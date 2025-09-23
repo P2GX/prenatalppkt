@@ -7,4 +7,4 @@ dependencies:
  - pip:
 #   - -r requirements.txt
 #   - -r requirements_test.txt
-   - -e . # editable install with packages needed for testing
+   - -e .[test] # editable install with packages needed for testing
