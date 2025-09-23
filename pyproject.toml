@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=80.9.0", "wheel==0.45.1", "setuptools_scm==8.3.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prenatalppkt"
+description = "Prenatal phenopacket library"
+authors = [{ name = "Varenya Jain, Peter Robinson" }]
+requires-python = ">=3.10"
+dynamic = ["dependencies", "version"]
+license = { file = "LICENSE" }
+readme = "README.md"
+
+[project.urls]
+homepage = "https://github.com/P2GX/prenatalppkt/"
+repository = "https://github.com/P2GX/prenatalppkt/.git"
+documentation = "https://github.com/P2GX/prenatalppkt/"
+bugtracker = "https://github.com/P2GX/prenatalppkt/issues"
+
+[project.optional-dependencies]
+test=[]
+
+[project.scripts]
+fetalpackets = "prenatalppkt.cli:main"
+
+[tool.setuptools.dynamic.optional-dependencies]
+test = {file = ["requirements/requirements_test.txt"]}
+
+[tool.setuptools]
+packages.find = { where = ["src"] }
+
+[tool.setuptools_scm]
+version_file = "src/prenatalppkt/_version.py"
+
+[tool.setuptools.dynamic]
+version = { attr = "prenatalppkt._version.version" }
+dependencies = {file = ["requirements/requirements.txt"]}
