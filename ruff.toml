@@ -1,0 +1,134 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "*.ipynb"
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.10
+target-version = "py310"
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+# https://docs.astral.sh/ruff/rules/#flake8-type-checking-tc
+extend-select = [
+    # Pandas
+    "PD002", # inplace=True should be avoided; it has inconsistent behavior
+    "PD008", # Use .loc instead of .at. If speed is important, use NumPy.
+    "PD009", # Use .iloc instead of .iat. If speed is important, use NumPy.
+    "PD010", # .pivot_table is preferred to .pivot or .unstack; provides same functionality
+    "PD011", # Use .to_numpy() instead of .values
+    "PD012", # Use .read_csv instead of .read_table to read CSV files
+    "PD013", # .melt is preferred to .stack; provides same functionality
+    "PD015", # Use .merge method instead of pd.merge function. They have equivalent functionality.
+
+    # Complexity
+    "C901", # {name} is too complex ({complexity} > {max_complexity})
+
+    # Loops
+    "SIM113", # Use enumerate() for index variable {index} in for loop
+    "SIM115", # Use a context manager for opening files
+    "PLC0206", # Extracting value from dictionary without calling .items()
+    "PERF203", # try-except within a loop incurs performance overhead
+    "PERF102", # When using only the {subset} of a dict use the {subset}() method
+
+    #TODOs
+    "TD002", # Missing author in TODO; try: # TODO(<author_name>): ... or # TODO @<author_name>: ...
+    "TD005", # Missing issue description after TODO
+    "TD006", # Invalid TODO capitalization: {tag} should be TODO
+    # Typehints
+    "TC010", # Invalid string member in X | Y-style union type
+
+    #Collections
+    "PERF101", # Do not cast an iterable to list before iterating over it
+    "PERF402", # Use list or list.copy to create a copy of a list
+
+    # Documentation checks
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+
+    # Imports
+    "F402", # Import {name} from {row} shadowed by loop variable
+    "F403", # from {name} import * used; unable to detect undefined names
+    "F404", # from __future__ imports must occur at the beginning of the file
+    "F634", # If test is a tuple, which is always True
+
+
+    # Mutable Defaults
+    "RUF012", # Mutable class attributes should be annotated with typing.ClassVar
+    "B006", # Do not use mutable data structures for argument defaults
+
+    # Prints
+    "T201", # print found
+    "T203" # pprint found
+]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = true
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+[lint.per-file-ignores]
+"tests/**.py" = ["D103", "D101", "D102"]
