@@ -1,0 +1,25 @@
+name: Install a Python Package
+description: 'Installs a specified Python package from a requirements file, allowing for flexible package management.'
+
+inputs:
+    requirements-path:
+        required: true
+        description: Path to the requirements file
+    package:
+        required: true
+        description: Package you would like to install from the requirements file
+
+runs:
+    using: composite
+    steps:
+        -   name: Extract Package Version
+            id: extract_package_version
+            shell: bash
+            run: |
+                echo "PACKAGE_LINE=$(grep -w "^${{ inputs.package }}" ${{ inputs.requirements-path }} || echo "${{ inputs.package }}")" >> $GITHUB_OUTPUT
+
+        -   name: Install Package
+            shell: bash
+            run: |
+                python -m pip install --upgrade pip
+                pip install "${{ steps.extract_package_version.outputs.PACKAGE_LINE }}"
