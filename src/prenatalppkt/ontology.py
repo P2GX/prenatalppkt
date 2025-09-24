@@ -12,7 +12,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # HPO release URL (points to latest)
-HPO_URL = "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/hp.json"
+#HPO_URL = "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/hp.json"
+# Utilize persistent uniform resource locator (PURL) over Github release URL
+HPO_URL = "http://purl.obolibrary.org/obo/hp.json"
 
 # Project-local cache (instead of ~/.cache)
 CACHE_DIR = Path(__file__).resolve().parent / "data"
