@@ -49,3 +49,7 @@ Hadlock and colleagues (1980s, Baylor College of Medicine) developed widely used
 - **NICHD tables** provide percentile-based norms stratified by race/ethnicity and gestational age.
 - **Z-scores** standardize measurements relative to the mean, allowing precise classification of abnormal growth.
 - **Hadlock regression formulas** predict gestational age and estimated fetal weight by combining multiple biometric parameters, reducing error compared to single measurements.
+
+### Key References
+- [Radiology. 1984 Feb;150(2):535-40: *Sonographic estimation of fetal weight. The value of femur length in addition to head and abdomen measurements*](https://pubmed.ncbi.nlm.nih.gov/6691115/){:target="_blank"}
+- [Am J Obstet Gynecol. 1985 Feb;151(3):333-7: *Estimation of fetal weight with the use of head, body, and femur measurements -- a prospective study*](https://www.sciencedirect.com/science/article/pii/0002937885902984?via%3Dihub){:target="_blank"}
