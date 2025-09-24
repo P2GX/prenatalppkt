@@ -11,13 +11,17 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # HPO release URL (points to latest)
 #HPO_URL = "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/hp.json"
 # Utilize persistent uniform resource locator (PURL) over Github release URL
 HPO_URL = "http://purl.obolibrary.org/obo/hp.json"
 
 # Project-local cache (instead of ~/.cache)
-CACHE_DIR = Path(__file__).resolve().parent / "data"
+CACHE_DIR = Path(__file__).resolve().parents[2] / "data"
 HPO_CACHE = CACHE_DIR / "hp.json"
 
 
@@ -44,6 +48,7 @@ def download_hpo(force: bool = False) -> Path:
     if HPO_CACHE.exists() and not force:
         return HPO_CACHE
 
+    logger.info("Downloading HPO ontology to: %s", HPO_CACHE)
     with urllib.request.urlopen(HPO_URL) as resp:
         data = resp.read()
     HPO_CACHE.write_bytes(data)

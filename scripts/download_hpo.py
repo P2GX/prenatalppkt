@@ -10,6 +10,8 @@ from prenatalppkt.ontology import download_hpo
 
 logger = logging.getLogger(__name__)
 
+logging.basicConfig(level=logging.INFO)
+
 if __name__ == "__main__":
     path = download_hpo(force=True)
     logger.info("Downloaded HPO ontology to %s", path)
