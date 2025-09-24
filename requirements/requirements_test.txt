@@ -1,3 +1,0 @@
-# Feel free to adjust these versions
-pytest==8.4.0
-ruff==0.12.4
