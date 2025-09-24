@@ -16,7 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # HPO release URL (points to latest)
-#HPO_URL = "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/hp.json"
+# HPO_URL = "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/hp.json"
 # Utilize persistent uniform resource locator (PURL) over Github release URL
 HPO_URL = "http://purl.obolibrary.org/obo/hp.json"
 
