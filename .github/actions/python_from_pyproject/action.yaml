@@ -1,0 +1,22 @@
+name: Install python from pyproject.toml
+description: 'Installs Python from the version found in the pyproject.toml'
+
+inputs:
+  pyproject-file-path:
+      required: False
+      description: "Path to the pyproject.toml including filename"
+      default: "./pyproject.toml"
+
+runs:
+    using: composite
+    steps:
+        - name: Get project version with yq
+          id: get_python_version
+          uses: mikefarah/yq@v4.46.1
+          with:
+              cmd: yq '.project.requires-python' ${{ inputs.pyproject-file-path }}
+
+        -   name: Set up Python
+            uses: actions/setup-python@v5.6.0
+            with:
+                python-version: ${{ steps.get_python_version.outputs.result }}
