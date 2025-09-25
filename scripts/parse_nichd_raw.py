@@ -7,8 +7,17 @@ percentile-only rows.
 """
 
 import csv
+import logging
 from pathlib import Path
 from typing import Optional, List
+
+# ---------------- Logging Setup ----------------
+logging.basicConfig(
+    level=logging.INFO,  # Change to DEBUG for more verbosity
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+# ------------------------------------------------
 
 # Paths
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -89,7 +98,8 @@ def parse_line(line: str) -> Optional[List[str]]:
         percentiles = tokens[idx:]
 
         return [ga, race, measure] + percentiles
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to parse line: {line.strip()} | Error: {e}")
         return None
 
 
@@ -124,7 +134,7 @@ def main() -> None:
             if row:
                 writer.writerow(row)
 
-    print(f"Parsed data written to {OUT_FILE}")
+    logger.info(f"Parsed data written to {OUT_FILE}")
 
 
 if __name__ == "__main__":
