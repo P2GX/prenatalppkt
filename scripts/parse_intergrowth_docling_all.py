@@ -2,10 +2,22 @@
 parse_intergrowth_docling_all.py
 
 Batch-parse all Intergrowth-21 fetal growth tables (centiles and z-scores)
-using Docling. Normalizes structure into TSV files in data/parsed/.
+into TSVs. This script is designed to work across all the Intergrowth PDFs
+with minimal user intervention.
 
-Dependencies:
- pip install docling pandas
+We use **Docling** instead of lightweight PDF parsers because:
+- The Intergrowth PDFs have **complex multi-row headers** (e.g. "Gestational age (exact weeks)" vs "Centiles.50 th").
+- They contain **grid-structured medical tables**, which docling's
+ table-structure models (like TableFormer) handle better than plain OCR.
+- Docling provides a single unified interface that outputs a structured
+ **TableItem -> pandas.DataFrame**, which we can normalize downstream.
+
+This script differs from `parse_nichd_raw.py`:
+- NIHCD parsing was simpler, since it dealt with a **text-based, single PDF** table.
+- Intergrowth requires **looping across multiple PDFs and measures**, and handling
+ **both centile (_ct_) and z-score (_zs_) tables**.
+- We also need fallback strategies because some tables won't parse
+ correctly on the first try (thus the multi-strategy extractor).
 """
 
 from __future__ import annotations
@@ -18,18 +30,23 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
+# Docling handles PDF parsing + table structure reconstruction
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 
 # -----------------------
-# Defaults
+# Defaults and renaming maps
 # -----------------------
 
+# Default folder for raw Intergrowth PDFs
 DEFAULT_RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw" / "intergrowth21"
+# Where normalized TSVs will be written
 OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "parsed"
 
+# Mapping from filename keys to full measurement names
+# (ensures TSVs are self-descriptive instead of cryptic codes)
 MEASURE_MAP: Dict[str, str] = {
    "ac": "Abdominal Circumference",
    "bpd": "Biparietal Diameter",
@@ -38,6 +55,7 @@ MEASURE_MAP: Dict[str, str] = {
    "ofd": "Occipito-Frontal Diameter",
 }
 
+# Standardization for column names in centile (_ct_) tables
 CT_COLUMN_RENAMES = {
    "GA": "Gestational Age (weeks)",
    "GA (weeks)": "Gestational Age (weeks)",
@@ -51,6 +69,7 @@ CT_COLUMN_RENAMES = {
    "97th": "97th Percentile",
 }
 
+# Desired order of centile columns (keeps outputs consistent across PDFs)
 CT_COLUMNS_ORDER = [
    "Gestational Age (weeks)",
    "Measure",
@@ -65,13 +84,20 @@ CT_COLUMNS_ORDER = [
 
 
 # -----------------------
-# Helpers
+# Helper functions
 # -----------------------
 
 def build_converter(do_table_structure: bool, do_cell_matching: Optional[bool]) -> DocumentConverter:
-   """Create a DocumentConverter with chosen table-structure settings."""
+   """
+   Build a Docling DocumentConverter with flexible options.
+
+   Why: Intergrowth PDFs vary in table layout quality. Some parse best with
+   table-structure reconstruction, some without. This helper lets us build
+   a converter with different strategies (structure, cell matching, etc).
+   """
    pipeline = PdfPipelineOptions(do_table_structure=do_table_structure)
    if do_table_structure and do_cell_matching is not None:
+       # TableFormer = ML-based model for reconstructing structured tables
        pipeline.table_structure_options.mode = TableFormerMode.ACCURATE
        pipeline.table_structure_options.do_cell_matching = do_cell_matching
    return DocumentConverter(
@@ -80,7 +106,15 @@ def build_converter(do_table_structure: bool, do_cell_matching: Optional[bool]) 
 
 
 def table_to_dataframe(tbl) -> pd.DataFrame:
-   """Convert Docling TableItem to Pandas DataFrame, supporting new/old API."""
+   """
+   Convert a Docling TableItem to a pandas DataFrame.
+
+   Docling has two different APIs depending on version:
+   - new: export_to_dataframe()
+   - old: to_pandas()
+
+   This keeps the script forward/backward compatible.
+   """
    if hasattr(tbl, "export_to_dataframe"):
        return tbl.export_to_dataframe()
    elif hasattr(tbl, "to_pandas"):
@@ -90,7 +124,17 @@ def table_to_dataframe(tbl) -> pd.DataFrame:
 
 
 def try_extract_tables(pdf_path: Path, debug: bool = False) -> List[pd.DataFrame]:
-   """Try multiple extraction strategies and return list of DataFrames."""
+   """
+   Try multiple extraction strategies for a given PDF.
+
+   Why: Some PDFs parse perfectly with table-structure ON, others require
+   a looser mode. We iterate over three strategies:
+   1. structure+match (most accurate, slowest)
+   2. structure-no-match (fallback if cell matching is off)
+   3. no-structure (raw text blocks -> tables)
+
+   Returns a list of DataFrames (most PDFs only yield 1 table).
+   """
    strategies: List[Tuple[bool, Optional[bool], str]] = [
        (True, True, "structure+match"),
        (True, False, "structure-no-match"),
@@ -127,18 +171,30 @@ def try_extract_tables(pdf_path: Path, debug: bool = False) -> List[pd.DataFrame
 
 
 def normalize_centile_table(df: pd.DataFrame, measure_label: str, debug: bool = False) -> pd.DataFrame:
-   """Normalize Intergrowth centile tables to a consistent schema."""
+   """
+   Normalize centile (_ct_) tables to a consistent schema.
+
+   Steps:
+   - Strip messy whitespace / multi-row headers
+   - Standardize column names (e.g., "Centiles.50 th" -> "50th Percentile")
+   - Add a "Measure" column (so one file encodes what biometric it refers to)
+   - Reorder columns to match CT_COLUMNS_ORDER for downstream consistency
+   """
    df.columns = [str(c).strip() for c in df.columns]
 
+   # Some tables encode headers in the *first row* instead of column names
    if any(isinstance(v, str) and v.lower().startswith("ga") for v in df.iloc[0].values):
        df = df.rename(columns=df.iloc[0]).drop(df.index[0])
        df.columns = [str(c).strip() for c in df.columns]
 
+   # Apply standard renaming map
    df = df.rename(columns={c: CT_COLUMN_RENAMES.get(c, c) for c in df.columns})
 
+   # Insert "Measure" column if not already present
    if "Measure" not in df.columns:
        df.insert(1, "Measure", measure_label)
 
+   # Reorder columns if possible, log missing columns otherwise
    if all(col in df.columns for col in CT_COLUMNS_ORDER):
        df = df[CT_COLUMNS_ORDER]
    else:
@@ -155,6 +211,12 @@ def normalize_centile_table(df: pd.DataFrame, measure_label: str, debug: bool = 
 
 
 def write_tsv(df: pd.DataFrame, out_path: Path, force: bool) -> None:
+   """
+   Write DataFrame to TSV.
+
+   We skip if the file exists unless --force is passed, to avoid
+   unnecessary overwrites during repeated runs.
+   """
    out_path.parent.mkdir(parents=True, exist_ok=True)
    if out_path.exists() and not force:
        logging.info(f"Exists (skip): {out_path}")
@@ -164,7 +226,7 @@ def write_tsv(df: pd.DataFrame, out_path: Path, force: bool) -> None:
 
 
 # -----------------------
-# Main
+# Main workflow
 # -----------------------
 
 def main() -> None:
@@ -180,6 +242,7 @@ def main() -> None:
    raw_dir = args.raw_dir.resolve()
    logging.info(f"RAW_DIR resolved to: {raw_dir}")
 
+   # Find PDFs by pattern (ct = centile, zs = z-score)
    ct_pdfs = sorted(raw_dir.rglob("*ct*table.pdf"))
    zs_pdfs = sorted(raw_dir.rglob("*zs*table.pdf"))
 
@@ -189,8 +252,9 @@ def main() -> None:
 
    logging.info(f"Found ct PDFs: {len(ct_pdfs)}  |  zs PDFs: {len(zs_pdfs)}")
 
-   # Process CT
+   # Process centile (_ct_) tables
    for pdf_path in ct_pdfs:
+       # Match filename key (e.g., "_ac_" -> abdominal circumference)
        matched_key = next((k for k in MEASURE_MAP if f"_{k}_" in pdf_path.stem or f"-{k}_" in pdf_path.stem), None)
        if not matched_key or (args.only and matched_key not in args.only):
            continue
@@ -203,10 +267,11 @@ def main() -> None:
            logging.warning(f"No tables extracted from {pdf_path.name}")
            continue
 
+       # Normalize before saving
        df_norm = normalize_centile_table(frames[0], measure, debug=args.debug)
        write_tsv(df_norm, out_path, force=args.force)
 
-   # Process ZS
+   # Process z-score (_zs_) tables
    for pdf_path in zs_pdfs:
        matched_key = next((k for k in MEASURE_MAP if f"_{k}_" in pdf_path.stem or f"-{k}_" in pdf_path.stem), None)
        if not matched_key or (args.only and matched_key not in args.only):
@@ -220,6 +285,7 @@ def main() -> None:
            logging.warning(f"No tables extracted from {pdf_path.name}")
            continue
 
+       # Z-score tables are simpler (already numeric bins), so no heavy normalization
        df = frames[0]
        df.columns = [str(c).strip() for c in df.columns]
        if "Measure" not in df.columns:
