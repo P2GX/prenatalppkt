@@ -1,7 +1,7 @@
 # prenatalppkt
 ============
 
-Transform raw sonagraphy data into phenopackets
+Library to transform raw sonagraphy data into phenopackets
 
 -------------------------------------------------------------------------------
 ## Why
