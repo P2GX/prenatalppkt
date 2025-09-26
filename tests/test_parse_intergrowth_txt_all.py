@@ -8,7 +8,7 @@ header matching, TSV writing, and summary bookkeeping.
 
 import pandas as pd
 from pathlib import Path
-import scripts.parse_intergrowth_txt_all as intergrowth
+from prenatalppkt.scripts import parse_intergrowth_txt_all as intergrowth
 
 
 # -------------------

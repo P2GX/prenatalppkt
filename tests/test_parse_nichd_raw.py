@@ -7,7 +7,7 @@ are properly filtered and whether valid lines are correctly parsed
 into structured rows.
 """
 
-import scripts.parse_nichd_raw as nichd
+from prenatalppkt.scripts import parse_nichd_raw as nichd
 
 
 def test_is_header_or_junk_detects_junk():
