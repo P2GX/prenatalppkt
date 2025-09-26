@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------
 
 # Paths
-DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+DATA_DIR = Path(__file__).resolve().parents[3] / "data"
 RAW_FILE = (
     DATA_DIR / "raw" / "raw_NIHCD_feta_growth_calculator_percentile_range_text.txt"
 )

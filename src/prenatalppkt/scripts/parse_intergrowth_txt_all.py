@@ -34,9 +34,9 @@ logging.basicConfig(
 # Paths
 # -----------------------
 
-RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw" / "intergrowth21"
+RAW_DIR = Path(__file__).resolve().parent.parents[2] / "data" / "raw" / "intergrowth21"
 OUT_DIR = (
-    Path(__file__).resolve().parent.parent / "data" / "parsed" / "intergrowth_text"
+    Path(__file__).resolve().parent.parents[2] / "data" / "parsed" / "intergrowth_text"
 )
 
 # -----------------------

@@ -42,10 +42,10 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 # Default folder for raw Intergrowth PDFs
 DEFAULT_RAW_DIR = (
-    Path(__file__).resolve().parent.parent / "data" / "raw" / "intergrowth21"
+    Path(__file__).resolve().parent.parents[2] / "data" / "raw" / "intergrowth21"
 )
 # Where normalized TSVs will be written
-OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "parsed"
+OUT_DIR = Path(__file__).resolve().parent.parents[2] / "data" / "parsed" / "intergrowth21_docling_parse"
 
 # Mapping from filename keys to full measurement names
 # (ensures TSVs are self-descriptive instead of cryptic codes)
