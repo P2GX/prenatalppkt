@@ -13,6 +13,28 @@ Reference: [NICHD Fetal Growth Calculator Percentile Range](https://www.nichd.ni
 
 ---
 
+## INTERGROWTH-21st Fetal Growth Standards
+The INTERGROWTH-21st Project established international fetal growth standards based on a multi-country study of low-risk pregnancies across diverse populations. Unlike NICHD, INTERGROWTH provides **single, population-agnostic reference tables** that are intended for global use.
+
+Key features:
+- Covers gestational ages 14-40 weeks.
+- Provides both **centile tables** (3rd, 5th, 10th, 50th, 90th, 95th, 97th) and **z-score tables** (-3SD to +3SD).
+- Includes multiple biometric measures:
+ - Biparietal diameter (BPD)
+ - Head circumference (HC)
+ - Abdominal circumference (AC)
+ - Femur length (FL)
+ - Occipito-frontal diameter (OFD)
+
+### Comparison to NICHD
+- **NICHD:** stratified by maternal race/ethnicity, U.S.-specific.
+- **INTERGROWTH:** pooled international data, ethnicity-agnostic.
+- **Clinical use:** NICHD may be preferred in U.S. practice, while INTERGROWTH is more widely recommended in global and research contexts.
+
+Reference: [INTERGROWTH-21st Fetal Growth Standards](https://intergrowth21.org/)
+
+---
+
 ## Z-Scores
 A z-score is a standardized measure that expresses how many standard deviations an observed value lies above or below the mean for a given gestational age and population. The formula is:
 
