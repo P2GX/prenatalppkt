@@ -1,28 +1,28 @@
-Gestational Age (weeks)	Measure	-3 SD	-2 SD	-1 SD	0 SD	1 SD	2 SD	3 SD
-14	Occipito-Frontal Diameter	28.0	29.9	31.8	33.8	35.7	37.6	39.6
-15	Occipito-Frontal Diameter	32.0	34.1	36.2	38.3	40.4	42.5	44.5
-16	Occipito-Frontal Diameter	36.1	38.4	40.6	42.8	45.1	47.3	49.5
-17	Occipito-Frontal Diameter	40.2	42.6	45.0	47.4	49.7	52.1	54.5
-18	Occipito-Frontal Diameter	44.3	46.8	49.3	51.9	54.4	56.9	59.4
-19	Occipito-Frontal Diameter	48.4	51.0	53.7	56.3	59.0	61.6	64.3
-20	Occipito-Frontal Diameter	52.4	55.1	57.9	60.7	63.5	66.2	69.0
-21	Occipito-Frontal Diameter	56.3	59.2	62.1	65.0	67.9	70.8	73.7
-22	Occipito-Frontal Diameter	60.2	63.2	66.2	69.2	72.2	75.2	78.3
-23	Occipito-Frontal Diameter	63.9	67.1	70.2	73.3	76.4	79.6	82.7
-24	Occipito-Frontal Diameter	67.6	70.8	74.1	77.3	80.5	83.8	87.0
-25	Occipito-Frontal Diameter	71.1	74.5	77.8	81.2	84.5	87.8	91.2
-26	Occipito-Frontal Diameter	74.5	78.0	81.4	84.9	88.3	91.8	95.2
-27	Occipito-Frontal Diameter	77.8	81.3	84.9	88.4	92.0	95.5	99.1
-28	Occipito-Frontal Diameter	80.8	84.5	88.1	91.8	95.5	99.1	102.8
-29	Occipito-Frontal Diameter	83.7	87.5	91.2	95.0	98.8	102.5	106.3
-30	Occipito-Frontal Diameter	86.4	90.3	94.1	98.0	101.9	105.8	109.7
-31	Occipito-Frontal Diameter	88.8	92.8	96.8	100.8	104.9	108.9	112.9
-32	Occipito-Frontal Diameter	91.0	95.2	99.3	103.5	107.6	111.7	115.9
-33	Occipito-Frontal Diameter	93.0	97.3	101.6	105.9	110.1	114.4	118.7
-34	Occipito-Frontal Diameter	94.6	99.1	103.6	108.0	112.5	117.0	121.4
-35	Occipito-Frontal Diameter	96.0	100.6	105.3	109.9	114.6	119.3	123.9
-36	Occipito-Frontal Diameter	97.0	101.9	106.8	111.6	116.5	121.4	126.3
-37	Occipito-Frontal Diameter	97.6	102.8	107.9	113.1	118.2	123.3	128.5
-38	Occipito-Frontal Diameter	97.9	103.4	108.8	114.2	119.7	125.1	130.6
-39	Occipito-Frontal Diameter	97.8	103.6	109.4	115.1	120.9	126.7	132.5
-40	Occipito-Frontal Diameter	97.2	103.4	109.6	115.8	122.0	128.2	134.4
+Gestational Age (weeks)	Measure	-3 SD	-2 SD	-1 SD	0 SD	1 SD	2 SD	3 SD	SourceFile	ParseTimestamp
+14	Occipito-Frontal Diameter	28.0	29.9	31.8	33.8	35.7	37.6	39.6	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+15	Occipito-Frontal Diameter	32.0	34.1	36.2	38.3	40.4	42.5	44.5	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+16	Occipito-Frontal Diameter	36.1	38.4	40.6	42.8	45.1	47.3	49.5	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+17	Occipito-Frontal Diameter	40.2	42.6	45.0	47.4	49.7	52.1	54.5	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+18	Occipito-Frontal Diameter	44.3	46.8	49.3	51.9	54.4	56.9	59.4	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+19	Occipito-Frontal Diameter	48.4	51.0	53.7	56.3	59.0	61.6	64.3	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+20	Occipito-Frontal Diameter	52.4	55.1	57.9	60.7	63.5	66.2	69.0	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+21	Occipito-Frontal Diameter	56.3	59.2	62.1	65.0	67.9	70.8	73.7	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+22	Occipito-Frontal Diameter	60.2	63.2	66.2	69.2	72.2	75.2	78.3	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+23	Occipito-Frontal Diameter	63.9	67.1	70.2	73.3	76.4	79.6	82.7	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+24	Occipito-Frontal Diameter	67.6	70.8	74.1	77.3	80.5	83.8	87.0	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+25	Occipito-Frontal Diameter	71.1	74.5	77.8	81.2	84.5	87.8	91.2	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+26	Occipito-Frontal Diameter	74.5	78.0	81.4	84.9	88.3	91.8	95.2	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+27	Occipito-Frontal Diameter	77.8	81.3	84.9	88.4	92.0	95.5	99.1	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+28	Occipito-Frontal Diameter	80.8	84.5	88.1	91.8	95.5	99.1	102.8	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+29	Occipito-Frontal Diameter	83.7	87.5	91.2	95.0	98.8	102.5	106.3	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+30	Occipito-Frontal Diameter	86.4	90.3	94.1	98.0	101.9	105.8	109.7	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+31	Occipito-Frontal Diameter	88.8	92.8	96.8	100.8	104.9	108.9	112.9	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+32	Occipito-Frontal Diameter	91.0	95.2	99.3	103.5	107.6	111.7	115.9	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+33	Occipito-Frontal Diameter	93.0	97.3	101.6	105.9	110.1	114.4	118.7	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+34	Occipito-Frontal Diameter	94.6	99.1	103.6	108.0	112.5	117.0	121.4	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+35	Occipito-Frontal Diameter	96.0	100.6	105.3	109.9	114.6	119.3	123.9	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+36	Occipito-Frontal Diameter	97.0	101.9	106.8	111.6	116.5	121.4	126.3	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+37	Occipito-Frontal Diameter	97.6	102.8	107.9	113.1	118.2	123.3	128.5	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+38	Occipito-Frontal Diameter	97.9	103.4	108.8	114.2	119.7	125.1	130.6	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+39	Occipito-Frontal Diameter	97.8	103.6	109.4	115.1	120.9	126.7	132.5	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
+40	Occipito-Frontal Diameter	97.2	103.4	109.6	115.8	122.0	128.2	134.4	grow_fetal-zs_ofd_table.txt	2025-09-26T14:07:54
