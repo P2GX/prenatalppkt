@@ -7,6 +7,11 @@ Unit tests for BiometryMeasurement and head circumference mapping.
 import pytest
 from prenatalppkt.biometry import BiometryMeasurement, BiometryType
 from prenatalppkt import constants
+from prenatalppkt.biometry_reference import FetalGrowthPercentiles
+
+
+# Initialize a global reference object for consistency across tests
+REFERENCE = FetalGrowthPercentiles(source="intergrowth")
 
 
 def test_head_circumference_normal_case():
@@ -16,7 +21,7 @@ def test_head_circumference_normal_case():
         gestational_age_weeks=20,
         value_mm=175,
     )
-    pct, hpo = measure.percentile_and_hpo()
+    pct, hpo = measure.percentile_and_hpo(reference=REFERENCE)
     assert 40 <= pct <= 60
     assert hpo is None
 
@@ -32,7 +37,7 @@ def test_head_circumference_abnormal_cases(value_mm, expected_hpo):
         gestational_age_weeks=20,
         value_mm=value_mm,
     )
-    _, hpo = measure.percentile_and_hpo()
+    _, hpo = measure.percentile_and_hpo(reference=REFERENCE)
     assert hpo == expected_hpo
 
 
@@ -44,7 +49,7 @@ def test_invalid_gestational_age_raises_error():
         value_mm=100,
     )
     with pytest.raises(ValueError):
-        measure.percentile_and_hpo()
+        measure.percentile_and_hpo(reference=REFERENCE)
 
     measure = BiometryMeasurement(
         measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
@@ -52,7 +57,7 @@ def test_invalid_gestational_age_raises_error():
         value_mm=200,
     )
     with pytest.raises(ValueError):
-        measure.percentile_and_hpo()
+        measure.percentile_and_hpo(reference=REFERENCE)
 
 
 def test_missing_reference_data_raises_error():
@@ -63,4 +68,4 @@ def test_missing_reference_data_raises_error():
         value_mm=150,
     )
     with pytest.raises(ValueError):
-        measure.percentile_and_hpo()
+        measure.percentile_and_hpo(reference=REFERENCE)
