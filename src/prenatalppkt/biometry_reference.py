@@ -190,72 +190,91 @@ class FetalGrowthPercentiles:
     # -----------------------
 
     def _load_tables(self) -> None:
-        """Load all reference tables for the selected source into memory."""
+        """
+        Load all reference tables for the selected source into memory.
+
+        Delegates to either `_load_intergrowth` or `_load_nichd`
+        depending on the configured source.
+        """
         if self.source == "intergrowth":
-            # For Intergrowth, load both centile (ct) and z-score (zs) tables
-            for long_key, short_key in SHORT_ALIASES.items():
-                ct_path = (
-                    RESOURCES_DIR
-                    / "intergrowth21_docling_parse"
-                    / f"intergrowth21_{short_key}_ct.tsv"
-                )
-                zs_path = (
-                    RESOURCES_DIR
-                    / "intergrowth21_docling_parse"
-                    / f"intergrowth21_{short_key}_zs.tsv"
-                )
-                if ct_path.exists() and zs_path.exists():
-                    ct_df = _normalize_columns(pd.read_csv(ct_path, sep="\t"))
-                    zs_df = _normalize_columns(pd.read_csv(zs_path, sep="\t"))
-                    self.tables[long_key] = {"ct": ct_df, "zs": zs_df}
-
+            self._load_intergrowth()
         elif self.source == "nichd":
-            # For NICHD, load one master file and split by "Measure" column
-            path = (
-                RESOURCES_DIR / "raw_NIHCD_feta_growth_calculator_percentile_range.tsv"
-            )
-            if path.exists():
-                df = _normalize_columns(pd.read_csv(path, sep="\t"))
-                measure_col = next(
-                    (c for c in df.columns if c.strip().lower() == "measure"), None
-                )
-                if measure_col:
-                    # normalize the measure column for robust matching
-                    df[measure_col] = df[measure_col].str.strip().str.lower()
-
-                    for long_key, label in SUPPORTED_MEASURES.items():
-                        # build robust label set
-                        alias = SHORT_ALIASES.get(long_key, "")
-                        possible_labels = {
-                            label.lower(),
-                            alias.lower(),
-                            alias.upper(),
-                            label.lower().replace(" ", ""),
-                        }
-                        # add common synonyms
-                        if "circumference" in label.lower():
-                            possible_labels.add(
-                                label.lower().replace("circumference", "circ")
-                            )
-                        if long_key == "head_circumference":
-                            possible_labels.update({"hc", "headcirc", "headcircum"})
-
-                        # flexible substring matching
-                        subset = df[
-                            df[measure_col].apply(
-                                lambda x: any(
-                                    lbl in x.replace(" ", "")
-                                    for lbl in possible_labels
-                                    if lbl
-                                )
-                            )
-                        ]
-                        if not subset.empty:
-                            self.tables[long_key] = {"ct": _normalize_columns(subset)}
+            self._load_nichd()
 
         logger.debug(
             "Loaded measures for %s: %s", self.source, list(self.tables.keys())
         )
+
+    def _load_intergrowth(self) -> None:
+        """
+        Load Intergrowth-21st tables for all supported measures.
+
+        Each measure has both centile (ct) and z-score (zs) TSV files,
+        which are parsed and stored under `self.tables[long_key]`.
+        """
+        for long_key, short_key in SHORT_ALIASES.items():
+            ct_path = (
+                RESOURCES_DIR
+                / "intergrowth21_docling_parse"
+                / f"intergrowth21_{short_key}_ct.tsv"
+            )
+            zs_path = (
+                RESOURCES_DIR
+                / "intergrowth21_docling_parse"
+                / f"intergrowth21_{short_key}_zs.tsv"
+            )
+            if ct_path.exists() and zs_path.exists():
+                ct_df = _normalize_columns(pd.read_csv(ct_path, sep="\t"))
+                zs_df = _normalize_columns(pd.read_csv(zs_path, sep="\t"))
+                self.tables[long_key] = {"ct": ct_df, "zs": zs_df}
+
+    def _load_nichd(self) -> None:
+        """
+        Load NICHD reference table and split by measurement type.
+
+        NICHD provides one master table with a `Measure` column.
+        Each supported measure is matched flexibly against this column,
+        and the subset of rows is stored under `self.tables[long_key]`.
+        """
+        path = RESOURCES_DIR / "raw_NIHCD_feta_growth_calculator_percentile_range.tsv"
+        if not path.exists():
+            return
+
+        df = _normalize_columns(pd.read_csv(path, sep="\t"))
+        measure_col = next(
+            (c for c in df.columns if c.strip().lower() == "measure"), None
+        )
+        if not measure_col:
+            return
+
+        # normalize the measure column for robust matching
+        df[measure_col] = df[measure_col].str.strip().str.lower()
+
+        for long_key, label in SUPPORTED_MEASURES.items():
+            # build robust label set
+            alias = SHORT_ALIASES.get(long_key, "")
+            possible_labels = {
+                label.lower(),
+                alias.lower(),
+                alias.upper(),
+                label.lower().replace(" ", ""),
+            }
+            # add common synonyms
+            if "circumference" in label.lower():
+                possible_labels.add(label.lower().replace("circumference", "circ"))
+            if long_key == "head_circumference":
+                possible_labels.update({"hc", "headcirc", "headcircum"})
+
+            # flexible substring matching
+            subset = df[
+                df[measure_col].apply(
+                    lambda x: any(
+                        lbl in x.replace(" ", "") for lbl in possible_labels if lbl
+                    )
+                )
+            ]
+            if not subset.empty:
+                self.tables[long_key] = {"ct": _normalize_columns(subset)}
 
     # -----------------------
     # Public API
