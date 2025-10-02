@@ -74,3 +74,14 @@ def test_missing_reference_data_raises_error(reference):
     )
     with pytest.raises(ValueError):
         measure.percentile_and_hpo(reference=reference)
+
+
+def test_unsupported_measurement_type_raises_error(reference):
+    """Unsupported biometrics like estimated fetal weight should raise a ValueError."""
+    measure = BiometryMeasurement(
+        measurement_type=BiometryType.ESTIMATED_FETAL_WEIGHT,
+        gestational_age_weeks=20,
+        value_mm=300,
+    )
+    with pytest.raises(ValueError, match="Unsupported measurement type"):
+        measure.percentile_and_hpo(reference=reference)

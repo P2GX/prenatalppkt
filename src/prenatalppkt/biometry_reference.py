@@ -30,11 +30,11 @@ from typing import Dict, Optional
 RESOURCES_DIR = Path(__file__).resolve().parents[2] / "data" / "parsed"
 
 SUPPORTED_MEASURES = {
-    "hc": "Head Circumference",
-    "bpd": "Biparietal Diameter",
-    "ac": "Abdominal Circumference",
-    "fl": "Femur Length",
-    "ofd": "Occipito-Frontal Diameter",
+    "head_circumference": "Head Circumference",
+    "biparietal_diameter": "Biparietal Diameter",
+    "abdominal_circumference": "Abdominal Circumference",
+    "femur_length": "Femur Length",
+    "occipitofrontal_diameter": "Occipito-Frontal Diameter",
 }
 
 
