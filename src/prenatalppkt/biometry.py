@@ -63,7 +63,7 @@ class BiometryMeasurement:
         Returns
         -------
         tuple[float, str | None]
-            Percentile (0–100), and HPO identifier if abnormal, else None.
+            Percentile (0-100), and HPO identifier if abnormal, else None.
 
         Raises
         ------
@@ -75,16 +75,22 @@ class BiometryMeasurement:
             raise ValueError("A FetalGrowthPercentiles reference must be provided.")
 
         percentile = reference.lookup_percentile(
-            measure_key=self.measurement_type,
+            measurement_type=self.measurement_type,
             gestational_age_weeks=self.gestational_age_weeks,
             value_mm=self.value_mm,
         )
 
-        # Map abnormal percentiles to HPO terms
+        # Abnormal thresholds (<=3rd or >=97th percentile) by measurement
         if self.measurement_type == BiometryType.HEAD_CIRCUMFERENCE:
-            if percentile < 3:
+            if percentile <= 3:
                 return percentile, constants.HPO_MICROCEPHALY
-            if percentile > 97:
+            if percentile >= 97:
                 return percentile, constants.HPO_MACROCEPHALY
+
+        if self.measurement_type == BiometryType.FEMUR_LENGTH:
+            if percentile <= 3:
+                return percentile, constants.HPO_SHORT_FEMUR
+            if percentile >= 97:
+                return percentile, constants.HPO_LONG_FEMUR
 
         return percentile, None
