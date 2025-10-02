@@ -102,7 +102,9 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def _extract_numeric_label(label: str) -> float:
     """
-    Extract numeric value from a label like '3rd Percentile', '97th Percentile', or '-2 SD'. Handles suffixes (st/nd/rd/th) and z-score notation.
+    Extract numeric value from a label like '3rd Percentile', '97th Percentile', or '-2 SD'.
+
+    Handles suffixes (st/nd/rd/th) and z-score notation.
     """
     match = re.search(r"-?\d+", label)  # captures integers with optional minus
     if not match:
@@ -218,6 +220,9 @@ class FetalGrowthPercentiles:
                     (c for c in df.columns if c.strip().lower() == "measure"), None
                 )
                 if measure_col:
+                    # normalize the measure column for robust matching
+                    df[measure_col] = df[measure_col].str.strip().str.lower()
+
                     for long_key, label in SUPPORTED_MEASURES.items():
                         # build robust label set
                         alias = SHORT_ALIASES.get(long_key, "")
@@ -225,18 +230,23 @@ class FetalGrowthPercentiles:
                             label.lower(),
                             alias.lower(),
                             alias.upper(),
-                            label.lower().replace(
-                                " ", ""
-                            ),  # "head circumference" -> "headcircumference"
+                            label.lower().replace(" ", ""),
                         }
+                        # add common synonyms
+                        if "circumference" in label.lower():
+                            possible_labels.add(
+                                label.lower().replace("circumference", "circ")
+                            )
+                        if long_key == "head_circumference":
+                            possible_labels.update({"hc", "headcirc", "headcircum"})
+
                         # flexible substring matching
                         subset = df[
-                            df[measure_col]
-                            .str.lower()
-                            .apply(
+                            df[measure_col].apply(
                                 lambda x: any(
-                                    lbl and lbl in x.replace(" ", "")
+                                    lbl in x.replace(" ", "")
                                     for lbl in possible_labels
+                                    if lbl
                                 )
                             )
                         ]

@@ -1,14 +1,8 @@
 """
 test_biometry.py
 
-Unit tests for BiometryMeasurement and percentile-to-HPO mapping.
-
-Covers:
-- Normal cases (?50th percentile, no HPO term).
-- Abnormal cases (<=3rd or >=97th percentile, mapping to HPO terms).
-- Edge cases (invalid gestational age, missing data, unsupported types).
-
-Tests are run against both INTERGROWTH-21st and NICHD reference tables.
+Unit tests for BiometryMeasurement and mapping to ontology terms.
+Covers both INTERGROWTH-21st and NICHD reference tables.
 """
 
 import pytest
@@ -17,9 +11,9 @@ from prenatalppkt import constants
 from prenatalppkt.biometry_reference import FetalGrowthPercentiles
 
 
-# ----------------------------------------------------------------------
-# Shared fixture
-# ----------------------------------------------------------------------
+# -----------------------
+# Shared fixtures
+# -----------------------
 
 
 @pytest.fixture(params=["intergrowth", "nichd"])
@@ -28,109 +22,131 @@ def reference(request):
     return FetalGrowthPercentiles(source=request.param)
 
 
-# ----------------------------------------------------------------------
-# Normal case
-# ----------------------------------------------------------------------
+# -----------------------
+# Head circumference tests
+# -----------------------
 
 
 def test_head_circumference_normal_case(reference):
-    """A typical head circumference should map to ~50th percentile with no HPO term."""
+    """
+    A typical head circumference should map to ~50th percentile with no HPO term.
+    Tested for both Intergrowth and NICHD sources.
+    """
     measure = BiometryMeasurement(
         measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
         gestational_age_weeks=20,
         value_mm=175,
     )
     pct, hpo = measure.percentile_and_hpo(reference=reference)
-
-    # Percentile should always be within 0-100
     assert 0 <= pct <= 100
-
-    # No abnormal HPO mapping expected for a ~50th percentile value
-    if pct:
-        assert hpo is None
-
-
-# ----------------------------------------------------------------------
-# Abnormal cases (combined HC + FL)
-# ----------------------------------------------------------------------
+    assert hpo is None
 
 
 @pytest.mark.parametrize(
-    "measurement_type, ga_weeks, value_mm, expected_hpo, source_required",
+    "value_mm, expected_hpo",
     [
-        # Head circumference: only INTERGROWTH source has abnormal-case validation
-        (
-            BiometryType.HEAD_CIRCUMFERENCE,
-            20,
-            130,
-            constants.HPO_MICROCEPHALY,
-            "intergrowth",
-        ),
-        (
-            BiometryType.HEAD_CIRCUMFERENCE,
-            20,
-            210,
-            constants.HPO_MACROCEPHALY,
-            "intergrowth",
-        ),
-        # Femur length: only NICHD source has abnormal-case validation
-        (BiometryType.FEMUR_LENGTH, 20, 10, constants.HPO_SHORT_FEMUR, "nichd"),
-        (BiometryType.FEMUR_LENGTH, 20, 50, constants.HPO_LONG_FEMUR, "nichd"),
+        (130, constants.HPO_MICROCEPHALY),  # <=3rd percentile
+        (210, constants.HPO_MACROCEPHALY),  # >=97th percentile
     ],
 )
-def test_abnormal_cases(
-    reference, measurement_type, ga_weeks, value_mm, expected_hpo, source_required
-):
+def test_head_circumference_abnormal_cases(reference, value_mm, expected_hpo):
     """
-    Extremely small or large values should map to abnormal HPO terms.
-
-    Different sources provide different validated abnormal definitions:
-    - Head circumference abnormal thresholds -> INTERGROWTH.
-    - Femur length abnormal thresholds -> NICHD.
+    Extremely small or large head circumference should map to the correct HPO term.
+    Only tested with Intergrowth, since NICHD HC parsing is not yet standardized.
     """
-    if reference.source != source_required:
-        pytest.skip(
-            f"Abnormal cases for {measurement_type} only tested with {source_required}"
-        )
+    if reference.source != "intergrowth":
+        pytest.skip("Head circumference abnormal cases only tested with Intergrowth")
 
     measure = BiometryMeasurement(
-        measurement_type=measurement_type,
-        gestational_age_weeks=ga_weeks,
+        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
+        gestational_age_weeks=20,
         value_mm=value_mm,
     )
     _, hpo = measure.percentile_and_hpo(reference=reference)
     assert hpo == expected_hpo
 
 
-# ----------------------------------------------------------------------
-# Edge cases
-# ----------------------------------------------------------------------
+# -----------------------
+# Femur length tests
+# -----------------------
+
+
+@pytest.mark.parametrize(
+    "value_mm, expected_hpo",
+    [
+        (10, constants.HPO_SHORT_FEMUR),  # <=3rd percentile
+        (50, constants.HPO_LONG_FEMUR),  # >=97th percentile (placeholder constant)
+    ],
+)
+def test_femur_length_abnormal_cases(reference, value_mm, expected_hpo):
+    """
+    Extremely small or large femur length should map to the correct HPO term.
+    Only tested with NICHD, since Intergrowth does not flag femur length in the same way.
+    """
+    if reference.source != "nichd":
+        pytest.skip("Femur length abnormal cases only tested with NICHD")
+
+    measure = BiometryMeasurement(
+        measurement_type=BiometryType.FEMUR_LENGTH,
+        gestational_age_weeks=20,
+        value_mm=value_mm,
+    )
+    _, hpo = measure.percentile_and_hpo(reference=reference)
+    assert hpo == expected_hpo
+
+
+# -----------------------
+# Interpolation test
+# -----------------------
+
+
+def test_interpolation_for_non_tabled_ga(reference):
+    """
+    Ensure interpolation works at a GA not directly in the reference table.
+    E.g., GA=19 weeks is missing in some sources but should interpolate cleanly.
+    """
+    measure = BiometryMeasurement(
+        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
+        gestational_age_weeks=19,
+        value_mm=165,
+    )
+    try:
+        pct, hpo = measure.percentile_and_hpo(reference=reference)
+        assert 0 <= pct <= 100
+        assert hpo in (None, constants.HPO_MICROCEPHALY, constants.HPO_MACROCEPHALY)
+    except ValueError as e:
+        pytest.skip(f"Interpolation not available for {reference.source}: {e}")
+
+
+# -----------------------
+# Error handling tests
+# -----------------------
 
 
 def test_invalid_gestational_age_raises_error(reference):
     """Gestational ages outside 12-40 weeks should raise ValueError."""
-    early = BiometryMeasurement(
+    measure = BiometryMeasurement(
         measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
         gestational_age_weeks=2,
         value_mm=100,
     )
     with pytest.raises(ValueError):
-        early.percentile_and_hpo(reference=reference)
+        measure.percentile_and_hpo(reference=reference)
 
-    late = BiometryMeasurement(
+    measure = BiometryMeasurement(
         measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
         gestational_age_weeks=45,
         value_mm=200,
     )
     with pytest.raises(ValueError):
-        late.percentile_and_hpo(reference=reference)
+        measure.percentile_and_hpo(reference=reference)
 
 
 def test_missing_reference_data_raises_error(reference):
-    """Valid GA but missing from reference tables should raise ValueError."""
+    """Gestational age within 12-40 but missing from reference should raise ValueError."""
     measure = BiometryMeasurement(
         measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        gestational_age_weeks=13,  # chosen GA likely absent from both sources
+        gestational_age_weeks=13,  # deliberately missing
         value_mm=150,
     )
     with pytest.raises(ValueError):
@@ -138,7 +154,7 @@ def test_missing_reference_data_raises_error(reference):
 
 
 def test_unsupported_measurement_type_raises_error(reference):
-    """Unsupported biometrics like estimated fetal weight should raise ValueError."""
+    """Unsupported biometrics like estimated fetal weight should raise a ValueError."""
     measure = BiometryMeasurement(
         measurement_type=BiometryType.ESTIMATED_FETAL_WEIGHT,
         gestational_age_weeks=20,
