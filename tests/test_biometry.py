@@ -142,17 +142,6 @@ def test_invalid_gestational_age_raises_error(reference):
         measure.percentile_and_hpo(reference=reference)
 
 
-def test_missing_reference_data_raises_error(reference):
-    """Gestational age within 12-40 but missing from reference should raise ValueError."""
-    measure = BiometryMeasurement(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        gestational_age_weeks=13,  # deliberately missing
-        value_mm=150,
-    )
-    with pytest.raises(ValueError):
-        measure.percentile_and_hpo(reference=reference)
-
-
 def test_unsupported_measurement_type_raises_error(reference):
     """Unsupported biometrics like estimated fetal weight should raise a ValueError."""
     measure = BiometryMeasurement(
@@ -161,4 +150,22 @@ def test_unsupported_measurement_type_raises_error(reference):
         value_mm=300,
     )
     with pytest.raises(ValueError, match="Unsupported measurement type"):
+        measure.percentile_and_hpo(reference=reference)
+
+
+def test_missing_reference_data_raises_error(reference):
+    """
+    Gestational age within 12-40 but missing from the reference table
+    should raise ValueError.
+
+    - Intergrowth starts later, so GA=13 is missing there.
+    - NICHD starts earlier (around 10 weeks), so GA=9 is missing there.
+    """
+    missing_ga = 9 if reference.source == "nichd" else 13
+    measure = BiometryMeasurement(
+        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
+        gestational_age_weeks=missing_ga,
+        value_mm=150,
+    )
+    with pytest.raises(ValueError):
         measure.percentile_and_hpo(reference=reference)
