@@ -5,10 +5,10 @@ Class-based implementation of prenatal biometric measurements.
 Supports percentile calculation and mapping to ontology terms.
 """
 
-from statistics import NormalDist
 from dataclasses import dataclass
 from typing import Optional
 from . import constants
+from .biometry_reference import FetalGrowthPercentiles
 
 
 class BiometryType:
@@ -49,9 +49,16 @@ class BiometryMeasurement:
     gestational_age_weeks: float
     value_mm: float
 
-    def percentile_and_hpo(self) -> tuple[float, Optional[str]]:
+    def percentile_and_hpo(
+        self, reference: Optional[FetalGrowthPercentiles] = None
+    ) -> tuple[float, Optional[str]]:
         """
         Calculate the percentile and infer an ontology term if abnormal.
+
+        Parameters
+        ----------
+        reference : FetalGrowthPercentiles, optional
+            Reference growth standard to use. If None, raises ValueError.
 
         Returns
         -------
@@ -61,31 +68,29 @@ class BiometryMeasurement:
         Raises
         ------
         ValueError
-            If the gestational age is invalid or reference data is missing.
+            If no reference is provided, gestational age is invalid,
+            or the measurement type is unsupported by the reference.
         """
-        if self.gestational_age_weeks < 12 or self.gestational_age_weeks > 40:
-            raise ValueError(
-                f"Unsupported gestational age: {self.gestational_age_weeks} weeks. "
-                "Valid range is 12-40 weeks."
-            )
+        if reference is None:
+            raise ValueError("A FetalGrowthPercentiles reference must be provided.")
 
-        ref_table = _MOCK_REFERENCES.get(self.measurement_type, {})
-        if self.gestational_age_weeks not in ref_table:
-            raise ValueError(
-                f"No reference data for {self.measurement_type} at "
-                f"{self.gestational_age_weeks} weeks."
-            )
+        percentile = reference.lookup_percentile(
+            measurement_type=self.measurement_type,
+            gestational_age_weeks=self.gestational_age_weeks,
+            value_mm=self.value_mm,
+        )
 
-        ref = ref_table[self.gestational_age_weeks]
-        mean, sd = ref["mean"], ref["sd"]
-
-        z_score = (self.value_mm - mean) / sd
-        percentile = round(NormalDist().cdf(z_score) * 100, 1)
-
+        # Abnormal thresholds (<=3rd or >=97th percentile) by measurement
         if self.measurement_type == BiometryType.HEAD_CIRCUMFERENCE:
-            if percentile < 3:
+            if percentile <= 3:
                 return percentile, constants.HPO_MICROCEPHALY
-            if percentile > 97:
+            if percentile >= 97:
                 return percentile, constants.HPO_MACROCEPHALY
+
+        if self.measurement_type == BiometryType.FEMUR_LENGTH:
+            if percentile <= 3:
+                return percentile, constants.HPO_SHORT_FEMUR
+            if percentile >= 97:
+                return percentile, constants.HPO_LONG_FEMUR
 
         return percentile, None

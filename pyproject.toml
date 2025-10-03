@@ -15,6 +15,7 @@ readme = "README.md"
 # inherited from requirements/requirements.txt and requirements/requirements_test.txt
 dependencies = [
  "click==8.2.1",
+ "docling==2.54.0",
  #hpo-toolkit==0.7.0,
  "hpo-toolkit==0.5.5",
  "ijson==3.4.0",
@@ -31,7 +32,7 @@ dependencies = [
  "requests==2.32.4",
  "rich==14.1.0",
  "stairval==0.2.1",
- "typer==0.17.4",
+ #"typer==0.17.4",
 ]
 
 [project.optional-dependencies]
