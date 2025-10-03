@@ -32,47 +32,47 @@ Library to transform raw sonography data into [Phenopackets](https://phenopacket
 
 -------------------------------------------------------------------------------
 ## Simple Architecture
--------------------------------------------------------------------------------
+--------------------------------------------------------
 
-+-----------------------+
-|Input JSON / XLSX|
-+----------+------------+
- |
- v
-+----------+------------+
-|Parser Layer |
-|- Extracts GA, HC, |
-|BPD, AC, FL, OFD |
-+----------+------------+
- |
- v
-+----------+------------+
-|Reference Lookup |
-|- FetalGrowthPercent |
-|loads NIHCD/IG21st |
-|- Percentile/Z-score |
-+----------+------------+
- |
- v
-+----------+------------+
-|BiometryMeasurement|
-|- Maps values to HPO |
-|- Flags abnormalities|
-+----------+------------+
- |
- v
-+----------+------------+
-| Phenopacket Builder |
-|- JSON assembly|
-|- Metadata/QC log|
-+----------+------------+
- |
-+----------------+------------------+
-| |
-v v
- +------+-------+ +------+------+
- | QC Reports | | Phenopackets|
- +--------------+ +-------------+
+          +-----------------------+
+          | Input JSON / XLSX     |
+          +-----------------------+
+                    |
+                    v
+          +-----------------------+
+          | Parser Layer          |
+          | - Extracts GA, HC,    |
+          |   BPD, AC, FL, OFD    |
+          +-----------------------+
+                    |
+                    v
+          +-----------------------+
+          | Reference Lookup      |
+          | - FetalGrowthPercent  |
+          |   loads NIHCD/IG21st  |
+          | - Percentile/Z-score  |
+          +-----------------------+
+                    |
+                    v
+          +-----------------------+
+          | BiometryMeasurement   |
+          | - Maps values to HPO  |
+          | - Flags abnormalities |
+          +-----------------------+
+                    |
+                    v
+          +-----------------------+
+          | Phenopacket Builder   |
+          | - JSON assembly       |
+          | - Metadata/QC log     |
+          +-----------------------+
+                    |
+           +--------+--------+
+           |                 |
+           v                 v
+  +----------------+   +----------------+
+  | QC Reports     |   | Phenopackets   |
+  +----------------+   +----------------+
 
 Optional: extract flat CSV for statistical analysis.
 
@@ -141,10 +141,14 @@ percentile, hpo = measure.percentile_and_hpo(reference=fg)
 print(percentile, hpo)
 # Example: 50.0, None
 
-# Testing
-# Run linting and tests:
-# ruff format . && ruff check . --fix && pytest -vv
-# Tests cover:
+```
+
+## Testing
+
+### Run linting and tests:
+ruff format . && ruff check . --fix && pytest -vv
+
+### Tests cover:
 # Normal vs abnormal growth (HC, BPD, AC, FL, OFD)
 # Z-score lookups (INTERGROWTH only)
 # Missing reference data
