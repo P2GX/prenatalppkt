@@ -10,16 +10,15 @@ from prenatalppkt.measurements.reference_range import ReferenceRange
 
 
 @pytest.fixture
-def reference(request) -> ReferenceRange: # type: ignore
-    """Create MeasurementResult with one line from 
-        Gestational week - 20.86,  Non-Hispanic White, Abdominal Circ
+def reference(request) -> ReferenceRange:  # type: ignore
+    """Create MeasurementResult with one line from
+    Gestational week - 20.86,  Non-Hispanic White, Abdominal Circ
     """
     thresholds = [145.25, 147.25, 150.37, 161.95, 174.41, 178.12, 180.56]
     gestational_age = GestationalAge.from_weeks(20.86)
     ref_range = ReferenceRange(gestational_age=gestational_age, percentiles=thresholds)
-    
+
     return ref_range
-    
 
 
 """

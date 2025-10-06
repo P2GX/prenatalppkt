@@ -1,12 +1,13 @@
 import typing
 import math
 
+
 class GestationalAge:
     """
     A class representing gestational age, expressed in weeks and days.
 
     Gestational age is typically used in obstetrics to describe the age of an embryo or fetus.
-    It is expressed as the number of completed weeks and additional days since the first day 
+    It is expressed as the number of completed weeks and additional days since the first day
     of the last menstrual period (LMP). Example 34w3d
 
     Attributes
@@ -41,7 +42,7 @@ class GestationalAge:
             The number of additional days (0-6).
         """
         self._weeks = weeks
-        self._days = days 
+        self._days = days
 
     @staticmethod
     def from_weeks(weeks: typing.Union[int, float]) -> "GestationalAge":
