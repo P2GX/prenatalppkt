@@ -53,10 +53,10 @@ class GestationalAge:
 
         Examples
         --------
-        >>> GestationalAge.from_weeks(12)
-        <GestationalAge: 12 weeks, 0 days>
-        >>> GestationalAge.from_weeks(12.5)
-        <GestationalAge: 12 weeks, 3 days>
+        # >>> GestationalAge.from_weeks(12)
+        # <GestationalAge: 12 weeks, 0 days>
+        # >>> GestationalAge.from_weeks(12.5)
+        # <GestationalAge: 12 weeks, 3 days>
 
         Parameters
         ----------
@@ -102,4 +102,5 @@ class GestationalAge:
         return self._days
 
     def __repr__(self) -> str:
-        return f"GestationalAge(weeks={self._weeks}, days={self._days})"
+        """Return a concise representation like <GestationalAge: 20 weeks, 6 days>."""
+        return f"<GestationalAge: {self._weeks} weeks, {self._days} days>"

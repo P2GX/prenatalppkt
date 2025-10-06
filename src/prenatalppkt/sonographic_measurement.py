@@ -1,6 +1,5 @@
 import typing
 from abc import ABC, abstractmethod
-import hpotk
 from hpotk import MinimalTerm
 
 from prenatalppkt.gestational_age import GestationalAge

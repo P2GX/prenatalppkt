@@ -8,7 +8,7 @@ class ReferenceRange:
     Defines the percentile thresholds for a particular gestational age and
     provides logic to evaluate raw measurement values against these thresholds.
 
-    The evaluation logic is designed to be flexible -- allowing external
+    The evaluation logic is designed to be flexible - allowing external
     configuration of percentile bins (e.g., "abnormal" = 3-10th, 90-97th)
     through the class interface or JSON configuration in the future.
 
@@ -47,17 +47,23 @@ class ReferenceRange:
         Notes
         -----
         The thresholds list should contain percentiles in ascending order:
-        [3rd, 10th, 50th, 90th, 97th]
+        [3rd, 5th, 10th, 50th, 90th, 95th, 97th]
         """
 
         p = self._percentile_thresholds
         if value <= p[0]:
             return MeasurementResult.below_3p()
         elif value <= p[1]:
-            return MeasurementResult.between_3p_10p()
+            return MeasurementResult.between_3p_5p()
+        elif value <= p[2]:
+            return MeasurementResult.between_5p_10p()
         elif value <= p[3]:
-            return MeasurementResult.between_10p_90p()
+            return MeasurementResult.between_10p_50p()
         elif value <= p[4]:
-            return MeasurementResult.between_90p_97p()
+            return MeasurementResult.between_50p_90p()
+        elif value <= p[5]:
+            return MeasurementResult.between_90p_95p()
+        elif value <= p[6]:
+            return MeasurementResult.between_95p_97p()
         else:
             return MeasurementResult.above_97p()

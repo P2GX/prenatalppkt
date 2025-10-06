@@ -40,58 +40,97 @@ class MeasurementResult:
         """Return the upper percentile bound (or None)."""
         return self._upper
 
-    # ---- Convenience constructors ---- #
+    # --- Convenience Static constructors for percentile intervals --- #
 
     @staticmethod
     def below_3p() -> "MeasurementResult":
-        """Return a result representing <3rd percentile."""
+        """
+        Percentile bin for less than 3rd Percentile
+        """
         return MeasurementResult(lower=None, upper=Percentile.Third)
 
     @staticmethod
-    def between_3p_10p() -> "MeasurementResult":
-        """Return a result representing 3rd-10th percentile."""
-        return MeasurementResult(lower=Percentile.Third, upper=Percentile.Tenth)
+    def between_3p_5p() -> "MeasurementResult":
+        """
+        Percentile bin for between 3rd and 5th Percentiles
+        """
+        return MeasurementResult(lower=Percentile.Third, upper=Percentile.Fifth)
 
     @staticmethod
-    def between_10p_90p() -> "MeasurementResult":
-        """Return a result representing 10th-90th percentile (normal range)."""
-        return MeasurementResult(lower=Percentile.Tenth, upper=Percentile.Ninetieth)
+    def between_5p_10p() -> "MeasurementResult":
+        """
+        Percentile bin for between 5th and 10th Percentiles
+        """
+        return MeasurementResult(lower=Percentile.Fifth, upper=Percentile.Tenth)
 
     @staticmethod
-    def between_90p_97p() -> "MeasurementResult":
-        """Return a result representing 90th-97th percentile."""
+    def between_10p_50p() -> "MeasurementResult":
+        """
+        Percentile bin for between 10th and 50th Percentiles
+        """
+        return MeasurementResult(lower=Percentile.Tenth, upper=Percentile.Fiftieth)
+
+    @staticmethod
+    def between_50p_90p() -> "MeasurementResult":
+        """
+        Percentile bin for between 50th and 90th Percentiles
+        """
+        return MeasurementResult(lower=Percentile.Fiftieth, upper=Percentile.Ninetieth)
+
+    @staticmethod
+    def between_90p_95p() -> "MeasurementResult":
+        """
+        Percentile bin for between 90th and 95th Percentiles
+        """
         return MeasurementResult(
-            lower=Percentile.Ninetieth, upper=Percentile.Ninetyseventh
+            lower=Percentile.Ninetieth, upper=Percentile.Ninetyfifth
+        )
+
+    @staticmethod
+    def between_95p_97p() -> "MeasurementResult":
+        """
+        Percentile bin for between 95th and 97th Percentiles
+        """
+        return MeasurementResult(
+            lower=Percentile.Ninetyfifth, upper=Percentile.Ninetyseventh
         )
 
     @staticmethod
     def above_97p() -> "MeasurementResult":
-        """Return a result representing >=97th percentile."""
+        """
+        Percentile bin for more than 97th Percentile
+        """
         return MeasurementResult(lower=Percentile.Ninetyseventh, upper=None)
 
-    # ---- Classification helpers ---- #
+    # --- Logical Classification helpers --- #
 
     def is_below_extreme(self) -> bool:
-        """Return True if the measurement is <=3rd percentile."""
+        """
+        Categorize a biometric value as less than 3rd percentile
+        """
         return self._upper == Percentile.Third
 
     def is_above_extreme(self) -> bool:
-        """Return True if the measurement is >=97th percentile."""
+        """
+        Categorize a biometric value as more than 97th percentile
+        """
         return self._lower == Percentile.Ninetyseventh
 
     def is_abnormal(self) -> bool:
         """
-        Return True if the measurement is between
-        mildly abnormal ranges (3rd-10th or 90th-97th percentile).
+        Return True if the measurement is within a mildly abnormal range:
+        - 3rd–10th percentile (including 3–5, 5–10)
+        - 90th–97th percentile (including 90–95, 95–97)
         """
-        if (self._lower, self._upper) in [
-            (Percentile.Third, Percentile.Tenth),
-            (Percentile.Ninetieth, Percentile.Ninetyseventh),
-        ]:
-            return True
-        return False
+        return self._lower in {
+            Percentile.Third,
+            Percentile.Fifth,
+            Percentile.Ninetieth,
+            Percentile.Ninetyfifth,
+        }
 
     def __repr__(self) -> str:
+        """Developer-friendly string representation."""
         lower = self._lower.name if self._lower else "None"
         upper = self._upper.name if self._upper else "None"
         return f"MeasurementResult(lower={lower}, upper={upper})"
