@@ -40,6 +40,39 @@ class MeasurementResult:
         """Return the upper percentile bound (or None)."""
         return self._upper
 
+    @property
+    def bin_name(self) -> str:
+        """
+        Return a canonical bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p') that identifies the percentile interval of this measurement result.
+        This property is used by higher-level evaluators (e.g., SonographicMeasurement) to map percentile ranges to HPO term categories.
+        """
+        mapping = {
+            (None, Percentile.Third): "below_3p",
+            (Percentile.Third, Percentile.Fifth): "between_3p_5p",
+            (Percentile.Fifth, Percentile.Tenth): "between_5p_10p",
+            (Percentile.Tenth, Percentile.Fiftieth): "between_10p_50p",
+            (Percentile.Fiftieth, Percentile.Ninetieth): "between_50p_90p",
+            (Percentile.Ninetieth, Percentile.Ninetyfifth): "between_90p_95p",
+            (Percentile.Ninetyfifth, Percentile.Ninetyseventh): "between_95p_97p",
+            (Percentile.Ninetyseventh, None): "above_97p",
+        }
+        return mapping.get((self._lower, self._upper), "unknown")
+
+    @property
+    def get_bin_key(self) -> str:
+        """Return the string key corresponding to this percentile bin."""
+        mapping = {
+            (None, Percentile.Third): "below_3p",
+            (Percentile.Third, Percentile.Fifth): "between_3p_5p",
+            (Percentile.Fifth, Percentile.Tenth): "between_5p_10p",
+            (Percentile.Tenth, Percentile.Fiftieth): "between_10p_50p",
+            (Percentile.Fiftieth, Percentile.Ninetieth): "between_50p_90p",
+            (Percentile.Ninetieth, Percentile.Ninetyfifth): "between_90p_95p",
+            (Percentile.Ninetyfifth, Percentile.Ninetyseventh): "between_95p_97p",
+            (Percentile.Ninetyseventh, None): "above_97p",
+        }
+        return mapping.get((self._lower, self._upper))
+
     # --- Convenience Static constructors for percentile intervals --- #
 
     @staticmethod

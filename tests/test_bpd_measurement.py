@@ -1,68 +1,63 @@
 """
-Integration test for BiparietalDiameterMeasurement HPO term mapping.
+test_bpd_measurement.py
 
-Dataset reference:
-------------------
-NIHCD Fetal Growth Calculator (Non-Hispanic White)
-Gestational Age: 20.86 weeks
-Measurement: Biparietal Diameter
-Percentile thresholds used (3rd-97th):
-[145.25, 147.25, 150.37, 161.95, 174.41, 178.12, 180.56]
+Integration tests for the BiparietalDiameterMeasurement class.
+Uses NIHCD reference thresholds for BPD at 20.86 weeks (Non-Hispanic White)
+to confirm correct HPO term mapping and observed flag behavior.
+
+Reference: FGCalculatorPercentileRange.pdf (NIHCD dataset)
 """
 
+import pytest
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.reference_range import ReferenceRange
 from prenatalppkt.measurements.bpd_measurement import BiparietalDiameterMeasurement
 
 
-def test_bpd_measurement_evaluate_all_bins():
+@pytest.fixture
+def reference_range() -> ReferenceRange:
     """
-    Verify that BPD measurement correctly maps each percentile bin
-    to the expected HPO term and observation flag.
+    NIHCD BPD reference thresholds at 20.86 weeks.
     """
     thresholds = [145.25, 147.25, 150.37, 161.95, 174.41, 178.12, 180.56]
     ga = GestationalAge.from_weeks(20.86)
-    ref = ReferenceRange(gestational_age=ga, percentiles=thresholds)
-    bpd = BiparietalDiameterMeasurement()
-
-    # <=3rd percentile -> decreased skull size
-    obs = bpd.evaluate(ga, ref.evaluate(140.0))
-    assert obs.hpo_term.name == "Decreased head circumference"
-    assert obs.observed is True
-
-    # 3rd-10th percentile -> abnormal skull size (mildly abnormal)
-    obs = bpd.evaluate(ga, ref.evaluate(148.0))
-    assert obs.hpo_term.name == "Abnormality of skull size"
-    assert obs.observed is True
-
-    # 10th-90th percentile -> normal range (parent term, not observed)
-    obs = bpd.evaluate(ga, ref.evaluate(160.0))
-    assert obs.hpo_term.name == "Abnormality of skull size"
-    assert obs.observed is False
-
-    # 90th-97th percentile -> abnormal skull size (mildly abnormal)
-    obs = bpd.evaluate(ga, ref.evaluate(176.0))
-    assert obs.hpo_term.name == "Abnormality of skull size"
-    assert obs.observed is True
-
-    # >=97th percentile -> increased skull size
-    obs = bpd.evaluate(ga, ref.evaluate(185.0))
-    assert obs.hpo_term.name == "Increased head circumference"
-    assert obs.observed is True
+    return ReferenceRange(gestational_age=ga, percentiles=thresholds)
 
 
-def test_term_attributes_are_supported():
+@pytest.fixture
+def measurement() -> BiparietalDiameterMeasurement:
+    """Instantiate the BPD measurement class."""
+    return BiparietalDiameterMeasurement()
+
+
+@pytest.mark.parametrize(
+    "value, expected_label, expected_observed",
+    [
+        (140.0, "Microcephaly", True),  # <=3rd
+        (146.0, "Microcephaly", True),  # 3-5
+        (149.0, "Abnormality of skull size", True),  # 5-10
+        (155.0, "Normal skull morphology", False),  # 10-50
+        (170.0, "Normal skull morphology", False),  # 50-90
+        (176.0, "Abnormality of skull size", True),  # 90-95
+        (179.0, "Macrocephaly", True),  # 95-97
+        (185.0, "Macrocephaly", True),  # >=97
+    ],
+)
+def test_bpd_measurement_evaluate(
+    measurement: BiparietalDiameterMeasurement,
+    reference_range: ReferenceRange,
+    value: float,
+    expected_label: str,
+    expected_observed: bool,
+):
     """
-    Ensure MinimalTerm factory objects expose expected attributes.
-
-    This reflects the DefaultMinimalTerm dataclass used in hpotk>=0.5.5.
+    Verify that each percentile bin produces the correct ontology term
+    and observed flag in the TermObservation output.
     """
-    import hpotk
-
-    term = hpotk.MinimalTerm.create_minimal_term(
-        term_id="HP:0000252", name="Microcephaly", alt_term_ids=[], is_obsolete=False
+    ga = GestationalAge.from_weeks(20.86)
+    observation = measurement.evaluate(
+        gestational_age=ga, measurement_value=value, reference_range=reference_range
     )
-    assert hasattr(term, "identifier")
-    assert hasattr(term, "name")
-    assert hasattr(term, "alt_term_ids")
-    assert hasattr(term, "is_obsolete")
+
+    assert observation.hpo_label == expected_label
+    assert observation.observed is expected_observed
