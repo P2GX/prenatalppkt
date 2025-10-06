@@ -16,7 +16,7 @@ readme = "README.md"
 dependencies = [
  "click==8.2.1",
  "docling==2.54.0",
- #hpo-toolkit==0.7.0,
+ #"hpo-toolkit==0.7.0",
  "hpo-toolkit==0.5.5",
  "ijson==3.4.0",
  "jsonschema==4.25.1",
