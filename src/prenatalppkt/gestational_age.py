@@ -6,9 +6,8 @@ class GestationalAge:
     """
     A class representing gestational age, expressed in weeks and days.
 
-    Gestational age is typically used in obstetrics to describe the age of an embryo or fetus.
-    It is expressed as the number of completed weeks and additional days since the first day
-    of the last menstrual period (LMP). Example 34w3d
+    Gestational age, defined as the time elapsed since the first day of the last menstrual period (LMP), is typically used in obstetrics to describe the age of an embryo or fetus.
+    It is expressed as the number of completed weeks and additional days since the first day of the last menstrual period (LMP). Example 34w3d
 
     Attributes
     ----------
@@ -76,6 +75,8 @@ class GestationalAge:
             week_frac = weeks - w
             d = int(week_frac * 7)
             return GestationalAge(weeks=w, days=d)
+        raise TypeError("weeks must be int or float")
+
 
     @property
     def weeks(self) -> int:
@@ -100,3 +101,6 @@ class GestationalAge:
             The number of days (0-6).
         """
         return self._days
+    
+    def __repr__(self) -> str:
+        return f"GestationalAge(weeks={self._weeks}, days={self._days})"
