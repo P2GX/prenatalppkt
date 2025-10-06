@@ -77,7 +77,6 @@ class GestationalAge:
             return GestationalAge(weeks=w, days=d)
         raise TypeError("weeks must be int or float")
 
-
     @property
     def weeks(self) -> int:
         """
@@ -101,6 +100,6 @@ class GestationalAge:
             The number of days (0-6).
         """
         return self._days
-    
+
     def __repr__(self) -> str:
         return f"GestationalAge(weeks={self._weeks}, days={self._days})"
