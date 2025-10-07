@@ -12,6 +12,7 @@ import pytest
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.reference_range import ReferenceRange
 from prenatalppkt.measurements.bpd_measurement import BiparietalDiameterMeasurement
+from prenatalppkt.measurements.measurement_result import MeasurementResult
 
 
 @pytest.fixture
@@ -30,17 +31,72 @@ def measurement() -> BiparietalDiameterMeasurement:
     return BiparietalDiameterMeasurement()
 
 
+# ---------------------------------------------------------
+# Test 1: ReferenceRange categorization
+# ---------------------------------------------------------
+@pytest.mark.parametrize(
+    "value, expected_method, expected_bin",
+    [
+        (140.0, MeasurementResult.below_3p, "below_3p"),
+        (146.0, MeasurementResult.between_3p_5p, "between_3p_5p"),
+        (149.0, MeasurementResult.between_5p_10p, "between_5p_10p"),
+        (
+            155.0,
+            MeasurementResult.between_10p_50p,
+            "between_10p_50p",
+        ),  # no ontology term for "normal" percentiles
+        (
+            170.0,
+            MeasurementResult.between_50p_90p,
+            "between_50p_90p",
+        ),  # no ontology term for "normal" percentiles
+        (176.0, MeasurementResult.between_90p_95p, "between_90p_95p"),
+        (179.0, MeasurementResult.between_95p_97p, "between_95p_97p"),
+        (185.0, MeasurementResult.above_97p, "above_97p"),
+    ],
+)
+def test_reference_range_returns_correct_measurement_result(
+    reference_range: ReferenceRange, value: float, expected_method, expected_bin: str
+):
+    """Ensure reference range evaluation yields expected bin and flags."""
+    result = reference_range.evaluate(value)
+    expected = expected_method()
+
+    # Check percentile bounds
+    assert result._lower == expected._lower
+    assert result._upper == expected._upper
+
+    # Check canonical bin key and name
+    assert result.get_bin_key == expected_bin
+    assert result.bin_name == expected_bin
+
+    # Validate logical categorization flags
+    if expected_bin == "below_3p":
+        assert result.is_below_extreme()
+    elif expected_bin == "above_97p":
+        assert result.is_above_extreme()
+    elif expected_bin in {
+        "between_3p_5p",
+        "between_5p_10p",
+        "between_90p_95p",
+        "between_95p_97p",
+    }:
+        assert result.is_abnormal()
+    else:
+        assert not result.is_abnormal()
+
+
+# ---------------------------------------------------------
+# Test 2: BPD Measurement evaluation -- ontology + observed
+# ---------------------------------------------------------
 @pytest.mark.parametrize(
     "value, expected_label, expected_observed",
     [
-        (140.0, "Microcephaly", True),  # <=3rd
-        (146.0, "Microcephaly", True),  # 3-5
-        (149.0, "Abnormality of skull size", True),  # 5-10
-        (155.0, None, False),  # 10-50 , no ontology term for "normal" percentiles
-        (170.0, None, False),  # 50-90 , no ontology term for "normal" percentiles
-        (176.0, "Abnormality of skull size", True),  # 90-95
-        (179.0, "Macrocephaly", True),  # 95-97
-        (185.0, "Macrocephaly", True),  # >=97
+        (140.0, "Microcephaly", True),  # HP:0000252
+        (149.0, "Abnormality of skull size", True),  # HP:0000240
+        (155.0, None, False),  # normal range
+        (170.0, None, False),  # normal range
+        (185.0, "Macrocephaly", True),  # HP:0000256
     ],
 )
 def test_bpd_measurement_evaluate(
