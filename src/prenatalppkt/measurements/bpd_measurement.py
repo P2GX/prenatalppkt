@@ -41,12 +41,6 @@ class BiparietalDiameterMeasurement(SonographicMeasurement):
             alt_term_ids=[],
             is_obsolete=False,
         )
-        self._normal = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0000234",
-            name="Normal skull morphology",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
         self._increased = hpotk.MinimalTerm.create_minimal_term(
             term_id="HP:0040194",
             name="Increased head circumference",
@@ -66,7 +60,7 @@ class BiparietalDiameterMeasurement(SonographicMeasurement):
             lower_extreme_term=self._microcephaly,
             lower_term=self._microcephaly,
             abnormal_term=self._abnormal,
-            normal_term=self._normal,
+            normal_term=None,
             upper_term=self._macrocephaly,
             upper_extreme_term=self._macrocephaly,
         )

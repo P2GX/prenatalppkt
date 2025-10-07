@@ -36,8 +36,8 @@ def measurement() -> BiparietalDiameterMeasurement:
         (140.0, "Microcephaly", True),  # <=3rd
         (146.0, "Microcephaly", True),  # 3-5
         (149.0, "Abnormality of skull size", True),  # 5-10
-        (155.0, "Normal skull morphology", False),  # 10-50
-        (170.0, "Normal skull morphology", False),  # 50-90
+        (155.0, None, False),  # 10-50 , no ontology term for "normal" percentiles
+        (170.0, None, False),  # 50-90 , no ontology term for "normal" percentiles
         (176.0, "Abnormality of skull size", True),  # 90-95
         (179.0, "Macrocephaly", True),  # 95-97
         (185.0, "Macrocephaly", True),  # >=97
@@ -59,5 +59,10 @@ def test_bpd_measurement_evaluate(
         gestational_age=ga, measurement_value=value, reference_range=reference_range
     )
 
-    assert observation.hpo_label == expected_label
+    if expected_label is None:
+        # Normal bins: no ontology term assigned
+        assert observation.hpo_term is None
+    else:
+        assert observation.hpo_label == expected_label
+
     assert observation.observed is expected_observed

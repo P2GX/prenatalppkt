@@ -62,7 +62,7 @@ class SonographicMeasurement(ABC):
         lower_extreme_term,
         lower_term,
         abnormal_term,
-        normal_term,
+        normal_term=None,
         upper_term,
         upper_extreme_term,
     ) -> None:
@@ -77,8 +77,8 @@ class SonographicMeasurement(ABC):
             Term for 3rd-5th percentile (mild low finding).
         abnormal_term : MinimalTerm
             Term for 5th-10th and 90th-95th percentiles (abnormal zone).
-        normal_term : MinimalTerm
-            Term for 10th-90th percentile range (normal findings).
+        normal_term : Optional[MinimalTerm]
+            Optional term for 10th-90th percentile range (normal findings). May be None if the ontology does not include a "normal" concept.
         upper_term : MinimalTerm
             Term for 95th-97th percentile (mild high finding).
         upper_extreme_term : MinimalTerm
@@ -124,13 +124,17 @@ class SonographicMeasurement(ABC):
         bin_key = measurement_result.get_bin_key
         hpo_term = self._bin_to_term.get(bin_key)
 
-        if not hpo_term:
-            raise ValueError(f"No HPO term configured for bin '{bin_key}'")
+        # Step 3: Handle normal / unconfigured bins gracefully
+        # If the bin has no ontology term (e.g., normal range), return an unobserved result.
+        if hpo_term is None:
+            return TermObservation(
+                hpo_term=None, observed=False, gestational_age=gestational_age
+            )
 
-        # Step 3: determine observed flag (abnormal bins only)
+        # Step 4: Determine observed flag (abnormal bins only)
         observed = bin_key not in {"between_10p_50p", "between_50p_90p"}
 
-        # Step 4: return standardized TermObservation
+        # Step 5: Return standardized TermObservation
         return TermObservation(
             hpo_term=hpo_term, observed=observed, gestational_age=gestational_age
         )
