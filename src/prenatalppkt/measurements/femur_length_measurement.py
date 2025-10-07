@@ -12,17 +12,19 @@ class FemurLengthMeasurement(SonographicMeasurement):
 
     Clinical Interpretation
     ------------------------
-    - <=3rd percentile       -> Short fetal femur length (HP:0011428)
-    - 3rd-5th percentile     -> Short femur (HP:0003097)
-    - 5th-10th / 90th-95th   -> Abnormal femur morphology (HP:0002823)
-    - 10th-90th percentile   -> Normal range (no HPO term; observed=False)
-    - >=95th percentile      -> No HPO term available ("long femur" not in HPO)
+    Percentile ranges and HPO mappings:
+      - <=3rd percentile       -> Short fetal femur length (HP:0011428)
+      - 3rd-5th percentile     -> Short femur (HP:0003097)
+      - 5th-10th / 90th-95th   -> Abnormal femur morphology (HP:0002823)
+      - 10th-90th percentile   -> Normal range (no HPO term; observed=False)
+      - 95th-97th percentile   -> No known phenotype (upper_term=None)
+      - >=97th percentile      -> No known phenotype (upper_extreme_term=None)
 
     Notes
     -----
     o There are no HPO terms for increased or long femur length.
-    o Normal percentile bins are represented as `None` and excluded in downstream
-      Phenopacket conversion (`excluded=True`).
+    o Normal and upper percentile bins are represented as `None` and
+      handled as `excluded=True` in downstream Phenopacket conversion.
     """
 
     def __init__(self) -> None:
@@ -45,15 +47,15 @@ class FemurLengthMeasurement(SonographicMeasurement):
             is_obsolete=False,
         )
 
-        # Configure standardized mapping.
-        # No upper or "normal" terms are assigned -- those bins will be None.
+        # Configure standardized bin-to-term mapping (mirrors BPD structure)
+        # Femur lacks "upper" or "long" HPO terms, so upper bins return None.
         self.configure_terms(
-            lower_extreme_term=self._short_fetal_femur,
-            lower_term=self._short_femur,
-            abnormal_term=self._abnormal_femur,
-            normal_term=None,
-            upper_term=None,
-            upper_extreme_term=None,
+            lower_extreme_term=self._short_fetal_femur,  # <=3rd percentile
+            lower_term=self._short_femur,  # 3rd-5th percentile
+            abnormal_term=self._abnormal_femur,  # 5th-10th and 90th-95th
+            normal_term=None,  # 10th-90th (normal range)
+            upper_term=None,  # 95th-97th (no known phenotype)
+            upper_extreme_term=None,  # >=97th (no known phenotype)
         )
 
     def name(self) -> str:
