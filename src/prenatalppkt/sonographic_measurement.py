@@ -104,7 +104,7 @@ class SonographicMeasurement(ABC):
 
     #
     # ------------------------------------------------------------------ #
-    # Structural TermObservation (active for current milestone)
+    # Structural TermObservation (active for current milestone, but ontology layer is deffered)
     # ------------------------------------------------------------------ #
     def to_term_observation(
         self,
