@@ -26,16 +26,16 @@ This module centralizes the mapping between percentile bins and ontology terms. 
 
 Example
 -------
-    >>> mapping = TermObservation.build_standard_bin_mapping(
-    ...     lower_extreme_term=microcephaly,
-    ...     lower_term=decreased_head_circumference,
-    ...     abnormal_term=abnormal_skull_size,
-    ...     normal_term=normal_skull_morphology,
-    ...     upper_term=increased_head_circumference,
-    ...     upper_extreme_term=macrocephaly,
-    ... )
-    >>> result = reference_range.evaluate(155.0)
-    >>> obs = TermObservation.from_measurement_result(result, mapping, ga)
+    # >>> mapping = TermObservation.build_standard_bin_mapping(
+    # ...     lower_extreme_term=microcephaly,
+    # ...     lower_term=decreased_head_circumference,
+    # ...     abnormal_term=abnormal_skull_size,
+    # ...     normal_term=normal_skull_morphology,
+    # ...     upper_term=increased_head_circumference,
+    # ...     upper_extreme_term=macrocephaly,
+    # ... )
+    # >>> result = reference_range.evaluate(155.0)
+    # >>> obs = TermObservation.from_measurement_result(result, mapping, ga)
 
 This corresponds exactly to the five logical steps that used to be embedded inside `SonographicMeasurement.evaluate()`:
 
