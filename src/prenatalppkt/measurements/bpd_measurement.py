@@ -1,70 +1,59 @@
-import hpotk
+"""
+bpd_measurement.py
+
+Defines `BiparietalDiameterMeasurement`, a subclass of `SonographicMeasurement`
+for fetal biparietal diameter (BPD) evaluation.
+
+This class implements the structural hooks for gestational-age-specific
+evaluation and ontology mapping but does not hardcode reference data.
+Percentile thresholds will be dynamically loaded in a future PR via the
+percentile parsing pipeline (NIHCD/INTERGROWTH tables).
+"""
+
+from __future__ import annotations
+from typing import Optional, Dict
+from hpotk import MinimalTerm
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.term_observation import TermObservation
 
 
 class BiparietalDiameterMeasurement(SonographicMeasurement):
     """
-    Sonographic measurement for Biparietal Diameter (BPD).
+    Represents a sonographic measurement of fetal biparietal diameter (BPD).
 
-    Uses NIHCD and INTERGROWTH percentile references to detect
-    skull-size abnormalities. Percentile thresholds are evaluated
-    via `ReferenceRange`, and results are mapped to ontology
-    (HPO) terms using the standard `configure_terms()` interface.
+    Responsibilities
+    ----------------
+    - Provides a canonical measurement name.
+    - Defines default ontology term mappings (if available).
+    - Delegates percentile evaluation logic to the superclass.
 
-    Clinical Interpretation
-    ------------------------
-    - <=5th percentile  -> Microcephaly
-    - 5th-10th or 90th-95th percentile -> Abnormality of skull size
-    - 10th-90th percentile -> Normal skull morphology
-    - >=95th percentile -> Macrocephaly
+    Reference Data
+    --------------
+    Reference ranges will be populated in a later PR that parses NIHCD and
+    INTERGROWTH-21st tables for BPD percentile values.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize BPD measurement."""
         super().__init__()
 
-        # Define HPO terms for skull size deviations
-        self._microcephaly = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0000252",
-            name="Microcephaly",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-        self._decreased = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0040195",
-            name="Decreased head circumference",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-        self._abnormal = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0000240",
-            name="Abnormality of skull size",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-        self._increased = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0040194",
-            name="Increased head circumference",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-        self._macrocephaly = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0000256",
-            name="Macrocephaly",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-
-        # Configure standardized mapping using the generic helper.
-        # Adjusted so <=5th -> Microcephaly, >=95th -> Macrocephaly
-        self.configure_terms(
-            lower_extreme_term=self._microcephaly,
-            lower_term=self._microcephaly,
-            abnormal_term=self._abnormal,
-            normal_term=None,
-            upper_term=self._macrocephaly,
-            upper_extreme_term=self._macrocephaly,
-        )
-
     def name(self) -> str:
-        """Return the canonical measurement name."""
+        """Return the canonical name for this measurement."""
         return "biparietal diameter"
+
+    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
+        """
+        Optionally provide a default ontology mapping for skull-size deviations.
+
+        This is a forward-declaration placeholder to illustrate where HPO
+        terms will be bound in future ontology integration.
+        """
+        # Example placeholder (no concrete terms assigned)
+        return TermObservation.build_standard_bin_mapping(
+            lower_extreme_term=None,
+            lower_term=None,
+            abnormal_term=None,
+            normal_term=None,
+            upper_term=None,
+            upper_extreme_term=None,
+        )

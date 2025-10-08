@@ -1,63 +1,50 @@
-import hpotk
+"""
+femur_length_measurement.py
+
+Defines `FemurLengthMeasurement`, a subclass of `SonographicMeasurement`
+for fetal femur length (FL) evaluation.
+
+This class provides a consistent interface for percentile evaluation
+without embedding any reference data directly.  Actual reference tables
+will be injected via parsing utilities in a future PR.
+"""
+
+from __future__ import annotations
+from typing import Optional, Dict
+from hpotk import MinimalTerm
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.term_observation import TermObservation
 
 
 class FemurLengthMeasurement(SonographicMeasurement):
     """
-    Sonographic measurement for fetal Femur Length (FL).
+    Represents a sonographic measurement of fetal femur length (FL).
 
-    Uses NIHCD and INTERGROWTH percentile references to evaluate femur length
-    relative to gestational age and map percentile categories to relevant
-    ontology (HPO) terms.
-
-    Clinical Interpretation
-    ------------------------
-    Percentile ranges and HPO mappings:
-      - <=3rd percentile       -> Short fetal femur length (HP:0011428)
-      - 3rd-5th percentile     -> Short femur (HP:0003097)
-      - 5th-10th / 90th-95th   -> Abnormal femur morphology (HP:0002823)
-      - 10th-90th percentile   -> Normal range (no HPO term; observed=False)
-      - 95th-97th percentile   -> No known phenotype (upper_term=None)
-      - >=97th percentile      -> No known phenotype (upper_extreme_term=None)
-
-    Notes
-    -----
-    o There are no HPO terms for increased or long femur length.
-    o Normal and upper percentile bins are represented as `None` and
-      handled as `excluded=True` in downstream Phenopacket conversion.
+    Responsibilities
+    ----------------
+    - Provides a canonical measurement name.
+    - Defines a placeholder for ontology mapping.
+    - Delegates percentile evaluation logic to the superclass.
     """
 
     def __init__(self) -> None:
+        """Initialize femur length measurement."""
         super().__init__()
 
-        # Define HPO terms for femur length abnormalities
-        self._short_fetal_femur = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0011428",
-            name="Short fetal femur length",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-        self._short_femur = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0003097", name="Short femur", alt_term_ids=[], is_obsolete=False
-        )
-        self._abnormal_femur = hpotk.MinimalTerm.create_minimal_term(
-            term_id="HP:0002823",
-            name="Abnormal femur morphology",
-            alt_term_ids=[],
-            is_obsolete=False,
-        )
-
-        # Configure standardized bin-to-term mapping (mirrors BPD structure)
-        # Femur lacks "upper" or "long" HPO terms, so upper bins return None.
-        self.configure_terms(
-            lower_extreme_term=self._short_fetal_femur,  # <=3rd percentile
-            lower_term=self._short_femur,  # 3rd-5th percentile
-            abnormal_term=self._abnormal_femur,  # 5th-10th and 90th-95th
-            normal_term=None,  # 10th-90th (normal range)
-            upper_term=None,  # 95th-97th (no known phenotype)
-            upper_extreme_term=None,  # >=97th (no known phenotype)
-        )
-
     def name(self) -> str:
-        """Return the canonical measurement name."""
+        """Return the canonical name for this measurement."""
         return "femur length"
+
+    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
+        """
+        Placeholder ontology mapping for femur length deviations.
+        Future versions will attach skeletal growth-related HPO terms.
+        """
+        return TermObservation.build_standard_bin_mapping(
+            lower_extreme_term=None,
+            lower_term=None,
+            abnormal_term=None,
+            normal_term=None,
+            upper_term=None,
+            upper_extreme_term=None,
+        )
