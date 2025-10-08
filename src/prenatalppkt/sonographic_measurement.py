@@ -1,148 +1,140 @@
+"""
+sonographic_measurement.py
+
+Defines `SonographicMeasurement`, the abstract superclass for fetal biometric
+measurements such as biparietal diameter (BPD), head circumference (HC),
+femur length (FL), abdominal circumference (AC), etc.
+
+Purpose
+-------
+This class provides a unified interface for evaluating a raw measurement value against gestational-age-specific percentile thresholds (`ReferenceRange.evaluate()`), returning a `MeasurementResult` object that encodes the percentile bin, and optionally converting that result into a `TermObservation` that maps the bin to ontology terms.
+
+Unlike earlier versions, `SonographicMeasurement` itself no longer stores or configures ontology mappings.  Ontology mapping has been relocated to `TermObservation` to ensure clean separation of concerns and testability.
+
+Usage
+-----
+A typical evaluation workflow looks like this:
+
+    # Step 1: Compute the percentile bin
+    result = bpd.evaluate(ga, 155.0, reference_range)
+
+    # Step 2-5: Convert the bin to a TermObservation
+    mapping = TermObservation.build_standard_bin_mapping(
+        lower_extreme_term=microcephaly,
+        lower_term=decreased_head_circumference,
+        abnormal_term=abnormal_skull_size,
+        normal_term=normal_skull_morphology,
+        upper_term=increased_head_circumference,
+        upper_extreme_term=macrocephaly,
+    )
+    obs = bpd.to_term_observation(result, ga, parent_term=skull_measurement)
+"""
+
+from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import Dict, Optional
 from hpotk import MinimalTerm
-from prenatalppkt.term_observation import TermObservation
 from prenatalppkt.gestational_age import GestationalAge
+from prenatalppkt.measurements.measurement_result import MeasurementResult
+from prenatalppkt.term_observation import TermObservation
 
 
 class SonographicMeasurement(ABC):
     """
-    Abstract base class for fetal biometric (sonographic) measurements.
+    Abstract base class for a fetal sonographic measurement.
 
-    Provides a framework for:
-      o Mapping percentile bins to ontology terms (HPO).
-      o Evaluating measurements against a gestational-age-specific
-        reference range.
-      o Returning standardized `TermObservation` objects.
+    Responsibilities
+    ----------------
+    1. **Percentile evaluation** -
+        Calls `ReferenceRange.evaluate(value)` to determine which percentile bin a raw measurement falls into, returning a `MeasurementResult`.
+    2. **Delegated ontology mapping** -
+        Provides the convenience wrapper `to_term_observation()` which translates a `MeasurementResult` into a `TermObservation` using the subclass's bin->term mapping.
+    3. **Subclass extensibility** -
+        Each subclass (e.g., `BiparietalDiameterMeasurement`) overrides `get_bin_to_term_mapping()` or defines measurement-specific metadata.
 
-    Subclasses (e.g., BiparietalDiameterMeasurement, FemurLengthMeasurement)
-    should configure which ontology terms correspond to percentile categories
-    using either `set_bin_to_term_mapping()` or the simplified
-    `configure_terms()` helper.
+    By decoupling evaluation from ontology mapping, this design preserves clean separation of logic (numeric evaluation vs semantic interpretation).
     """
 
-    _bin_to_term: dict[str, MinimalTerm]
+    # ------------------------------------------------------------------ #
+    # Abstract metadata
+    # ------------------------------------------------------------------ #
+    @abstractmethod
+    def name(self) -> str:
+        """Return the canonical name for this measurement (e.g., 'biparietal diameter')."""
+        raise NotImplementedError
 
-    def __init__(self) -> None:
-        """Initialize the base measurement with an empty bin->term mapping."""
-        self._bin_to_term = {}
-
-    # ---------------------------------------------------------------------- #
-    # Configuration Methods
-    # ---------------------------------------------------------------------- #
-    def set_bin_to_term_mapping(self, mapping: dict[str, MinimalTerm]) -> None:
+    # ------------------------------------------------------------------ #
+    # Core evaluation
+    # ------------------------------------------------------------------ #
+    def evaluate(
+        self, gestational_age: GestationalAge, measurement_value: float, reference_range
+    ) -> MeasurementResult:
         """
-        Manually configure the mapping between percentile bins and ontology terms.
+        Evaluate a raw measurement against the provided reference range.
 
-        Required keys:
-            below_3p, between_3p_5p, between_5p_10p, between_10p_50p,
-            between_50p_90p, between_90p_95p, between_95p_97p, above_97p
+        Returns
+        -------
+        MeasurementResult
+            Encodes which percentile interval the value falls into.
         """
-        required_bins = {
-            "below_3p",
-            "between_3p_5p",
-            "between_5p_10p",
-            "between_10p_50p",
-            "between_50p_90p",
-            "between_90p_95p",
-            "between_95p_97p",
-            "above_97p",
-        }
-        missing = required_bins - set(mapping.keys())
-        if missing:
-            raise ValueError(f"Missing required percentile bins: {missing}")
+        return reference_range.evaluate(measurement_value)
 
-        self._bin_to_term = mapping
+    # ------------------------------------------------------------------ #
+    # Optional ontology integration
+    # ------------------------------------------------------------------ #
+    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
+        """
+        Return a default mapping of percentile bins to ontology terms.
 
-    # ---------------------------------------------------------------------- #
-    # Generic Term Configuration Helper
-    # ---------------------------------------------------------------------- #
-    def configure_terms(
+        Subclasses may override this method or dynamically construct a mapping using `TermObservation.build_standard_bin_mapping()`:
+
+            mapping = TermObservation.build_standard_bin_mapping(
+                lower_extreme_term=microcephaly,
+                lower_term=decreased_head_circumference,
+                abnormal_term=abnormal_skull_size,
+                normal_term=normal_skull_morphology,
+                upper_term=increased_head_circumference,
+                upper_extreme_term=macrocephaly,
+            )
+
+        This mapping will later be consumed by `to_term_observation()`.
+        """
+        return {}
+
+    def to_term_observation(
         self,
-        *,
-        lower_extreme_term,
-        lower_term,
-        abnormal_term,
-        normal_term=None,
-        upper_term,
-        upper_extreme_term,
-    ) -> None:
+        measurement_result: MeasurementResult,
+        gestational_age: GestationalAge,
+        parent_term: Optional[MinimalTerm] = None,
+    ) -> TermObservation:
         """
-        Simplified convenience method for configuring standard percentile bins.
+        Convert a MeasurementResult into a TermObservation.
+
+        This performs Steps 2-5 of the classic evaluation workflow:
+
+            Step 2 - Resolve percentile bin -> ontology term using mapping
+            Step 3 - Handle missing or normal bins (mark as unobserved)
+            Step 4 - Determine observed flag (exclude 10th-90th)
+            Step 5 - Return standardized TermObservation
 
         Parameters
         ----------
-        lower_extreme_term : MinimalTerm
-            Term for <3rd percentile (severe low extreme).
-        lower_term : MinimalTerm
-            Term for 3rd-5th percentile (mild low finding).
-        abnormal_term : MinimalTerm
-            Term for 5th-10th and 90th-95th percentiles (abnormal zone).
-        normal_term : Optional[MinimalTerm]
-            Optional term for 10th-90th percentile range (normal findings). May be None if the ontology does not include a "normal" concept.
-        upper_term : MinimalTerm
-            Term for 95th-97th percentile (mild high finding).
-        upper_extreme_term : MinimalTerm
-            Term for >97th percentile (severe high extreme).
+        measurement_result : MeasurementResult
+            Output of `evaluate()`.
+        gestational_age : GestationalAge
+            Gestational context for the observation.
+        parent_term : Optional[MinimalTerm]
+            Optional parent ontology concept for grouping.
 
-        Example
+        Returns
         -------
-        self.configure_terms(
-            lower_extreme_term=microcephaly,
-            lower_term=decreased_head_circumference,
-            abnormal_term=abnormal_skull_size,
-            normal_term=normal_skull_morphology,
-            upper_term=increased_head_circumference,
-            upper_extreme_term=macrocephaly,
+        TermObservation
+            Ontology-aware representation of the measurement outcome.
+        """
+        mapping = self.get_bin_to_term_mapping()
+        return TermObservation.from_measurement_result(
+            measurement_result=measurement_result,
+            bin_to_term=mapping,
+            gestational_age=gestational_age,
+            parent_term=parent_term,
         )
-        """
-        mapping = {
-            "below_3p": lower_extreme_term,
-            "between_3p_5p": lower_term,
-            "between_5p_10p": abnormal_term,
-            "between_10p_50p": normal_term,
-            "between_50p_90p": normal_term,
-            "between_90p_95p": abnormal_term,
-            "between_95p_97p": upper_term,
-            "above_97p": upper_extreme_term,
-        }
-        self.set_bin_to_term_mapping(mapping)
-
-    # ---------------------------------------------------------------------- #
-    # Evaluation Logic
-    # ---------------------------------------------------------------------- #
-    def evaluate(
-        self, gestational_age: GestationalAge, measurement_value: float, reference_range
-    ) -> TermObservation:
-        """
-        Evaluate a raw measurement value against the provided reference range
-        and map the resulting percentile bin to its configured ontology term.
-        """
-        # Step 1: compute the percentile bin result
-        measurement_result = reference_range.evaluate(measurement_value)
-
-        # Step 2: resolve bin -> term mapping
-        bin_key = measurement_result.get_bin_key
-        hpo_term = self._bin_to_term.get(bin_key)
-
-        # Step 3: Handle normal / unconfigured bins gracefully
-        # If the bin has no ontology term (e.g., normal range), return an unobserved result.
-        if hpo_term is None:
-            return TermObservation(
-                hpo_term=None, observed=False, gestational_age=gestational_age
-            )
-
-        # Step 4: Determine observed flag (abnormal bins only)
-        observed = bin_key not in {"between_10p_50p", "between_50p_90p"}
-
-        # Step 5: Return standardized TermObservation
-        return TermObservation(
-            hpo_term=hpo_term, observed=observed, gestational_age=gestational_age
-        )
-
-    # ---------------------------------------------------------------------- #
-    # Subclasses must define name
-    # ---------------------------------------------------------------------- #
-    @abstractmethod
-    def name(self) -> str:
-        """Return the canonical name for this measurement."""
-        raise NotImplementedError("Subclasses must implement 'name()'.")
