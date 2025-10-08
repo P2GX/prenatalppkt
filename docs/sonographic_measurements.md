@@ -1,3 +1,5 @@
+# TODO(@VarenyaJ): Adjust once this feature is finalized
+# This is just a draft as of this moment and is not complete
 # Sonographic Measurements
 ==========================
 
