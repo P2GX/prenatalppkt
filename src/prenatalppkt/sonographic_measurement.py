@@ -85,21 +85,21 @@ class SonographicMeasurement(ABC):
         # ------------------------------------------------------------------ #
         # def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
         """
-       Return a default mapping of percentile bins to ontology terms.
+        Return a default mapping of percentile bins to ontology terms.
 
-       Subclasses may override this method or dynamically construct a mapping using `TermObservation.build_standard_bin_mapping()`:
+        Subclasses may override this method or dynamically construct a mapping using `TermObservation.build_standard_bin_mapping()`:
 
-           mapping = TermObservation.build_standard_bin_mapping(
-               lower_extreme_term=microcephaly,
-               lower_term=decreased_head_circumference,
-               abnormal_term=abnormal_skull_size,
-               normal_term=normal_skull_morphology,
-               upper_term=increased_head_circumference,
-               upper_extreme_term=macrocephaly,
-           )
+        mapping = TermObservation.build_standard_bin_mapping(
+            lower_extreme_term=microcephaly,
+            lower_term=decreased_head_circumference,
+            abnormal_term=abnormal_skull_size,
+            normal_term=normal_skull_morphology,
+            upper_term=increased_head_circumference,
+            upper_extreme_term=macrocephaly,
+        )
 
-       This mapping will later be consumed by `to_term_observation()`.
-       """
+        This mapping will later be consumed by `to_term_observation()`.
+        """
         # return {}
 
     #
