@@ -1,14 +1,85 @@
 """
 term_observation.py
 
-Defines `TermObservation`, the ontology-aware representation of a fetal biometric measurement.
+Defines the `TermObservation` class -- the ontology-aware interpretation of a
+quantitative fetal sonographic measurement.
 
-A `TermObservation` associates:
-    - a `MeasurementResult` (percentile bin)
-    - a corresponding ontology concept (`MinimalTerm` from hpotk)
-    - and an observation status (observed / excluded)
-for a given gestational age.
+Overview
+--------
+This module bridges quantitative measurements (via `MeasurementResult`) with
+ontology terms (via `MinimalTerm` from hpotk).  It provides a consistent way to
+represent whether a given percentile-based result should be treated as an
+*observed abnormality* or an *excluded normal finding* in downstream analysis.
 
+Unlike earlier implementations, `TermObservation` does **not** assume any
+specific definition of "normal."  Instead, the calling application (or study
+configuration) must explicitly pass the set of percentile bins considered
+normal.  This decouples numeric logic from clinical semantics and allows
+population- or study-specific interpretations.
+
+Responsibilities
+----------------
+1. **Mapping construction**
+  - Provides `build_standard_bin_mapping()` to generate a canonical mapping
+    between percentile bin keys (e.g., `"below_3p"`, `"between_90p_95p"`) and
+    ontology terms (`MinimalTerm` objects).
+
+2. **Observation derivation**
+  - Converts a `MeasurementResult` into a `TermObservation` using
+    `from_measurement_result()`.
+  - The caller supplies both the mapping and the definition of what percentile
+    bins are considered "normal".
+
+3. **Serialization**
+  - Exports an ontology-aware measurement as a simple dictionary conforming to
+    Phenopacket JSON expectations via `to_phenotypic_feature()`.
+
+Design Principles
+-----------------
+- **No hard-coded normal ranges.**  The logic for what is "normal" is
+ *injected* by the application, allowing different percentile thresholds for
+ different populations, studies, or biometric parameters.
+
+- **Separation of concerns.**  Numeric percentile evaluation is handled by
+ `MeasurementResult`; semantic interpretation (normal vs abnormal phenotype)
+ lives here; and ontology term selection happens in higher-level mappings.
+
+Example
+-------
+   from prenatalppkt.measurements.measurement_result import MeasurementResult
+   from prenatalppkt.term_observation import TermObservation
+
+   # Step 1: Define or load percentile bin mapping
+   mapping = TermObservation.build_standard_bin_mapping(
+       lower_extreme_term=microcephaly_term,
+       lower_term=decreased_head_circumference_term,
+       abnormal_term=abnormal_skull_term,
+       normal_term=normal_skull_term,
+       upper_term=increased_head_circumference_term,
+       upper_extreme_term=macrocephaly_term,
+   )
+
+   # Step 2: Define what bins count as "normal" for this analysis
+   normal_bins = {"between_10p_50p", "between_50p_90p"}
+
+   # Step 3: Convert a MeasurementResult to a TermObservation
+   result = reference_range.evaluate(value_mm)
+   obs = TermObservation.from_measurement_result(
+       measurement_result=result,
+       bin_to_term=mapping,
+       gestational_age=ga,
+       normal_bins=normal_bins,
+   )
+
+   # Step 4: Serialize for Phenopacket export
+   feature = obs.to_phenotypic_feature()
+
+Notes
+-----
+- The `normal_bins` argument provides full configurability.  If omitted, all
+ bins with ontology terms are treated as "observed" (no normal range exclusion).
+- The `interpret_as_normal` flag can explicitly mark an observation as normal,
+ even if percentile data are unavailable (e.g., clinician-reviewed cases).
 """
 
 from __future__ import annotations
