@@ -4,20 +4,9 @@ from prenatalppkt.measurements.percentile import Percentile
 
 class MeasurementResult:
     """
-    Represents the outcome of comparing a measured biometric value against
-    percentile reference thresholds.
+    Represents the outcome of comparing a measured biometric value against percentile reference thresholds.
 
-    A MeasurementResult does not store the raw measurement; it only encodes
-    the percentile bin in which the measurement falls. This allows higher-level
-    evaluators (e.g., SonographicMeasurement) to interpret whether an HPO term
-    such as 'Decreased head circumference' or 'Abnormality of skull size' should apply.
-
-    Attributes
-    ----------
-    _lower : Percentile | None
-        The lower bound percentile for the measurement range.
-    _upper : Percentile | None
-        The upper bound percentile for the measurement range.
+    A MeasurementResult does not store the raw measurement; it only encodes the percentile bin in which the measurement falls. Higher-level evaluators should interpret whether an HPO term applies based on the metric considered as well as reference ranges.
     """
 
     _lower: typing.Optional[Percentile]
@@ -41,10 +30,9 @@ class MeasurementResult:
         return self._upper
 
     @property
-    def bin_name(self) -> str:
+    def bin_key(self) -> str:
         """
-        Return a canonical bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p') that identifies the percentile interval of this measurement result.
-        This property is used by higher-level evaluators (e.g., SonographicMeasurement) to map percentile ranges to HPO term categories.
+        Return a canonical bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p') that identifies the percentile interval of this measurement result. This property is used by higher-level evaluators (e.g., SonographicMeasurement) to map percentile ranges to HPO term categories.
         """
         mapping = {
             (None, Percentile.Third): "below_3p",
@@ -57,21 +45,6 @@ class MeasurementResult:
             (Percentile.Ninetyseventh, None): "above_97p",
         }
         return mapping.get((self._lower, self._upper), "unknown")
-
-    @property
-    def get_bin_key(self) -> str:
-        """Return the string key corresponding to this percentile bin."""
-        mapping = {
-            (None, Percentile.Third): "below_3p",
-            (Percentile.Third, Percentile.Fifth): "between_3p_5p",
-            (Percentile.Fifth, Percentile.Tenth): "between_5p_10p",
-            (Percentile.Tenth, Percentile.Fiftieth): "between_10p_50p",
-            (Percentile.Fiftieth, Percentile.Ninetieth): "between_50p_90p",
-            (Percentile.Ninetieth, Percentile.Ninetyfifth): "between_90p_95p",
-            (Percentile.Ninetyfifth, Percentile.Ninetyseventh): "between_95p_97p",
-            (Percentile.Ninetyseventh, None): "above_97p",
-        }
-        return mapping.get((self._lower, self._upper))
 
     # --- Convenience Static constructors for percentile intervals --- #
 
@@ -135,32 +108,28 @@ class MeasurementResult:
         """
         return MeasurementResult(lower=Percentile.Ninetyseventh, upper=None)
 
-    # --- Logical Classification helpers --- #
+        # TODO(@VarenyaJ): After feedback, this classification logic should be handled by ontology/config layers. These methods are commented out for now. I plan to remove them later when we have impletemented them
+        # --- Logical Classification helpers --- #
 
-    def is_below_extreme(self) -> bool:
+        # def is_below_extreme(self) -> bool:
         """
         Categorize a biometric value as less than 3rd percentile
         """
-        return self._upper == Percentile.Third
+        # return self._upper == Percentile.Third
 
-    def is_above_extreme(self) -> bool:
+        # def is_above_extreme(self) -> bool:
         """
         Categorize a biometric value as more than 97th percentile
         """
-        return self._lower == Percentile.Ninetyseventh
+        # return self._lower == Percentile.Ninetyseventh
 
-    def is_abnormal(self) -> bool:
+        # def is_abnormal(self) -> bool:
         """
         Return True if the measurement is within a mildly abnormal range:
         - 3rd–10th percentile (including 3–5, 5–10)
         - 90th–97th percentile (including 90–95, 95–97)
         """
-        return self._lower in {
-            Percentile.Third,
-            Percentile.Fifth,
-            Percentile.Ninetieth,
-            Percentile.Ninetyfifth,
-        }
+        # return self._lower in {Percentile.Third, Percentile.Fifth, Percentile.Ninetieth, Percentile.Ninetyfifth}
 
     def __repr__(self) -> str:
         """Developer-friendly string representation."""

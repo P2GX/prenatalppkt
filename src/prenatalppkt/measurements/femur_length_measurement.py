@@ -10,10 +10,7 @@ will be injected via parsing utilities in a future PR.
 """
 
 from __future__ import annotations
-from typing import Optional, Dict
-from hpotk import MinimalTerm
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
-from prenatalppkt.term_observation import TermObservation
 
 
 class FemurLengthMeasurement(SonographicMeasurement):
@@ -34,17 +31,3 @@ class FemurLengthMeasurement(SonographicMeasurement):
     def name(self) -> str:
         """Return the canonical name for this measurement."""
         return "femur length"
-
-    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
-        """
-        Placeholder ontology mapping for femur length deviations.
-        Future versions will attach skeletal growth-related HPO terms.
-        """
-        return TermObservation.build_standard_bin_mapping(
-            lower_extreme_term=None,
-            lower_term=None,
-            abnormal_term=None,
-            normal_term=None,
-            upper_term=None,
-            upper_extreme_term=None,
-        )

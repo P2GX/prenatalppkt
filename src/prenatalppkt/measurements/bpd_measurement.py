@@ -11,10 +11,7 @@ percentile parsing pipeline (NIHCD/INTERGROWTH tables).
 """
 
 from __future__ import annotations
-from typing import Optional, Dict
-from hpotk import MinimalTerm
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
-from prenatalppkt.term_observation import TermObservation
 
 
 class BiparietalDiameterMeasurement(SonographicMeasurement):
@@ -40,20 +37,3 @@ class BiparietalDiameterMeasurement(SonographicMeasurement):
     def name(self) -> str:
         """Return the canonical name for this measurement."""
         return "biparietal diameter"
-
-    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
-        """
-        Optionally provide a default ontology mapping for skull-size deviations.
-
-        This is a forward-declaration placeholder to illustrate where HPO
-        terms will be bound in future ontology integration.
-        """
-        # Example placeholder (no concrete terms assigned)
-        return TermObservation.build_standard_bin_mapping(
-            lower_extreme_term=None,
-            lower_term=None,
-            abnormal_term=None,
-            normal_term=None,
-            upper_term=None,
-            upper_extreme_term=None,
-        )

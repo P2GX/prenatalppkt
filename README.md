@@ -87,7 +87,7 @@ Optional: extract flat CSV for statistical analysis.
 -------------------------------------------------------------------------------
 
 ### Purpose
-The new measurement layer provides a clean abstraction for evaluating fetal biometry values (e.g. head circumference, femur length) against percentile reference tables (NIHCD and INTERGROWTH-21st) **without embedding ontology logic**.
+The new measurement layer provides a clean abstraction for evaluating fetal biometry values (e.g. head circumference, femur length) against percentile reference tables (NIHCD and INTERGROWTH-21)
 
 Each measurement:
 1. Uses a `ReferenceRange` to interpret raw values into percentile bins.

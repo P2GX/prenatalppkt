@@ -32,7 +32,7 @@ A typical evaluation workflow looks like this:
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Dict
 from hpotk import MinimalTerm
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.measurement_result import MeasurementResult
@@ -103,6 +103,7 @@ class SonographicMeasurement(ABC):
         # return {}
 
     #
+
     # ------------------------------------------------------------------ #
     # Structural TermObservation (active for current milestone, but ontology layer is deffered)
     # ------------------------------------------------------------------ #
@@ -139,10 +140,25 @@ class SonographicMeasurement(ABC):
             A minimal observation object with observed/excluded status.
         """
         # Observed = True for abnormal bins (outside 10th-90th percentile)
-        observed = measurement_result.get_bin_key not in {
+        observed = measurement_result.bin_key not in {
             "between_10p_50p",
             "between_50p_90p",
         }
         return TermObservation(
             hpo_term=parent_term, observed=observed, gestational_age=gestational_age
+        )
+
+    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
+        """
+        Placeholder for a default mapping of percentile bins to ontology terms.
+
+        This lives in the superclass so all measurement subclasses share the same baseline structure.  Each subclass may override this in a later ontology integration phase.
+        """
+        return TermObservation.build_standard_bin_mapping(
+            lower_extreme_term=None,
+            lower_term=None,
+            abnormal_term=None,
+            normal_term=None,
+            upper_term=None,
+            upper_extreme_term=None,
         )

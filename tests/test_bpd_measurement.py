@@ -47,4 +47,4 @@ def test_bpd_measurement_bins(reference_range, value, expected_bin):
     ga = reference_range.gestational_age
     result = bpd.evaluate(ga, value, reference_range)
     assert isinstance(result, MeasurementResult)
-    assert result.get_bin_key == expected_bin
+    assert result.bin_key == expected_bin
