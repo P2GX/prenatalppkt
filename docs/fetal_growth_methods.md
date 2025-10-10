@@ -51,7 +51,9 @@ Using z-scores rather than raw percentiles allows continuous assessment of growt
 ---
 
 ## Hadlock Regression Formulas
-Hadlock and colleagues (1980s, Baylor College of Medicine, (see [**Key References**](#key-references))) developed widely used regression models to predict gestational age and estimated fetal weight (EFW) from ultrasound parameters. However, a significant limitation appears to arise from the data source, namely only 392 pregnancies from a single center (UTMB in Galveston)
+Hadlock and colleagues (1980s, Baylor College of Medicine, (see [**Key References**](#key-references))) developed widely used regression models to predict gestational age and estimated fetal weight (EFW) from ultrasound parameters. However, a significant limitation appears to arise from the data source, namely only 392 pregnancies from white women with uncomplicated pregnancies recorded at a single center (UTMB in Galveston).
+
+###
 
 ### Gestational Age Estimation
 - **Parameters used:** BPD, HC, AC, FL (alone or in combination).
