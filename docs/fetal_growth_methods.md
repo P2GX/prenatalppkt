@@ -51,7 +51,9 @@ Using z-scores rather than raw percentiles allows continuous assessment of growt
 ---
 
 ## Hadlock Regression Formulas
-Hadlock and colleagues (1980s, Baylor College of Medicine, (see [**Key References**](#key-references))) developed widely used regression models to predict gestational age and estimated fetal weight (EFW) from ultrasound parameters.
+Hadlock and colleagues (1980s, Baylor College of Medicine, (see [**Key References**](#key-references))) developed widely used regression models to predict gestational age and estimated fetal weight (EFW) from ultrasound parameters. However, a significant limitation appears to arise from the data source, namely only 392 pregnancies from white women with uncomplicated pregnancies recorded at a single center (UTMB in Galveston).
+
+###
 
 ### Gestational Age Estimation
 - **Parameters used:** BPD, HC, AC, FL (alone or in combination).
@@ -75,3 +77,4 @@ Hadlock and colleagues (1980s, Baylor College of Medicine, (see [**Key Reference
 ### Key References
 - [Radiology. 1984 Feb;150(2):535-40: *Sonographic estimation of fetal weight. The value of femur length in addition to head and abdomen measurements*](https://pubmed.ncbi.nlm.nih.gov/6691115/){:target="_blank"}
 - [Am J Obstet Gynecol. 1985 Feb;151(3):333-7: *Estimation of fetal weight with the use of head, body, and femur measurements -- a prospective study*](https://www.sciencedirect.com/science/article/pii/0002937885902984?via%3Dihub){:target="_blank"}
+- [Fetal growth standards: The NICHD Fetal Growth Study Approach in Context with INTERGROWTH-21st and the World Health Organization Multicentre Growth Reference Study](Grantz KL, Hediger ML, Liu D, Buck Louis GM. Fetal growth standards: the NICHD fetal growth study approach in context with INTERGROWTH-21st and the World Health Organization Multicentre Growth Reference Study. Am J Obstet Gynecol. 2018 Feb;218(2S):S641-S655.e28. doi: 10.1016/j.ajog.2017.11.593. Epub 2017 Dec 22. PMID: 29275821; PMCID: PMC5807181.)
