@@ -11,6 +11,12 @@ Library to transform raw sonography data into [Phenopackets](https://phenopacket
 - Provide clinically valid percentile and z-score calculations from authoritative growth standards.
 
 -------------------------------------------------------------------------------
+## Overview of the Measurement System
+-------------------------------------------------------------------------------
+
+This release introduces a fully class-based architecture for sonographic measurement evaluation. It separates *numeric percentile classification* from *ontology mapping* while remaining fully compatible with downstream Phenopacket export.
+
+-------------------------------------------------------------------------------
 ## Inputs and Outputs (at a glance)
 -------------------------------------------------------------------------------
 ### Inputs
@@ -75,6 +81,34 @@ Library to transform raw sonography data into [Phenopackets](https://phenopacket
   +----------------+   +----------------+
 
 Optional: extract flat CSV for statistical analysis.
+
+-------------------------------------------------------------------------------
+## New Core Measurement Layer (src/prenatalppkt/measurements)
+-------------------------------------------------------------------------------
+
+### Purpose
+The new measurement layer provides a clean abstraction for evaluating fetal biometry values (e.g. head circumference, femur length) against percentile reference tables (NIHCD and INTERGROWTH-21)
+
+Each measurement:
+1. Uses a `ReferenceRange` to interpret raw values into percentile bins.
+2. Produces a `MeasurementResult` describing that bin.
+3. Can be wrapped in a `TermObservation` for ontology-aware reporting later.
+
+### Files
+- **`gestational_age.py`** - Represents gestational age as weeks and days.
+- **`percentile.py`** - Enumerates key percentile cutoffs (3rd-97th).
+- **`measurement_result.py`** - Encapsulates percentile bin classification and logic helpers.
+- **`reference_range.py`** - Evaluates a measurement value against percentile thresholds.
+- **`sonographic_measurement.py`** - Abstract base class for all biometric measures; defines unified evaluation flow and integration hooks.
+- **`bpd_measurement.py`** - Example subclass for biparietal diameter.
+- **`femur_length_measurement.py`** - Example subclass for femur length.
+- **`term_observation.py`** - Wraps results in ontology-compatible structures (HPO and Phenopacket-ready).
+
+### Highlights
+- Clean separation of evaluation (numeric) and interpretation (ontology).
+- Extensible to all biometric measurements (HC, AC, OFD, FL, EFW, etc.).
+- Ready for dynamic reference loading (via `vj/parse_percentiles`).
+- Fully tested with NIHCD thresholds at 20.86 weeks (BPD, FL examples).
 
 -------------------------------------------------------------------------------
 ## Core Components (src/prenatalppkt/)
@@ -142,6 +176,30 @@ print(percentile, hpo)
 # Example: 50.0, None
 
 ```
+
+-------------------------------------------------------------------------------
+## Example Usage of Measurement Layer
+-------------------------------------------------------------------------------
+
+```python
+from prenatalppkt.gestational_age import GestationalAge
+from prenatalppkt.measurements.reference_range import ReferenceRange
+from prenatalppkt.measurements.bpd_measurement import BiparietalDiameterMeasurement
+
+# Example NIHCD BPD percentiles (20.86 weeks, Non-Hispanic White)
+thresholds = [145.25, 147.25, 150.37, 161.95, 174.41, 178.12, 180.56]
+ga = GestationalAge.from_weeks(20.86)
+reference = ReferenceRange(gestational_age=ga, percentiles=thresholds)
+
+# Evaluate a measurement (in mm)
+bpd = BiparietalDiameterMeasurement()
+observation = bpd.evaluate(gestational_age=ga, measurement_value=170.0, reference_range=reference)
+
+print(observation)
+# -> TermObservation(hpo_label='None', observed=False, excluded=True, gestational_age=20w6d)
+```
+
+The same API applies to any measurement subclass. Future releases will link these evaluations to ontology mappings once percentile tables are fully parsed and harmonized.
 
 ## Testing
 -------------
