@@ -1,4 +1,4 @@
-# biometry_hpo_mappings.yaml
+# data/mappings/biometry_hpo_mappings.yaml
 #
 # HPO term mappings for fetal biometric measurements.
 # Each measurement type maps percentile bins to appropriate HPO terms.

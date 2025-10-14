@@ -119,7 +119,7 @@ def test_fl_short_femur_detected(intergrowth_exporter):
     )
 
     assert result["type"]["id"] == "HP:0011428"
-    assert "Short femur" in result["type"]["label"]
+    assert "Short fetal femur length" in result["type"]["label"]
     assert result["excluded"] is False
 
 
@@ -148,7 +148,7 @@ def test_bpd_decreased_width(intergrowth_exporter):
     )
 
     assert result["type"]["id"] == "HP:0005484"
-    assert "Decreased skull width" in result["type"]["label"]
+    assert "Secondary microcephaly" in result["type"]["label"]
     assert result["excluded"] is False
 
 
@@ -161,7 +161,7 @@ def test_bpd_increased_width(intergrowth_exporter):
     )
 
     assert result["type"]["id"] == "HP:0005490"
-    assert "Increased skull width" in result["type"]["label"]
+    assert "Postnatal macrocephaly" in result["type"]["label"]
     assert result["excluded"] is False
 
 
@@ -179,7 +179,7 @@ def test_ac_decreased(intergrowth_exporter):
     )
 
     assert result["type"]["id"] == "HP:6000339"
-    assert "Decreased abdominal circumference" in result["type"]["label"]
+    assert "Small fetal abdominal circumference" in result["type"]["label"]
     assert result["excluded"] is False
 
 

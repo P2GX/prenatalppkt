@@ -126,14 +126,17 @@ class PhenotypicExporter:
         processed = {}
         for meas_type, bin_mappings in raw_mappings.items():
             processed[meas_type] = {}
-            for bin_key, term_dict in bin_mappings.items():
-                if term_dict is None:
+            for bin_key, term_dict in (bin_mappings or {}).items():
+                if not term_dict:
                     processed[meas_type][bin_key] = None
-                else:
-                    processed[meas_type][bin_key] = MinimalTerm(
-                        identifier=term_dict["id"], name=term_dict["label"]
-                    )
+                    continue
 
+                processed[meas_type][bin_key] = MinimalTerm.create_minimal_term(
+                    term_id=term_dict["id"],
+                    name=term_dict["label"],
+                    alt_term_ids=(),
+                    is_obsolete=False,
+                )
         return processed
 
     def evaluate_and_export(
@@ -202,6 +205,27 @@ class PhenotypicExporter:
         measurement_result = ref_range.evaluate(value_mm)
 
         # Step 4: Get HPO term mapping for this measurement type
+        """
+        bin_to_term = {
+            k: (
+                MinimalTerm.create_minimal_term(
+                    term_id=v["id"], name=v["label"], alt_term_ids=(), is_obsolete=False
+                )
+                if isinstance(v, dict)
+                else v
+            )
+            for k, v in self.mappings.get(measurement_type, {}).items()
+        }
+        # Ensure all mappings are MinimalTerm instances, not dicts
+        for k, term in bin_to_term.items():
+            if isinstance(term, dict):
+                bin_to_term[k] = MinimalTerm.create_minimal_term(
+                    term_id=term["id"],
+                    name=term["label"],
+                    alt_term_ids=(),
+                    is_obsolete=False,
+                )
+        """
         bin_to_term = self.mappings.get(measurement_type, {})
 
         # Step 5: Convert to TermObservation

@@ -119,7 +119,12 @@ class TermObservation:
     def __post_init__(self) -> None:
         """Populate identifier and label from MinimalTerm when available."""
         if self.hpo_term and isinstance(self.hpo_term, MinimalTerm):
-            self.hpo_id = getattr(self.hpo_term, "term_id", "")
+            # MinimalTerm stores the ID as 'identifier', not 'term_id'
+            if hasattr(self.hpo_term, "identifier"):
+                self.hpo_id = str(self.hpo_term.identifier)
+            else:
+                self.hpo_id = ""
+
             self.hpo_label = getattr(self.hpo_term, "name", "")
 
     # ------------------------------------------------------------------ #
