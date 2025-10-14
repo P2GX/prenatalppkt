@@ -89,9 +89,8 @@ from hpotk import MinimalTerm
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.measurement_result import MeasurementResult
 
-
 @dataclass
-class TermObservation:
+class TermObservation:    
     """
     Represents an ontology-based interpretation of a MeasurementResult.
 
@@ -103,24 +102,12 @@ class TermObservation:
         True if the abnormality was observed; False if explicitly not observed (normal finding / excluded).
     gestational_age : GestationalAge
         Gestational age context for the measurement.
-    parent_term : Optional[MinimalTerm]
-        Optional ontology parent term used for grouping or hierarchical context.
-    hpo_id, hpo_label : str
-        Convenience accessors automatically populated from `hpo_term`.
     """
+    _hpo_term: MinimalTerm
+    _observed: bool
+    _gestational_age: GestationalAge
 
-    hpo_term: Optional[MinimalTerm]
-    observed: bool
-    gestational_age: GestationalAge
-    parent_term: Optional[MinimalTerm] = None
-    hpo_id: str = ""
-    hpo_label: str = ""
-
-    def __post_init__(self) -> None:
-        """Populate identifier and label from MinimalTerm when available."""
-        if self.hpo_term and isinstance(self.hpo_term, MinimalTerm):
-            self.hpo_id = getattr(self.hpo_term, "term_id", "")
-            self.hpo_label = getattr(self.hpo_term, "name", "")
+   
 
     # ------------------------------------------------------------------ #
     # Mapping Builders
@@ -165,8 +152,6 @@ class TermObservation:
         measurement_result: MeasurementResult,
         bin_to_term: Optional[Dict[str, Optional[MinimalTerm]]],
         gestational_age: GestationalAge,
-        parent_term: Optional[MinimalTerm] = None,
-        *,
         normal_bins: Optional[Set[str]] = None,
         interpret_as_normal: bool = False,
     ) -> TermObservation:
@@ -207,10 +192,9 @@ class TermObservation:
             observed = bool(hpo_term)
 
         return TermObservation(
-            hpo_term=hpo_term,
-            observed=observed,
-            gestational_age=gestational_age,
-            parent_term=parent_term,
+            _hpo_term=hpo_term,
+            _observed=observed,
+            _gestational_age=gestational_age,
         )
 
     # ------------------------------------------------------------------ #
@@ -229,6 +213,33 @@ class TermObservation:
             "description": f"Measurement at {self.gestational_age.weeks}w{self.gestational_age.days}d",
         }
 
+    
+    @property
+    def hpo_term(self) -> Optional["MinimalTerm"]:
+        """The ontology term representing the phenotype."""
+        return self._hpo_term
+
+    @property
+    def observed(self) -> bool:
+        """True if the abnormality was observed; False if explicitly not observed."""
+        return self._observed
+
+    @property
+    def gestational_age(self) -> "GestationalAge":
+        """Gestational age context for the measurement."""
+        return self._gestational_age
+
+    # --- Derived convenience properties ---
+    @property
+    def hpo_id(self) -> Optional[str]:
+        """Return the HPO term ID, if available."""
+        return self._hpo_term.identifier.value if self._hpo_term else None
+
+    @property
+    def hpo_label(self) -> Optional[str]:
+        """Return the HPO term label, if available."""
+        return self._hpo_term.name if self._hpo_term else None
+    
     def __repr__(self) -> str:
         label = self.hpo_label or "None"
         return f"TermObservation(hpo_label='{label}', observed={self.observed}, ga={self.gestational_age.weeks}w{self.gestational_age.days}d)"

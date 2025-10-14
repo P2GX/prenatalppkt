@@ -14,5 +14,3 @@ HPO_MACROCEPHALY: str = "HP:0000256"
 """Macrocephaly: head circumference significantly above expected size."""
 
 # New
-HPO_SHORT_FEMUR = "HP:0011428"  # Short fetal femur length
-HPO_LONG_FEMUR = "HP:9999999"  # Placeholder - if HPO doesn't define it, keep as custom

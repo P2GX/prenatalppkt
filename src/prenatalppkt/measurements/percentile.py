@@ -18,3 +18,19 @@ class Percentile(enum.Enum):
     Ninetieth = "Ninetieth percentile"
     Ninetyfifth = "Ninetyfifth percentile"
     Ninetyseventh = "Ninetyseventh percentile"
+
+
+
+
+
+percentile_to_result = {
+ Percentile.Third: "low",
+  Percentile.Fifth: "normal",
+   Percentile.Tenth: "low",
+    Percentile.Third: "low",
+     Percentile.Third: "low",
+      Percentile.Third: "low",
+       Percentile.Third: "low",
+
+
+}

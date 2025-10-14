@@ -34,6 +34,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional, Dict
 from hpotk import MinimalTerm
+import hpotk
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.measurement_result import MeasurementResult
 from prenatalppkt.term_observation import TermObservation
@@ -55,6 +56,13 @@ class SonographicMeasurement(ABC):
     By decoupling evaluation from ontology mapping, this design preserves clean separation of logic (numeric evaluation vs semantic interpretation).
     """
 
+
+    def __init__(self, low: hpotk.MinimalTerm, abn:hpotk.MinimalTerm, high:hpotk.MinimalTerm, interpretation_map = MeasurementResult.default_interpretation()) -> None:
+        self._low = low
+        self._abnormal = abn
+        self._high = high
+        self._interpretation_map = interpretation_map
+
     # ------------------------------------------------------------------ #
     # Abstract metadata
     # ------------------------------------------------------------------ #
@@ -68,7 +76,7 @@ class SonographicMeasurement(ABC):
     # ------------------------------------------------------------------ #
     def evaluate(
         self, gestational_age: GestationalAge, measurement_value: float, reference_range
-    ) -> MeasurementResult:
+    ) -> TermObservation:
         """
         Evaluate a raw measurement against the provided reference range.
 
@@ -77,7 +85,14 @@ class SonographicMeasurement(ABC):
         MeasurementResult
             Encodes which percentile interval the value falls into.
         """
-        return reference_range.evaluate(measurement_value)
+        meas_result = reference_range.evaluate(measurement_value)
+        interp = self._interpretation_map.get(meas_result, "normal")
+        if interp == "high":
+            pass ## return  TermObservation with observed = true and high term
+        elif interp == "low":
+             pass ## return  TermObservation with observed = true and low term
+        elif interp == "noirmal":
+            pass ## return  TermObservation with observed = false and abnormal term
 
         # TODO(@VarenyaJ): Integrate the below at a later stage when parsing the input for experimental data > finding the correct reference of gestational age/value in the NIHCD/Intergrowth-21 tables > assigning the correct percentile range for the experimental data > configuring and converting that experimental percentile range to the correct child HPO term if in "abnormal" or marking the parent HPO term as excluded if in "normal" range
         # ------------------------------------------------------------------ #

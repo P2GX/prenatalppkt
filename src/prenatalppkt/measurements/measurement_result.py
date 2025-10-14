@@ -136,3 +136,11 @@ class MeasurementResult:
         lower = self._lower.name if self._lower else "None"
         upper = self._upper.name if self._upper else "None"
         return f"MeasurementResult(lower={lower}, upper={upper})"
+    
+
+    @staticmethod
+    def default_interpretation() -> typing.Dict[typing.Tuple[typing.Optional[Percentile], typing.Optional[Percentile]], str]:
+        d = { (None, Percentile.Third): "low",
+            (Percentile.Ninetyseventh, None): "high",
+        }
+        return d
