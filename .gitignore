@@ -219,4 +219,5 @@ src/*/_version.py
 */*/*/.DS_Store
 
 # HPO file
-data/hp.json
+data/hp.jsonout.txt
+prenatalppkt-about.txt
