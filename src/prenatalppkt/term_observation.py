@@ -119,7 +119,12 @@ class TermObservation:
     def __post_init__(self) -> None:
         """Populate identifier and label from MinimalTerm when available."""
         if self.hpo_term and isinstance(self.hpo_term, MinimalTerm):
-            self.hpo_id = getattr(self.hpo_term, "term_id", "")
+            # MinimalTerm stores the ID as 'identifier', not 'term_id'
+            if hasattr(self.hpo_term, "identifier"):
+                self.hpo_id = str(self.hpo_term.identifier)
+            else:
+                self.hpo_id = ""
+
             self.hpo_label = getattr(self.hpo_term, "name", "")
 
     # ------------------------------------------------------------------ #
@@ -216,18 +221,35 @@ class TermObservation:
     # ------------------------------------------------------------------ #
     # Serialization
     # ------------------------------------------------------------------ #
+    # def to_phenotypic_feature(self) -> dict:
+    #    """Serialize to a Phenopacket-style dictionary."""
+    #    if self.hpo_term is None:
+    #        return {"excluded": True, "description": "Measurement within normal range for gestational age", "description": f"Measurement within normal range for gestational age ({self.gestational_age.weeks}w{self.gestational_age.days}d)"}
+    #    return {"type": {"id": self.hpo_id, "label": self.hpo_label}, "excluded": not self.observed, "description": f"Measurement at {self.gestational_age.weeks}w{self.gestational_age.days}d"}
+
     def to_phenotypic_feature(self) -> dict:
         """Serialize to a Phenopacket-style dictionary."""
-        if self.hpo_term is None:
-            return {
-                "excluded": True,
-                "description": "Measurement within normal range for gestational age",
-            }
-        return {
-            "type": {"id": self.hpo_id, "label": self.hpo_label},
+        ga_str = f"{self.gestational_age.weeks}w{self.gestational_age.days}d"
+
+        feature = {
             "excluded": not self.observed,
-            "description": f"Measurement at {self.gestational_age.weeks}w{self.gestational_age.days}d",
+            "description": f"Measurement at {ga_str}",
         }
+
+        # Always include a 'type' field, even if no HPO term is available
+        if self.hpo_term:
+            feature["type"] = {"id": self.hpo_id, "label": self.hpo_label}
+        else:
+            feature["type"] = {
+                "id": "HP:0000118",
+                "label": "Phenotypic abnormality (unspecified)",
+            }
+            if not self.observed:
+                feature["description"] = (
+                    f"Measurement within normal range for gestational age ({ga_str})"
+                )
+
+        return feature
 
     def __repr__(self) -> str:
         label = self.hpo_label or "None"
