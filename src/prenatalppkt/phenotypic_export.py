@@ -80,19 +80,36 @@ class PhenotypicExporter:
             raw_mappings = yaml.safe_load(f)
 
         processed = {}
-        for meas_type, bin_mappings in raw_mappings.items():
-            processed[meas_type] = {}
-            for bin_key, term_dict in (bin_mappings or {}).items():
-                if not term_dict:
-                    processed[meas_type][bin_key] = None
-                    continue
+        for meas_type, cfg in raw_mappings.items():
+            bins_cfg = cfg["bins"]
+            abnormal_cfg = cfg["abnormal_term"]
+            normal_bins = set(cfg.get("normal_bins", []))
 
-                processed[meas_type][bin_key] = MinimalTerm.create_minimal_term(
-                    term_id=term_dict["id"],
-                    name=term_dict["label"],
-                    alt_term_ids=(),
-                    is_obsolete=False,
-                )
+            # Convert bins -> MinimalTerm
+            bins = {}
+            for k, v in bins_cfg.items():
+                if v is None:
+                    bins[k] = None
+                else:
+                    bins[k] = MinimalTerm.create_minimal_term(
+                        term_id=v["id"],
+                        name=v["label"],
+                        alt_term_ids=(),
+                        is_obsolete=False,
+                    )
+
+            abnormal_term = MinimalTerm.create_minimal_term(
+                term_id=abnormal_cfg["id"],
+                name=abnormal_cfg["label"],
+                alt_term_ids=(),
+                is_obsolete=False,
+            )
+
+            processed[meas_type] = {
+                "bins": bins,
+                "normal_bins": normal_bins,
+                "abnormal_term": abnormal_term,
+            }
         return processed
 
     def evaluate_and_export(
@@ -151,8 +168,10 @@ class PhenotypicExporter:
             measurement_result = res
 
         # Step 5: Map to ontology
-        bin_to_term = self.mappings.get(measurement_type, {})
-        normal_bins_to_use = normal_bins or self.normal_bins
+        cfg = self.mappings[measurement_type]
+        bin_to_term = cfg["bins"]
+        normal_bins_to_use = normal_bins or cfg["normal_bins"]
+        abnormal_term = cfg["abnormal_term"]
 
         if isinstance(measurement_result, TermObservation):
             term_obs = measurement_result
@@ -162,6 +181,7 @@ class PhenotypicExporter:
                 bin_to_term=bin_to_term,
                 gestational_age=ga,
                 normal_bins=normal_bins_to_use,
+                abnormal_term=abnormal_term,
             )
 
         # Step 6: Serialize for Phenopacket
