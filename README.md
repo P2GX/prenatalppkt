@@ -3,6 +3,8 @@
 
 Library to transform raw sonography data into [Phenopackets](https://phenopacket-schema.readthedocs.io/) with validated fetal growth references (NIHCD and INTERGROWTH-21st).
 
+Includes ontology-aware export utilities and YAML-based phenotype mappings.
+
 -------------------------------------------------------------------------------
 ## Why
 -------------------------------------------------------------------------------
@@ -16,6 +18,10 @@ Library to transform raw sonography data into [Phenopackets](https://phenopacket
 
 This release introduces a fully class-based architecture for sonographic measurement evaluation. It separates *numeric percentile classification* from *ontology mapping* while remaining fully compatible with downstream Phenopacket export.
 
+Key updates:
+- Added `phenotypic_export` module for Phenopacket v2 JSON assembly.
+- Ontology mappings centralized in `data/mappings/biometry_hpo_mappings.yaml`.
+
 -------------------------------------------------------------------------------
 ## Inputs and Outputs (at a glance)
 -------------------------------------------------------------------------------
@@ -23,64 +29,160 @@ This release introduces a fully class-based architecture for sonographic measure
 - **Observer JSON** (e.g. `data/EVMS_SAMPLE.json`)
 - **ViewPoint Excel workbook** (`.xlsx` / `.xls`) with fetal biometry rows
 - Typical sections:
-  - * exam: DOB, LMP, GA by dates, exam date, ICD-10, referring clinicians
-  - * fetuses[*]: anatomy blocks, measurements, vessels, procedures
+   - * exam: DOB, LMP, GA by dates, exam date, ICD-10, referring clinicians
+   - * fetuses[*]: anatomy blocks, measurements, vessels, procedures
 
 ### Outputs
 - **Phenopackets (v2)**: one JSON per fetus (default) or per pregnancy (configurable)
-  * subject: pseudo-ID for fetus; optional family link/pedigree
-  * phenotypicFeatures: HPO terms with gestational onset (via ontology mapping)
-  * measurements: BPD / HC / AC / FL / OFD, EFW, ratios
-  * diseases: ICD-10 indications; optional MONDO/OMIM mappings
-  * metaData: versioning, ontology versions, pipeline provenance
+   * subject: pseudo-ID for fetus; optional family link/pedigree
+   * phenotypicFeatures: HPO terms with gestational onset (via ontology mapping)
+   * measurements: BPD / HC / AC / FL / OFD, EFW, ratios
+   * diseases: ICD-10 indications; optional MONDO/OMIM mappings
+   * metaData: versioning, ontology versions, pipeline provenance
 - **QC reports** per input record with structured issues
 - **Optional flat CSV** with per-fetus features for downstream analysis
 
+No command-line interface is provided in this release.
+
 -------------------------------------------------------------------------------
 ## Simple Architecture
---------------------------------------------------------
+-------------------------------------------------------------------------------
 
-          +-----------------------+
-          | Input JSON / XLSX     |
-          +-----------------------+
-                    |
-                    v
-          +-----------------------+
-          | Parser Layer          |
-          | - Extracts GA, HC,    |
-          |   BPD, AC, FL, OFD    |
-          +-----------------------+
-                    |
-                    v
-          +-----------------------+
-          | Reference Lookup      |
-          | - FetalGrowthPercent  |
-          |   loads NIHCD/IG21st  |
-          | - Percentile/Z-score  |
-          +-----------------------+
-                    |
-                    v
-          +-----------------------+
-          | BiometryMeasurement   |
-          | - Maps values to HPO  |
-          | - Flags abnormalities |
-          +-----------------------+
-                    |
-                    v
-          +-----------------------+
-          | Phenopacket Builder   |
-          | - JSON assembly       |
-          | - Metadata/QC log     |
-          +-----------------------+
-                    |
-           +--------+--------+
-           |                 |
-           v                 v
-  +----------------+   +----------------+
-  | QC Reports     |   | Phenopackets   |
-  +----------------+   +----------------+
+         +-----------------------+
+         | Input JSON / XLSX     |
+         +-----------------------+
+                   |
+                   v
+         +-----------------------+
+         | Parser Layer          |
+         | - Extracts GA, HC,    |
+         |   BPD, AC, FL, OFD    |
+         +-----------------------+
+                   |
+                   v
+         +-----------------------+
+         | Reference Lookup      |
+         | - FetalGrowthPercent  |
+         |   loads NIHCD/IG21st  |
+         | - Percentile/Z-score  |
+         +-----------------------+
+                   |
+                   v
+         +-----------------------+
+         | BiometryMeasurement   |
+         | - Maps values to HPO  |
+         | - Flags abnormalities |
+         +-----------------------+
+                   |
+                   v
+         +-----------------------+
+         | Phenopacket Builder   |
+         | - JSON assembly       |
+         | - Metadata/QC log     |
+         +-----------------------+
+                   |
+          +--------+--------+
+          |                 |
+          v                 v
+ +----------------+   +----------------+
+ | QC Reports     |   | Phenopackets   |
+ +----------------+   +----------------+
+
+New:
+- `phenotypic_export.py` implements final Phenopacket generation.
+- Ontology mappings now dynamically loaded from YAML.
 
 Optional: extract flat CSV for statistical analysis.
+
+-------------------------------------------------------------------------------
+## Technical Flowchart and Diagrams
+-------------------------------------------------------------------------------
+
+```mermaid
+flowchart TD
+    subgraph Input["Input Processing"]
+        JSON["JSON/XLSX Input"] --> Parser["Parser Layer"]
+        Parser --> GA["Gestational Age
+        Calculation"]
+        GA --> Measurements["Extract Measurements
+        • BPD
+        • HC
+        • AC
+        • FL
+        • OFD"]
+    end
+    
+    subgraph Reference["Reference Data"]
+        NIH["NIHCD Reference
+        • Percentiles
+        • Growth Charts"]
+        IG21["INTERGROWTH-21st
+        • Z-scores
+        • Centiles"]
+    end
+    
+    subgraph Processing["Measurement Processing"]
+        Measurements --> Eval["Measurement Evaluation"]
+        Eval --> Percentile["Percentile
+        Classification"]
+        Eval --> ZScore["Z-score
+        Calculation"]
+        
+        Percentile --> HPO["HPO Term Mapping
+        • Abnormalities
+        • Normal ranges"]
+        ZScore --> HPO
+    end
+    
+    subgraph Output["Output Generation"]
+        HPO --> Phenopacket["Phenopacket Builder"]
+        Phenopacket --> QC["QC Reports"]
+        Phenopacket --> Final["Final Phenopackets"]
+    end
+    
+    NIH --> Eval
+    IG21 --> Eval
+    
+    classDef input fill:#a8d5ff,stroke:#333,stroke-width:2px,color:#000000
+    classDef reference fill:#ffe6cc,stroke:#333,stroke-width:2px,color:#000000
+    classDef process fill:#d5ffa8,stroke:#333,stroke-width:2px,color:#000000
+    classDef output fill:#ffafcc,stroke:#333,stroke-width:2px,color:#000000
+    
+    class JSON,Parser,GA,Measurements input
+    class NIH,IG21 reference
+    class Eval,Percentile,ZScore,HPO process
+    class Phenopacket,QC,Final output
+```
+
+```mermaid
+sequenceDiagram
+    participant Input as Input Parser
+    participant GA as Gestational Age
+    participant Eval as Measurement Evaluator
+    participant Ref as Reference Data
+    participant HPO as HPO Mapper
+    participant QC as QC Reporter
+    participant PP as Phenopacket Builder
+
+    Input->>GA: Parse gestational age
+    Input->>Eval: Extract measurements
+    
+    Eval->>Ref: Request reference data
+    Ref-->>Eval: Return NIHCD/INTERGROWTH-21st data
+    
+    Eval->>Eval: Calculate percentiles/z-scores
+    Eval->>HPO: Map to HPO terms
+    
+    HPO->>QC: Send results for validation
+    QC-->>HPO: QC report
+    
+    HPO->>PP: Send validated data
+    PP->>PP: Assemble Phenopacket
+    PP-->>QC: Final QC check
+    QC-->>PP: QC approval
+    
+    PP-->>Input: Return completed Phenopacket
+```
 
 -------------------------------------------------------------------------------
 ## New Core Measurement Layer (src/prenatalppkt/measurements)
@@ -114,22 +216,22 @@ Each measurement:
 ## Core Components (src/prenatalppkt/)
 -------------------------------------------------------------------------------
 - `biometry.py`
-   - Defines `BiometryMeasurement` and `BiometryType`. Wraps reference lookups and applies abnormality logic (<=3rd percentile or >=97th percentile) to assign HPO terms.
+  - Defines `BiometryMeasurement` and `BiometryType`. Wraps reference lookups and applies abnormality logic (<=3rd percentile or >=97th percentile) to assign HPO terms.
 
 - `biometry_reference.py`
-   - Provides `FetalGrowthPercentiles`, which loads validated growth tables.
-   - Supports:
-      - * INTERGROWTH-21st (centiles + z-scores for HC, BPD, AC, FL, OFD).
-      - * NICHD (percentiles for HC, BPD, AC, FL, EFW).
+  - Provides `FetalGrowthPercentiles`, which loads validated growth tables.
+  - Supports:
+     - * INTERGROWTH-21st (centiles + z-scores for HC, BPD, AC, FL, OFD).
+     - * NICHD (percentiles for HC, BPD, AC, FL, EFW).
 
 - `constants.py`
-   Defines ontology mappings (e.g. HPO_MICROCEPHALY = HP:0000252).
+  Defines ontology mappings (e.g. HPO_MICROCEPHALY = HP:0000252).
 
 - `qc/` (planned)
-   Will validate completeness, gestational ages, duplicate measures, and flag out-of-range data.
+  Will validate completeness, gestational ages, duplicate measures, and flag out-of-range data.
 
 - `phenopacket_builder/` (planned)
-   Will convert parsed + annotated measurements into full [GA4GH Phenopacket v2](https://phenopacket-schema.readthedocs.io/en/latest/) JSONs.
+  Will convert parsed + annotated measurements into full [GA4GH Phenopacket v2](https://phenopacket-schema.readthedocs.io/en/latest/) JSONs.
 
 Together:
 **Inputs -> parsed measurements -> percentile/z-score lookup -> abnormality detection (HPO terms) -> structured Phenopacket**
@@ -157,6 +259,13 @@ Our mapping strategy combines biometric reference lookups with ontology terms:
 This ensures **machine-readable, clinically valid prenatal phenotyping** from raw sonography.
 
 -------------------------------------------------------------------------------
+## Phenotypic Export Layer
+-------------------------------------------------------------------------------
+Integrates `MeasurementResult` and `TermObservation` objects into GA4GH Phenopacket v2 JSONs.
+Implements structured provenance, ontology versioning, and per-feature gestational context.
+Unit tested in `tests/test_phenotypic_export.py`.
+
+-------------------------------------------------------------------------------
 ## Example Usage
 -------------------------------------------------------------------------------
 ```python
@@ -166,9 +275,9 @@ from prenatalppkt.biometry_reference import FetalGrowthPercentiles
 fg = FetalGrowthPercentiles(source="intergrowth")
 
 measure = BiometryMeasurement(
-   measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-   gestational_age_weeks=22,
-   value_mm=196.3,
+  measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
+  gestational_age_weeks=22,
+  value_mm=196.3,
 )
 
 percentile, hpo = measure.percentile_and_hpo(reference=fg)
@@ -179,7 +288,7 @@ print(percentile, hpo)
 
 -------------------------------------------------------------------------------
 ## Example Usage of Measurement Layer
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------  
 
 ```python
 from prenatalppkt.gestational_age import GestationalAge
@@ -242,6 +351,8 @@ Current documentation covers:
 Future documentation planned:
 - Input parsers
 - QC pipeline
+  - **QC reports** per input record with structured issues
+  - **Optional flat CSV** with per-fetus features for downstream analysis
 - End-to-end phenopacket export
 - CLI quick start guide
 
