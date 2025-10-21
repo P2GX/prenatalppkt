@@ -48,56 +48,6 @@ No command-line interface is provided in this release.
 ## Simple Architecture
 -------------------------------------------------------------------------------
 
-         +-----------------------+
-         | Input JSON / XLSX     |
-         +-----------------------+
-                   |
-                   v
-         +-----------------------+
-         | Parser Layer          |
-         | - Extracts GA, HC,    |
-         |   BPD, AC, FL, OFD    |
-         +-----------------------+
-                   |
-                   v
-         +-----------------------+
-         | Reference Lookup      |
-         | - FetalGrowthPercent  |
-         |   loads NIHCD/IG21st  |
-         | - Percentile/Z-score  |
-         +-----------------------+
-                   |
-                   v
-         +-----------------------+
-         | BiometryMeasurement   |
-         | - Maps values to HPO  |
-         | - Flags abnormalities |
-         +-----------------------+
-                   |
-                   v
-         +-----------------------+
-         | Phenopacket Builder   |
-         | - JSON assembly       |
-         | - Metadata/QC log     |
-         +-----------------------+
-                   |
-          +--------+--------+
-          |                 |
-          v                 v
- +----------------+   +----------------+
- | QC Reports     |   | Phenopackets   |
- +----------------+   +----------------+
-
-New:
-- `phenotypic_export.py` implements final Phenopacket generation.
-- Ontology mappings now dynamically loaded from YAML.
-
-Optional: extract flat CSV for statistical analysis.
-
--------------------------------------------------------------------------------
-## Technical Flowchart and Diagrams
--------------------------------------------------------------------------------
-
 ```mermaid
 flowchart TD
     subgraph Input["Input Processing"]
@@ -363,6 +313,45 @@ Future documentation planned:
 -------------------------------------------------------------------------------
 ## Rough Roadmap
 -------------------------------------------------------------------------------
+
+```mermaid
+sequenceDiagram
+    participant Caller as "Caller / CLI / Test"
+    participant GA as "GestationalAge"
+    participant FG as "FetalGrowthPercentiles"
+    participant RR as "ReferenceRange"
+    participant MR as "MeasurementResult"
+    participant Exporter as "PhenotypicExporter"
+    participant YAML as "biometry_hpo_mappings.yaml"
+    participant TO as "TermObservation"
+    participant Builder as "PhenopacketBuilder"
+    participant Output as "Phenopacket / JSON"
+
+    Caller->>GA: GestationalAge.from_weeks(weeks_float)
+    GA-->>Caller: GestationalAge(weeks, days)
+    Caller->>FG: FetalGrowthPercentiles.get_row(GA)
+    FG-->>Caller: thresholds (3p,5p,10p,50p,90p,95p,97p)
+    Caller->>RR: ReferenceRange(GA, thresholds)
+    Caller->>RR: RR.evaluate(value_mm)
+    RR-->>MR: MeasurementResult(bin_key)
+    Caller->>Exporter: Exporter.evaluate_and_export(measurement_type, MR, GA)
+    Exporter->>YAML: load mappings for measurement_type
+    YAML-->>Exporter: {bins, normal_bins, abnormal_term}
+    Exporter->>Exporter: decision:
+    alt child HPO exists for MR.bin_key
+        Exporter->>TO: TermObservation(child_hpo, observed=True, excluded=False, GA, note)
+        TO-->>Exporter: phenotypic_feature_dict
+    else MR.bin_key in normal_bins
+        Exporter->>TO: TermObservation(abnormal_term, observed=False, excluded=True, GA, note)
+        TO-->>Exporter: phenotypic_feature_dict
+    else unmapped / abnormal-but-no-child
+        Exporter->>TO: TermObservation(abnormal_term or None, observed=True/False per policy, GA, note)
+        TO-->>Exporter: phenotypic_feature_dict
+    end
+    Exporter->>Builder: PhenopacketBuilder.add(phenotypic_feature_dict)
+    Builder-->>Output: Phenopacket JSON
+
+```
 
 ```mermaid
 sequenceDiagram
