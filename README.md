@@ -484,3 +484,122 @@ flowchart TD
    EXPORT --> CSV
 
 ```
+
+```mermaid
+classDiagram
+   %% -------------------------------
+   %% Core Biometry + Parsing Layer
+   %% -------------------------------
+   class BiometryMeasurement {
+       + measurement_type: BiometryType
+       + gestational_age_weeks: float
+       + value_mm: float
+       + percentile_and_hpo(reference)
+   }
+
+   class BiometryType {
+       <<Enum>>
+       + HEAD_CIRCUMFERENCE
+       + BIPARIETAL_DIAMETER
+       + ABDOMINAL_CIRCUMFERENCE
+       + FEMUR_LENGTH
+       + OCCIPITOFRONTAL_DIAMETER
+       + ESTIMATED_FETAL_WEIGHT
+   }
+
+   class FetalGrowthPercentiles {
+       + source: str
+       + load_tables()
+       + get_percentile(measurement_type, ga, value)
+       + get_zscore(measurement_type, ga, value)
+   }
+
+   class GestationalAge {
+       + weeks: int
+       + days: int
+       + from_weeks(weeks: float)
+       + to_days() float
+       + __str__()
+   }
+
+   %% -------------------------------
+   %% Measurement Evaluation Layer
+   %% -------------------------------
+   class ReferenceRange {
+       + gestational_age: GestationalAge
+       + percentiles: list[float]
+       + evaluate(value: float) -> MeasurementResult
+   }
+
+   class MeasurementResult {
+       + bin_key: str
+       + percentile_range: tuple
+       + is_normal(): bool
+       + is_abnormal(): bool
+   }
+
+   class SonographicMeasurement {
+       <<abstract>>
+       + evaluate(ga, measurement_value, reference_range) -> TermObservation
+       + measurement_type(): str
+   }
+
+   class BiparietalDiameterMeasurement {
+       + measurement_type(): "BPD"
+   }
+
+   class FemurLengthMeasurement {
+       + measurement_type(): "FL"
+   }
+
+   SonographicMeasurement <|-- BiparietalDiameterMeasurement
+   SonographicMeasurement <|-- FemurLengthMeasurement
+   SonographicMeasurement *-- ReferenceRange
+   SonographicMeasurement *-- MeasurementResult
+   SonographicMeasurement *-- GestationalAge
+
+   %% -------------------------------
+   %% Ontology & Mapping Layer
+   %% -------------------------------
+   class TermObservation {
+       + hpo_id: str
+       + hpo_label: str
+       + observed: bool
+       + gestational_age: GestationalAge
+       + to_phenotypic_feature()
+   }
+
+   class BiometryHpoMappings {
+       + load_from_yaml(file_path)
+       + get_term(measurement_type, bin_key)
+   }
+
+   TermObservation --> BiometryHpoMappings
+
+   %% -------------------------------
+   %% Phenotypic Export & QC Layer
+   %% -------------------------------
+   class PhenotypicExporter {
+       + evaluate_and_export(measurement, reference)
+       + build_phenopacket(term_observations)
+       + to_json()
+   }
+
+   class QCValidator {
+       + validate_schema(json)
+       + validate_ontology_terms()
+       + check_completeness()
+   }
+
+   PhenotypicExporter *-- TermObservation
+   PhenotypicExporter *-- BiometryHpoMappings
+   PhenotypicExporter *-- QCValidator
+
+   %% -------------------------------
+   %% Dependencies
+   %% -------------------------------
+   BiometryMeasurement *-- FetalGrowthPercentiles
+   BiometryMeasurement *-- BiometryType
+   BiometryMeasurement *-- PhenotypicExporter
+
+```
