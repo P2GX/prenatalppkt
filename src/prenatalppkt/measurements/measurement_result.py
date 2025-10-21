@@ -137,38 +137,6 @@ class MeasurementResult:
             (Percentile.Ninetyseventh, None): "high",
         }
 
-    # ------------------------------------------------------------------ #
-    # Legacy classification helpers (commented-out placeholders)
-    # ------------------------------------------------------------------ #
-    # TODO(@VarenyaJ): After feedback, this classification logic should be handled
-    # by ontology/config layers. These methods are commented out for now. I plan to
-    # remove them later when we have implemented them properly.
-
-    # def is_below_extreme(self) -> bool:
-    #     """
-    #     Categorize a biometric value as less than 3rd percentile.
-    #     """
-    #     return self._upper == Percentile.Third
-
-    # def is_above_extreme(self) -> bool:
-    #     """
-    #     Categorize a biometric value as more than 97th percentile.
-    #     """
-    #     return self._lower == Percentile.Ninetyseventh
-
-    # def is_abnormal(self) -> bool:
-    #     """
-    #     Return True if the measurement is within a mildly abnormal range:
-    #     - 3rd-10th percentile (including 3-5, 5-10)
-    #     - 90th-97th percentile (including 90-95, 95-97)
-    #     """
-    #     return self._lower in {
-    #         Percentile.Third,
-    #         Percentile.Fifth,
-    #         Percentile.Ninetieth,
-    #         Percentile.Ninetyfifth,
-    #     }
-
     def __repr__(self) -> str:
         """Developer-friendly string representation."""
         lower = self._lower.name if self._lower else "None"
