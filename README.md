@@ -358,3 +358,129 @@ Future documentation planned:
 
 ### CLI quick start (planned):
  prenatalppkt parse --input mydata.xlsx --output outdir/
+
+
+-------------------------------------------------------------------------------
+## Rough Roadmap
+-------------------------------------------------------------------------------
+
+```mermaid
+sequenceDiagram
+   participant Input as Input File (JSON / ViewPoint .xlsx)
+   participant Parser as biometry.py / parse_viewpoint.py (planned)
+   participant GA as gestational_age.py
+   participant Ref as biometry_reference.py
+   participant Eval as measurements/sonographic_measurement.py
+   participant Result as measurements/measurement_result.py
+   participant Range as measurements/reference_range.py
+   participant Obs as term_observation.py
+   participant Map as data/mappings/biometry_hpo_mappings.yaml
+   participant Export as phenotypic_export.py
+   participant QC as qc/validator.py (planned)
+   participant Out as Phenopacket JSON Output
+
+   %% Input & Parsing
+   Input->>Parser: Load prenatal sonography JSON/XLSX
+   Parser->>GA: Derive GestationalAge (weeks + days)
+   Parser->>Eval: Pass raw measurements (HC, BPD, AC, FL, OFD)
+   
+   %% Reference Loading
+   Eval->>Ref: Request growth reference data (NIHCD/INTERGROWTH)
+   Ref-->>Eval: Return percentile thresholds + z-score model
+
+   %% Evaluation
+   Eval->>Range: Create ReferenceRange object
+   Range-->>Eval: Provide percentile cutoffs
+   Eval->>Result: Evaluate measurement value vs range
+   Result-->>Eval: Return percentile bin (e.g., "<3rd", "50th", ">97th")
+
+   %% Ontology Mapping
+   Eval->>Obs: Create TermObservation wrapper
+   Obs->>Map: Lookup HPO term for measurement type + bin
+   Map-->>Obs: Return ontology ID + label (e.g., HP:0003097 "Short femur")
+
+   %% Export
+   Obs->>Export: Send annotated TermObservation
+   Export->>Export: Build Phenopacket v2-compliant JSON
+   Export->>QC: Validate schema, completeness, and ontology consistency
+   QC-->>Export: Return QC results and provenance
+
+   %% Output
+   Export-->>Out: Write Phenopacket JSON + QC report to output directory
+
+
+```
+
+```mermaid
+flowchart TD
+
+   subgraph Input["Input Sources"]
+       JSON["data/EVMS_SAMPLE.json"]
+       XLSX["ViewPoint Excel (.xlsx)"]
+   end
+
+   subgraph Parsing["1 Parsing & Measurement Entry"]
+       PARSER["biometry.py / parse_viewpoint.py (planned)
+       o Reads JSON/XLSX
+       o Extracts GA, HC, BPD, AC, FL, OFD"]
+       GA["gestational_age.py
+       o Represents GA in weeks + days"]
+   end
+
+   subgraph Reference["2 Reference Standards"]
+       REF["biometry_reference.py
+       o Loads NIHCD & INTERGROWTH-21st tables
+       o Computes percentile/z-score"]
+   end
+
+   subgraph Measurements["3 Measurement Evaluation"]
+       RANGE["measurements/reference_range.py
+       o Encapsulates percentile cutoffs"]
+       RESULT["measurements/measurement_result.py
+       o Determines percentile bin"]
+       EVAL["measurements/sonographic_measurement.py
+       o Abstract class for HC, FL, BPD, AC, OFD
+       o Calls evaluate() on each subclass"]
+       SUB1["measurements/bpd_measurement.py"]
+       SUB2["measurements/femur_length_measurement.py"]
+   end
+
+   subgraph Ontology["4 Ontology Mapping"]
+       OBS["term_observation.py
+       o Wraps MeasurementResult in ontology term"]
+       YAML["data/mappings/biometry_hpo_mappings.yaml
+       o Defines percentile->HPO mapping"]
+   end
+
+   subgraph Export["5 Phenotypic Export"]
+       EXPORT["phenotypic_export.py
+       o Converts TermObservations to
+       o Phenopacket v2 JSON"]
+   end
+
+   subgraph QC["6 Quality Control (Planned)"]
+       VALID["qc/validator.py
+       o Validates schema, ontology, completeness"]
+   end
+
+   subgraph Output["7 Outputs"]
+       PP["Phenopackets (v2 JSON)"]
+       CSV["Optional flat CSV summary"]
+       LOGS["QC reports + provenance"]
+   end
+
+   %% Connections
+   JSON --> PARSER
+   XLSX --> PARSER
+   PARSER --> GA
+   PARSER --> REF
+   REF --> EVAL
+   EVAL --> RANGE --> RESULT --> OBS
+   OBS --> YAML
+   OBS --> EXPORT
+   EXPORT --> VALID
+   VALID --> PP
+   VALID --> LOGS
+   EXPORT --> CSV
+
+```
