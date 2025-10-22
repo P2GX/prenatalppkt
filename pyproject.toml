@@ -48,7 +48,7 @@ documentation = "https://github.com/P2GX/prenatalppkt/"
 bugtracker = "https://github.com/P2GX/prenatalppkt/issues"
 
 [project.scripts]
-fetalpackets = "prenatalppkt.cli:main"
+prenatalppkt = "prenatalppkt.cli:main"
 
 [tool.setuptools.dynamic.optional-dependencies]
 test = {file = ["requirements/requirements_test.txt"]}
