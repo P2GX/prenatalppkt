@@ -24,4 +24,6 @@ jobs:
       - run: pip install pillow cairosvg
       - run: pip install mkdocs-gen-files
       - run: pip install mkdocstrings[python]
+      - name: Install package
+        run: pip install -e .
       - run: mkdocs gh-deploy --force
