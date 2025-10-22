@@ -6,7 +6,8 @@ class MeasurementResult:
     """
     Represents the outcome of comparing a measured biometric value against percentile reference thresholds.
 
-    A MeasurementResult does not store the raw measurement; it only encodes the percentile bin in which the measurement falls. Higher-level evaluators should interpret whether an HPO term applies based on the metric considered as well as reference ranges.
+    A MeasurementResult does not store the raw measurement; it only encodes the percentile bin in which the measurement falls.
+    Higher-level evaluators should interpret whether an HPO term applies based on the metric considered as well as reference ranges.
     """
 
     _lower: typing.Optional[Percentile]
@@ -32,7 +33,11 @@ class MeasurementResult:
     @property
     def bin_key(self) -> str:
         """
-        Return a canonical bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p') that identifies the percentile interval of this measurement result. This property is used by higher-level evaluators (e.g., SonographicMeasurement) to map percentile ranges to HPO term categories.
+        Return a canonical bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p')
+        that identifies the percentile interval of this measurement result.
+
+        This property is used by higher-level evaluators (e.g., SonographicMeasurement)
+        to map percentile ranges to HPO term categories.
         """
         mapping = {
             (None, Percentile.Third): "below_3p",
@@ -51,42 +56,42 @@ class MeasurementResult:
     @staticmethod
     def below_3p() -> "MeasurementResult":
         """
-        Percentile bin for less than 3rd Percentile
+        Percentile bin for less than 3rd Percentile.
         """
         return MeasurementResult(lower=None, upper=Percentile.Third)
 
     @staticmethod
     def between_3p_5p() -> "MeasurementResult":
         """
-        Percentile bin for between 3rd and 5th Percentiles
+        Percentile bin for between 3rd and 5th Percentiles.
         """
         return MeasurementResult(lower=Percentile.Third, upper=Percentile.Fifth)
 
     @staticmethod
     def between_5p_10p() -> "MeasurementResult":
         """
-        Percentile bin for between 5th and 10th Percentiles
+        Percentile bin for between 5th and 10th Percentiles.
         """
         return MeasurementResult(lower=Percentile.Fifth, upper=Percentile.Tenth)
 
     @staticmethod
     def between_10p_50p() -> "MeasurementResult":
         """
-        Percentile bin for between 10th and 50th Percentiles
+        Percentile bin for between 10th and 50th Percentiles.
         """
         return MeasurementResult(lower=Percentile.Tenth, upper=Percentile.Fiftieth)
 
     @staticmethod
     def between_50p_90p() -> "MeasurementResult":
         """
-        Percentile bin for between 50th and 90th Percentiles
+        Percentile bin for between 50th and 90th Percentiles.
         """
         return MeasurementResult(lower=Percentile.Fiftieth, upper=Percentile.Ninetieth)
 
     @staticmethod
     def between_90p_95p() -> "MeasurementResult":
         """
-        Percentile bin for between 90th and 95th Percentiles
+        Percentile bin for between 90th and 95th Percentiles.
         """
         return MeasurementResult(
             lower=Percentile.Ninetieth, upper=Percentile.Ninetyfifth
@@ -95,7 +100,7 @@ class MeasurementResult:
     @staticmethod
     def between_95p_97p() -> "MeasurementResult":
         """
-        Percentile bin for between 95th and 97th Percentiles
+        Percentile bin for between 95th and 97th Percentiles.
         """
         return MeasurementResult(
             lower=Percentile.Ninetyfifth, upper=Percentile.Ninetyseventh
@@ -104,32 +109,33 @@ class MeasurementResult:
     @staticmethod
     def above_97p() -> "MeasurementResult":
         """
-        Percentile bin for more than 97th Percentile
+        Percentile bin for more than 97th Percentile.
         """
         return MeasurementResult(lower=Percentile.Ninetyseventh, upper=None)
 
-        # TODO(@VarenyaJ): After feedback, this classification logic should be handled by ontology/config layers. These methods are commented out for now. I plan to remove them later when we have impletemented them
-        # --- Logical Classification helpers --- #
+    # ------------------------------------------------------------------ #
+    # Default qualitative interpretation (simple 3-bin fallback)
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def default_interpretation() -> typing.Dict[
+        typing.Tuple[typing.Optional["Percentile"], typing.Optional["Percentile"]], str
+    ]:
+        """
+        Return a minimal default mapping from percentile intervals to qualitative labels.
 
-        # def is_below_extreme(self) -> bool:
-        """
-        Categorize a biometric value as less than 3rd percentile
-        """
-        # return self._upper == Percentile.Third
+        This is a placeholder used by some early subclasses or experimental adapters
+        (e.g., mapping only 'low' or 'high' extremes). The canonical eight-bin mapping
+        and HPO assignment logic now live in YAML and `TermObservation`.
 
-        # def is_above_extreme(self) -> bool:
+        Returns
+        -------
+        dict
+            Mapping of (lower, upper) percentile tuple -> label string.
         """
-        Categorize a biometric value as more than 97th percentile
-        """
-        # return self._lower == Percentile.Ninetyseventh
-
-        # def is_abnormal(self) -> bool:
-        """
-        Return True if the measurement is within a mildly abnormal range:
-        - 3rd–10th percentile (including 3–5, 5–10)
-        - 90th–97th percentile (including 90–95, 95–97)
-        """
-        # return self._lower in {Percentile.Third, Percentile.Fifth, Percentile.Ninetieth, Percentile.Ninetyfifth}
+        return {
+            (None, Percentile.Third): "low",
+            (Percentile.Ninetyseventh, None): "high",
+        }
 
     def __repr__(self) -> str:
         """Developer-friendly string representation."""
