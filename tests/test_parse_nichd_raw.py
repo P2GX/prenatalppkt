@@ -23,6 +23,7 @@ def test_parse_line_valid_line():
     """Parse a valid line into GA, race, measure, and percentiles."""
     line = "20 White Abdominal Circ 120 140 160 180 200 220 240"
     row = nichd.parse_line(line)
+    assert row is not None
     assert row[0] == "20"  # GA
     assert row[1] == "White"  # race
     assert "Abdominal" in row[2]  # measure normalized

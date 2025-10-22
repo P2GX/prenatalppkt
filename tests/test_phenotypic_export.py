@@ -23,19 +23,19 @@ from prenatalppkt.phenotypic_export import PhenotypicExporter
 
 
 @pytest.fixture(params=["intergrowth", "nichd"])
-def exporter(request):
+def exporter(request) -> PhenotypicExporter:
     """Provide exporter for both reference sources."""
     return PhenotypicExporter(source=request.param)
 
 
 @pytest.fixture
-def intergrowth_exporter():
+def intergrowth_exporter() -> PhenotypicExporter:
     """INTERGROWTH-specific exporter for tests requiring that source."""
     return PhenotypicExporter(source="intergrowth")
 
 
 @pytest.fixture
-def nichd_exporter():
+def nichd_exporter() -> PhenotypicExporter:
     """NICHD-specific exporter for tests requiring that source."""
     return PhenotypicExporter(source="nichd")
 

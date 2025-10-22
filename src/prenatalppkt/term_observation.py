@@ -85,6 +85,7 @@ even if percentile data are unavailable (e.g., clinician-reviewed cases).
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Set
+import typing
 from hpotk import MinimalTerm
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.measurement_result import MeasurementResult
@@ -215,7 +216,7 @@ class TermObservation:
     #        return {"excluded": True, "description": "Measurement within normal range for gestational age", "description": f"Measurement within normal range for gestational age ({self.gestational_age.weeks}w{self.gestational_age.days}d)"}
     #    return {"type": {"id": self.hpo_id, "label": self.hpo_label}, "excluded": not self.observed, "description": f"Measurement at {self.gestational_age.weeks}w{self.gestational_age.days}d"}
 
-    def to_phenotypic_feature(self) -> dict:
+    def to_phenotypic_feature(self) -> typing.Dict[str, str]:
         """Serialize to a Phenopacket-style dictionary."""
         ga_str = f"{self.gestational_age.weeks}w{self.gestational_age.days}d"
 

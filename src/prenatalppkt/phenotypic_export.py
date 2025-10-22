@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Dict, Optional, Set, List
+import typing
 import yaml
 import json
 
@@ -119,7 +120,7 @@ class PhenotypicExporter:
         gestational_age_weeks: float,
         population: Optional[str] = None,
         normal_bins: Optional[Set[str]] = None,
-    ) -> dict:
+    ) -> typing.Dict[str,str]:
         """
         Evaluate a fetal biometric measurement and export as Phenopacket-style dict.
 
