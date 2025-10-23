@@ -22,6 +22,15 @@
 #     bins:
 #       <bin_key>: {id: "...", label: "..."} or null
 
+# "below_3p": lower_extreme_term,
+# "between_3p_5p": lower_term,
+# "between_5p_10p": abnormal_term,
+# "between_10p_50p": normal_term,
+# "between_50p_90p": normal_term,
+# "between_90p_95p": abnormal_term,
+# "between_95p_97p": upper_term,
+# "above_97p": upper_extreme_term,
+
 
 head_circumference:
  abnormal_term:
