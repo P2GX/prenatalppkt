@@ -120,7 +120,7 @@ class PhenotypicExporter:
         gestational_age_weeks: float,
         population: Optional[str] = None,
         normal_bins: Optional[Set[str]] = None,
-    ) -> typing.Dict[str,str]:
+    ) -> typing.Dict[str, str]:
         """
         Evaluate a fetal biometric measurement and export as Phenopacket-style dict.
 
