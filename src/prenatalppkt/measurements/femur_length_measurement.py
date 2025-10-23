@@ -13,7 +13,7 @@ from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
 
 
-class FemurLengthMeasurement(SonographicMeasurement):
+class FemurLengthMeasurement(SonographicMeasurement, measurement_type="femur_length"):
     """
     Represents a sonographic measurement of fetal femur length (FL).
 
