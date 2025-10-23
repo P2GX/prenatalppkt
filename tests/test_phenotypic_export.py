@@ -1,393 +1,348 @@
 """
-test_phenotypic_export.py
+tests/test_phenotypic_export.py
 
-Comprehensive test suite for the PhenotypicExporter class.
+Comprehensive test suite for PhenotypicExporter.
 
-Tests cover:
-1. Correct percentile → HPO term mappings
-2. Normal results marked as excluded=True
-3. Abnormal bins produce correct HPO IDs and labels
-4. Behavior when percentile data missing
-5. Batch export functionality
-6. JSON serialization
+Ensures correct:
+- YAML-based HPO term mapping
+- Normal vs abnormal logic (observed/excluded)
+- Custom normal bin overrides
+- Batch and JSON export
+- Compatibility with INTERGROWTH and NICHD sources
+- Initialization and error-handling behavior
 """
 
-import pytest
 import json
+import pytest
 from prenatalppkt.phenotypic_export import PhenotypicExporter
+from prenatalppkt.term_observation import TermObservation
 
 
-# ------------------------------------------------------------------ #
-# Fixtures
-# ------------------------------------------------------------------ #
+# ---------------------------------------------------------------------- #
+# FIXTURES
+# ---------------------------------------------------------------------- #
 
 
-@pytest.fixture(params=["intergrowth", "nichd"])
-def exporter(request) -> PhenotypicExporter:
-    """Provide exporter for both reference sources."""
-    return PhenotypicExporter(source=request.param)
-
-
-@pytest.fixture
-def intergrowth_exporter() -> PhenotypicExporter:
-    """INTERGROWTH-specific exporter for tests requiring that source."""
+@pytest.fixture(scope="module")
+def intergrowth_exporter():
     return PhenotypicExporter(source="intergrowth")
 
 
-@pytest.fixture
-def nichd_exporter() -> PhenotypicExporter:
-    """NICHD-specific exporter for tests requiring that source."""
+@pytest.fixture(scope="module")
+def nichd_exporter():
     return PhenotypicExporter(source="nichd")
 
 
-# ------------------------------------------------------------------ #
-# Basic Functionality Tests
-# ------------------------------------------------------------------ #
-
-
-def test_exporter_initialization():
-    """Verify exporter initializes correctly with default settings."""
-    exporter = PhenotypicExporter(source="intergrowth")
-    assert exporter.source == "intergrowth"
-    assert exporter.reference is not None
-    assert exporter.mappings is not None
-    assert "between_10p_50p" in exporter.normal_bins
-    assert "between_50p_90p" in exporter.normal_bins
-
-
-def test_invalid_source_raises_error():
-    """Unsupported reference sources should raise ValueError."""
-    with pytest.raises(ValueError, match="Unsupported source"):
-        PhenotypicExporter(source="invalid_source")
-
-
-# ------------------------------------------------------------------ #
-# Head Circumference Tests
-# ------------------------------------------------------------------ #
-
-
-def test_hc_microcephaly_detected(intergrowth_exporter):
-    """Values below 3rd percentile should map to Microcephaly (HP:0000252)."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="head_circumference",
-        value_mm=85.0,  # Well below 3rd percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["type"]["id"] == "HP:0000252"
-    assert result["type"]["label"] == "Microcephaly"
-    assert result["excluded"] is False
-    assert "14w0d" in result["description"]
-
-
-def test_hc_macrocephaly_detected(intergrowth_exporter):
-    """Values above 97th percentile should map to Macrocephaly (HP:0000256)."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="head_circumference",
-        value_mm=110.0,  # Above 97th percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["type"]["id"] == "HP:0000256"
-    assert result["type"]["label"] == "Macrocephaly"
-    assert result["excluded"] is False
-
-
-def test_hc_normal_range_excluded(intergrowth_exporter):
-    """Normal HC values (10th-90th percentile) should be marked excluded."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="head_circumference",
-        value_mm=97.9,  # Median (50th percentile) at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["excluded"] is True
-    assert "normal range" in result["description"]
-
-
-# ------------------------------------------------------------------ #
-# Femur Length Tests
-# ------------------------------------------------------------------ #
-
-
-def test_fl_short_femur_detected(intergrowth_exporter):
-    """Values below 3rd percentile should map to Short femur (HP:0011428)."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="femur_length",
-        value_mm=10.0,  # Below 3rd percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["type"]["id"] == "HP:0011428"
-    assert "Short fetal femur length" in result["type"]["label"]
-    assert result["excluded"] is False
-
-
-def test_fl_normal_range(intergrowth_exporter):
-    """Normal FL values should be marked excluded."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="femur_length",
-        value_mm=13.1,  # Median at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["excluded"] is True
-
-
-# ------------------------------------------------------------------ #
-# Biparietal Diameter Tests
-# ------------------------------------------------------------------ #
-
-
-def test_bpd_decreased_width(intergrowth_exporter):
-    """BPD below 3rd percentile maps to Decreased skull width."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="biparietal_diameter",
-        value_mm=25.0,  # Below 3rd percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["type"]["id"] == "HP:0005484"
-    assert "Secondary microcephaly" in result["type"]["label"]
-    assert result["excluded"] is False
-
-
-def test_bpd_increased_width(intergrowth_exporter):
-    """BPD above 97th percentile maps to Increased skull width."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="biparietal_diameter",
-        value_mm=34.0,  # Above 97th percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["type"]["id"] == "HP:0005490"
-    assert "Postnatal macrocephaly" in result["type"]["label"]
-    assert result["excluded"] is False
-
-
-# ------------------------------------------------------------------ #
-# Abdominal Circumference Tests
-# ------------------------------------------------------------------ #
-
-
-def test_ac_decreased(intergrowth_exporter):
-    """AC below 3rd percentile maps to Decreased abdominal circumference."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="abdominal_circumference",
-        value_mm=70.0,  # Below 3rd percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["type"]["id"] == "HP:6000339"
-    assert "Small fetal abdominal circumference" in result["type"]["label"]
-    assert result["excluded"] is False
-
-
-# ------------------------------------------------------------------ #
-# Edge Cases and Error Handling
-# ------------------------------------------------------------------ #
-
-
-def test_missing_reference_data_raises_error(intergrowth_exporter):
-    """GA outside reference range should raise ValueError."""
-    with pytest.raises(ValueError, match="No reference data"):
-        intergrowth_exporter.evaluate_and_export(
-            measurement_type="head_circumference",
-            value_mm=100.0,
-            gestational_age_weeks=50,  # Outside valid range
-        )
-
-
-def test_unsupported_measurement_type_raises_error(intergrowth_exporter):
-    """Invalid measurement types should raise ValueError."""
-    with pytest.raises(ValueError, match="not available"):
-        intergrowth_exporter.evaluate_and_export(
-            measurement_type="invalid_measurement",
-            value_mm=100.0,
-            gestational_age_weeks=20,
-        )
-
-
-def test_fractional_gestational_age(intergrowth_exporter):
-    """Fractional GA should be handled correctly."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type="head_circumference",
-        value_mm=172.5,  # Median at 20 weeks
-        gestational_age_weeks=20.86,
-    )
-
-    assert "20w6d" in result["description"]
-
-
-# ------------------------------------------------------------------ #
-# Custom Normal Bins
-# ------------------------------------------------------------------ #
-
-
-def test_custom_normal_bins():
-    """Custom normal bin definitions should override defaults."""
-    exporter = PhenotypicExporter(
-        source="intergrowth",
-        normal_bins={
-            "between_5p_10p",
-            "between_10p_50p",
-            "between_50p_90p",
-            "between_90p_95p",
-        },
-    )
-
-    # Value in 5th-10th percentile should now be "normal"
-    result = exporter.evaluate_and_export(
-        measurement_type="head_circumference",
-        value_mm=91.0,  # ~5th-10th percentile at 14 weeks
-        gestational_age_weeks=14,
-    )
-
-    assert result["excluded"] is True
-
-
-# ------------------------------------------------------------------ #
-# Batch Export Tests
-# ------------------------------------------------------------------ #
-
-
-def test_batch_export_multiple_measurements(intergrowth_exporter):
-    """Batch export should process multiple measurements correctly."""
-    measurements = [
-        {
-            "measurement_type": "head_circumference",
-            "value_mm": 97.9,
-            "gestational_age_weeks": 14,
-        },
-        {
-            "measurement_type": "femur_length",
-            "value_mm": 13.1,
-            "gestational_age_weeks": 14,
-        },
-        {
-            "measurement_type": "biparietal_diameter",
-            "value_mm": 29.6,
-            "gestational_age_weeks": 14,
-        },
-    ]
-
-    results = intergrowth_exporter.batch_export(measurements)
-
-    assert len(results) == 3
-    assert all("excluded" in r for r in results)
-    assert all(r["excluded"] is True for r in results)  # All normal
-
-
-def test_batch_export_handles_errors(intergrowth_exporter):
-    """Batch export should handle individual failures gracefully."""
-    measurements = [
-        {
-            "measurement_type": "head_circumference",
-            "value_mm": 97.9,
-            "gestational_age_weeks": 14,
-        },
-        {
-            "measurement_type": "invalid_type",
-            "value_mm": 100.0,
-            "gestational_age_weeks": 20,
-        },
-    ]
-
-    results = intergrowth_exporter.batch_export(measurements)
-
-    assert len(results) == 2
-    assert "excluded" in results[0]  # First succeeded
-    assert "error" in results[1]  # Second failed
-
-
-# ------------------------------------------------------------------ #
-# JSON Serialization Tests
-# ------------------------------------------------------------------ #
-
-
-def test_to_json_valid_format(intergrowth_exporter):
-    """JSON export should produce valid, parseable JSON."""
-    measurements = [
-        {
-            "measurement_type": "head_circumference",
-            "value_mm": 85.0,
-            "gestational_age_weeks": 14,
-        }
-    ]
-
-    json_str = intergrowth_exporter.to_json(measurements, pretty=True)
-
-    # Should be valid JSON
-    parsed = json.loads(json_str)
-    assert isinstance(parsed, list)
-    assert len(parsed) == 1
-    assert parsed[0]["type"]["id"] == "HP:0000252"
-
-
-def test_to_json_pretty_formatting(intergrowth_exporter):
-    """Pretty JSON should include indentation."""
-    measurements = [
-        {
-            "measurement_type": "head_circumference",
-            "value_mm": 97.9,
-            "gestational_age_weeks": 14,
-        }
-    ]
-
-    json_str = intergrowth_exporter.to_json(measurements, pretty=True)
-
-    assert "\n" in json_str  # Contains newlines
-    assert "  " in json_str  # Contains indentation
-
-
-def test_to_json_compact_formatting(intergrowth_exporter):
-    """Compact JSON should be single-line."""
-    measurements = [
-        {
-            "measurement_type": "head_circumference",
-            "value_mm": 97.9,
-            "gestational_age_weeks": 14,
-        }
-    ]
-
-    json_str = intergrowth_exporter.to_json(measurements, pretty=False)
-
-    # Should be compact (no unnecessary whitespace)
-    parsed = json.loads(json_str)
-    assert len(parsed) == 1
-
-
-# ------------------------------------------------------------------ #
-# NICHD-Specific Tests
-# ------------------------------------------------------------------ #
-
-
-def test_nichd_source_works(nichd_exporter):
-    """NICHD reference data should work for supported measurements."""
-    result = nichd_exporter.evaluate_and_export(
-        measurement_type="head_circumference", value_mm=120.0, gestational_age_weeks=20
-    )
-
-    # Should successfully evaluate (result structure validated elsewhere)
-    assert "excluded" in result
-
-
-@pytest.mark.parametrize(
-    "measurement_type",
-    [
+# ---------------------------------------------------------------------- #
+# INITIALIZATION + BASIC SANITY CHECKS
+# ---------------------------------------------------------------------- #
+
+
+def test_exporter_initialization(intergrowth_exporter):
+    """Exporter initializes with proper reference tables and mappings."""
+    assert intergrowth_exporter.source == "intergrowth"
+    assert hasattr(intergrowth_exporter, "reference")
+    assert hasattr(intergrowth_exporter, "mappings")
+    assert isinstance(intergrowth_exporter.mappings, dict)
+    # Check at least the five core measurement types are present
+    expected_keys = {
         "head_circumference",
         "biparietal_diameter",
         "femur_length",
         "abdominal_circumference",
-    ],
-)
-def test_all_core_measurements_supported(intergrowth_exporter, measurement_type):
-    """All core measurements should have mappings and reference data."""
-    result = intergrowth_exporter.evaluate_and_export(
-        measurement_type=measurement_type,
-        value_mm=100.0,  # Arbitrary value
-        gestational_age_weeks=20,
-    )
+        "occipitofrontal_diameter",
+    }
+    assert expected_keys.issubset(intergrowth_exporter.mappings.keys())
+    # Reference tables must include these too
+    assert all(k in intergrowth_exporter.reference.tables for k in expected_keys)
 
-    assert "excluded" in result
-    assert "description" in result
+
+def test_invalid_source_raises_error():
+    """Invalid exporter source should raise a ValueError."""
+    with pytest.raises(ValueError):
+        PhenotypicExporter(source="invalid_source_name")
+
+
+def test_fractional_gestational_age(intergrowth_exporter):
+    """Fractional gestational ages (e.g. 14.3w) should round correctly to reference table rows."""
+    f = intergrowth_exporter.evaluate_to_observation(
+        "head_circumference", 100.0, 14.3
+    ).to_phenotypic_feature()
+    assert "14w" in f["description"]
+    assert "type" in f and "label" in f["type"]
+
+
+def test_batch_export_handles_errors(intergrowth_exporter):
+    """Batch export should continue processing after an invalid measurement."""
+    measurements = [
+        {
+            "measurement_type": "head_circumference",
+            "value_mm": 85.0,
+            "gestational_age_weeks": 14.0,
+        },
+        {
+            "measurement_type": "nonexistent_type",
+            "value_mm": 25.0,
+            "gestational_age_weeks": 14.0,
+        },
+        {
+            "measurement_type": "femur_length",
+            "value_mm": 7.0,
+            "gestational_age_weeks": 14.0,
+        },
+    ]
+    result = intergrowth_exporter.batch_export(measurements)
+    assert len(result) == 3
+    assert "error" in result[1]
+    assert "type" in result[0] and "type" in result[2]
+
+
+def test_all_core_measurements_supported(intergrowth_exporter):
+    """Ensure every core measurement type in YAML can be evaluated without crash."""
+    for mtype in intergrowth_exporter.mappings.keys():
+        obs = intergrowth_exporter.evaluate_to_observation(mtype, 100.0, 14.0)
+        f = obs.to_phenotypic_feature()
+        assert isinstance(f, dict)
+        assert "excluded" in f
+
+
+# ---------------------------------------------------------------------- #
+# HELPER
+# ---------------------------------------------------------------------- #
+
+
+def get_feature(exporter, measurement_type, value, ga=14.0, **kwargs):
+    """Convenience wrapper to obtain serialized feature."""
+    obs = exporter.evaluate_to_observation(
+        measurement_type=measurement_type,
+        value_mm=value,
+        gestational_age_weeks=ga,
+        **kwargs,
+    )
+    assert isinstance(obs, TermObservation)
+    return obs.to_phenotypic_feature()
+
+
+# ---------------------------------------------------------------------- #
+# HEAD CIRCUMFERENCE (HC)
+# ---------------------------------------------------------------------- #
+
+
+def test_hc_lower_extreme_microcephaly(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "head_circumference", 85.0)
+    assert f["type"]["id"] == "HP:0000252"
+    assert f["type"]["label"] == "Microcephaly"
+    assert f["excluded"] is False
+
+
+def test_hc_lower_decreased_head_circumference(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "head_circumference", 88.0)
+    assert f["type"]["label"] == "Decreased head circumference"
+    assert f["excluded"] is False
+
+
+def test_hc_normal_excluded(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "head_circumference", 100.0)
+    assert f["excluded"] is True
+    assert "normal range" in f["description"]
+
+
+def test_hc_upper_increased_head_circumference(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "head_circumference", 115.0)
+    assert f["type"]["label"] == "Increased head circumference"
+    assert f["excluded"] is False
+
+
+def test_hc_upper_extreme_macrocephaly(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "head_circumference", 120.0)
+    assert f["type"]["label"] == "Macrocephaly"
+    assert f["excluded"] is False
+
+
+# ---------------------------------------------------------------------- #
+# BIPARIETAL DIAMETER (BPD)
+# ---------------------------------------------------------------------- #
+
+
+def test_bpd_lower_extreme_secondary_microcephaly(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "biparietal_diameter", 20.0)
+    assert f["type"]["label"] == "Secondary microcephaly"
+    assert f["excluded"] is False
+
+
+def test_bpd_abnormal_skull_size(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "biparietal_diameter", 23.0)
+    assert f["type"]["label"] == "Abnormality of skull size"
+    assert f["excluded"] is False
+
+
+def test_bpd_upper_postnatal_macrocephaly(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "biparietal_diameter", 45.0)
+    assert f["type"]["label"] == "Postnatal macrocephaly"
+    assert f["excluded"] is False
+
+
+def test_bpd_normal_excluded(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "biparietal_diameter", 28.0)
+    assert f["excluded"] is True
+
+
+# ---------------------------------------------------------------------- #
+# FEMUR LENGTH (FL)
+# ---------------------------------------------------------------------- #
+
+
+def test_fl_lower_extreme_short_fetal_femur(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "femur_length", 5.0)
+    assert f["type"]["label"] == "Short fetal femur length"
+    assert f["excluded"] is False
+
+
+def test_fl_lower_short_femur(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "femur_length", 6.0)
+    assert f["type"]["label"] == "Short femur"
+    assert f["excluded"] is False
+
+
+def test_fl_abnormal_morphology(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "femur_length", 7.0)
+    assert f["type"]["label"] == "Abnormal femur morphology"
+    assert f["excluded"] is False
+
+
+def test_fl_normal_excluded(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "femur_length", 8.0)
+    assert f["excluded"] is True
+
+
+# ---------------------------------------------------------------------- #
+# ABDOMINAL CIRCUMFERENCE (AC)
+# ---------------------------------------------------------------------- #
+
+
+def test_ac_lower_extreme_small_abdomen(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "abdominal_circumference", 60.0)
+    assert f["type"]["label"] == "Small fetal abdominal circumference"
+    assert f["excluded"] is False
+
+
+def test_ac_abnormal_gi_morphology(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "abdominal_circumference", 65.0)
+    assert f["type"]["label"] == "Abnormal fetal gastrointestinal system morphology"
+    assert f["excluded"] is False
+
+
+def test_ac_normal_excluded(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "abdominal_circumference", 90.0)
+    assert f["excluded"] is True
+
+
+# ---------------------------------------------------------------------- #
+# OCCIPITOFRONTAL DIAMETER (OFD)
+# ---------------------------------------------------------------------- #
+
+
+def test_ofd_abnormal_skull(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "occipitofrontal_diameter", 25.0)
+    assert f["type"]["label"] == "Abnormality of skull size"
+    assert f["excluded"] is False
+
+
+def test_ofd_normal_excluded(intergrowth_exporter):
+    f = get_feature(intergrowth_exporter, "occipitofrontal_diameter", 35.0)
+    assert f["excluded"] is True
+
+
+# ---------------------------------------------------------------------- #
+# NORMAL BIN OVERRIDE
+# ---------------------------------------------------------------------- #
+
+
+def test_custom_normal_bins_override(intergrowth_exporter):
+    """User-defined normal bins should override defaults."""
+    custom_bins = {"between_5p_10p"}  # treat 5-10th percentile as normal
+    obs = intergrowth_exporter.evaluate_to_observation(
+        "head_circumference", 90.0, 14.0, normal_bins=custom_bins
+    )
+    f = obs.to_phenotypic_feature()
+    assert f["excluded"] is True  # normally abnormal, now excluded
+
+
+# ---------------------------------------------------------------------- #
+# BATCH EXPORT + JSON
+# ---------------------------------------------------------------------- #
+
+
+def test_batch_export_multiple(intergrowth_exporter):
+    """Batch export should process multiple measurements successfully."""
+    measurements = [
+        {
+            "measurement_type": "head_circumference",
+            "value_mm": 85.0,
+            "gestational_age_weeks": 14.0,
+        },
+        {
+            "measurement_type": "femur_length",
+            "value_mm": 5.0,
+            "gestational_age_weeks": 14.0,
+        },
+        {
+            "measurement_type": "biparietal_diameter",
+            "value_mm": 20.0,
+            "gestational_age_weeks": 14.0,
+        },
+    ]
+    result = intergrowth_exporter.batch_export(measurements)
+    assert isinstance(result, list)
+    assert len(result) == 3
+    labels = [r["type"]["label"] for r in result if "type" in r]
+    assert "Microcephaly" in labels
+    assert "Short fetal femur length" in labels
+
+
+def test_to_json_export(intergrowth_exporter):
+    """JSON export should yield valid and parseable JSON string."""
+    measurements = [
+        {
+            "measurement_type": "head_circumference",
+            "value_mm": 120.0,
+            "gestational_age_weeks": 14.0,
+        },
+        {
+            "measurement_type": "femur_length",
+            "value_mm": 8.0,
+            "gestational_age_weeks": 14.0,
+        },
+    ]
+    json_str = intergrowth_exporter.to_json(measurements)
+    parsed = json.loads(json_str)
+    assert isinstance(parsed, list)
+    assert parsed[0]["type"]["label"] == "Macrocephaly"
+    assert parsed[1]["excluded"] is True
+
+
+# ---------------------------------------------------------------------- #
+# NICHD DATA SOURCE
+# ---------------------------------------------------------------------- #
+
+
+def test_nichd_reference_data(nichd_exporter):
+    """Ensure NICHD reference operates similarly for supported measurements."""
+    f = get_feature(nichd_exporter, "head_circumference", 85.0)
+    assert f["type"]["label"] in {"Microcephaly", "Abnormality of skull size"}
+    assert "14w" in f["description"]
+
+
+# ---------------------------------------------------------------------- #
+# ERROR HANDLING
+# ---------------------------------------------------------------------- #
+
+
+def test_invalid_measurement_raises(intergrowth_exporter):
+    with pytest.raises(ValueError):
+        intergrowth_exporter.evaluate_to_observation("unknown_measurement", 25.0, 14.0)
+
+
+def test_invalid_ga_raises(intergrowth_exporter):
+    with pytest.raises(ValueError):
+        intergrowth_exporter.evaluate_to_observation("head_circumference", 90.0, 2.0)
