@@ -85,19 +85,22 @@ class TermObservation:
         abnormal_term: Optional["MinimalTerm"] = None,
     ) -> TermObservation:
         """
-        Convert a MeasurementResult into a TermObservation.
-
-        This is the canonical bridge between numeric evaluation
-        and ontology interpretation, as used by PhenotypicExporter.
+        Convert a MeasurementResult into a TermObservation using a bin->term mapping.
         """
         bin_key = measurement_result.bin_key
         hpo_term = bin_to_term.get(bin_key)
 
         if normal_bins and bin_key in normal_bins:
+            # For normal bins -> use parent abnormal term, mark excluded
             hpo_term = abnormal_term
             observed = False
+        elif hpo_term is None:
+            # For abnormal bins with no specific term -> use abnormal_term as fallback
+            hpo_term = abnormal_term
+            observed = True
         else:
-            observed = bool(hpo_term)
+            # Have a specific term for this bin
+            observed = True
 
         return TermObservation(
             hpo_term=hpo_term, observed=observed, gestational_age=gestational_age

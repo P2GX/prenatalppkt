@@ -71,7 +71,7 @@ def get_reference_values(exporter, measurement_type, ga):
     """Extract actual percentile thresholds from reference data.
 
     Returns dict with keys like "3rd", "5th", "10th", "50th", "90th", "95th", "97th"
-    (WITHOUT "Percentile" suffix in INTERGROWTH data)
+    normalized to use proper ordinal suffixes.
     """
     df = exporter.reference.tables[measurement_type]["ct"]
     row = df.loc[df["Gestational Age (weeks)"].round(1) == round(ga, 1)]
@@ -92,10 +92,33 @@ def get_reference_values(exporter, measurement_type, ga):
 
     result = row[percentile_cols].iloc[0].to_dict()
 
-    # Normalize keys: remove " Percentile" suffix if present for consistency
+    # Normalize keys: remove " Percentile" suffix and fix ordinal suffixes
+    # The _normalize_columns() function in biometry_reference.py extracts only
+    # digits and adds "th", so "3rd Percentile" becomes "3th Percentile"
     normalized = {}
     for k, v in result.items():
+        # Remove " Percentile" suffix
         normalized_key = k.replace(" Percentile", "")
+
+        # Fix ordinal suffix (3th -> 3rd, etc.)
+        # Extract the numeric part
+        num = "".join(ch for ch in normalized_key if ch.isdigit())
+        if num:
+            num_int = int(num)
+            # Use proper ordinal suffix rules
+            if num_int % 100 in (11, 12, 13):
+                # Special case: 11th, 12th, 13th
+                suffix = "th"
+            elif num_int % 10 == 1:
+                suffix = "st"
+            elif num_int % 10 == 2:
+                suffix = "nd"
+            elif num_int % 10 == 3:
+                suffix = "rd"
+            else:
+                suffix = "th"
+            normalized_key = f"{num_int}{suffix}"
+
         normalized[normalized_key] = v
 
     return normalized
