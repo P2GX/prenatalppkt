@@ -54,7 +54,7 @@ class SonographicMeasurement(ABC):
     # ------------------------------------------------------------------ #
     # Automatic registry for subclasses
     # ------------------------------------------------------------------ #
-    registry: dict[str, type["SonographicMeasurement"]] = {}
+    registry: ClassVar[dict[str, type["SonographicMeasurement"]]] = {}
 
     def __init_subclass__(cls, measurement_type: str, **kwargs):
         """
