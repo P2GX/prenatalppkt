@@ -23,7 +23,7 @@ Key improvements (OOP refactor)
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Optional, Dict
+from typing import Optional, Dict, ClassVar
 from hpotk import MinimalTerm
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.measurement_result import MeasurementResult
