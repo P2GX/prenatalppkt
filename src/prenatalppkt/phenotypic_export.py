@@ -221,7 +221,7 @@ class PhenotypicExporter:
         for meas in measurements:
             try:
                 results.append(self.export_feature(**meas))
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203 - intentional isolation for per-measurement robustness
                 logger.error(f"Failed to export measurement {meas}: {e}")
                 results.append({"error": str(e), "measurement": meas})
         return results
