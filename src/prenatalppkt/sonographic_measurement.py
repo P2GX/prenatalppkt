@@ -56,15 +56,15 @@ class SonographicMeasurement(ABC):
     # ------------------------------------------------------------------ #
     registry: ClassVar[dict[str, type["SonographicMeasurement"]]] = {}
 
-    def __init_subclass__(cls, measurement_type: str, **kwargs):
+    def __init_subclass__(cls, measurement_type: Optional[str] = None, **kwargs):
         """
-        Automatically register each subclass under its declared measurement type.
-        Example:
-            class HeadCircumferenceMeasurement(SonographicMeasurement, measurement_type="head_circumference"):
-                ...
+        Automatically register subclasses in the measurement registry.
+
+        If `measurement_type` is not explicitly provided, it defaults to the lowercase class name with 'Measurement' stripped (e.g., 'BiparietalDiameterMeasurement' -> 'biparietaldiameter').
         """
         super().__init_subclass__(**kwargs)
-        SonographicMeasurement.registry[measurement_type] = cls
+        key = measurement_type or cls.__name__.replace("Measurement", "").lower()
+        cls.registry[key] = cls
 
     # ------------------------------------------------------------------ #
     # Abstract metadata
