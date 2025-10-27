@@ -22,6 +22,15 @@
 #     bins:
 #       <bin_key>: {id: "...", label: "..."} or null
 
+# "below_3p": lower_extreme_term,
+# "between_3p_5p": lower_term,
+# "between_5p_10p": abnormal_term,
+# "between_10p_50p": normal_term,
+# "between_50p_90p": normal_term,
+# "between_90p_95p": abnormal_term,
+# "between_95p_97p": upper_term,
+# "above_97p": upper_extreme_term,
+
 
 head_circumference:
  abnormal_term:
@@ -47,14 +56,14 @@ biparietal_diameter:
  normal_bins: ["between_10p_50p", "between_50p_90p"]
 
  bins:
-   below_3p:        { id: "HP:0005484", label: "Secondary microcephaly" }
+   below_3p:        { id: "HP:0011451", label: "Primary microcephaly" }
    between_3p_5p:   null  # no specific HPO term found
    between_5p_10p:  { id: "HP:0000240", label: "Abnormality of skull size" }
    between_10p_50p: null  # Normal range
    between_50p_90p: null  # Normal range
    between_90p_95p: { id: "HP:0000240", label: "Abnormality of skull size" }
    between_95p_97p: null  # no specific HPO term found
-   above_97p:       { id: "HP:0005490", label: "Postnatal macrocephaly" }
+   above_97p:       { id: "HP:0004488", label: "Macrocephaly at birth" }
 
 
 femur_length:

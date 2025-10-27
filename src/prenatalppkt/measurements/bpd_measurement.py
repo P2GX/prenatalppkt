@@ -14,7 +14,9 @@ from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
 
 
-class BiparietalDiameterMeasurement(SonographicMeasurement):
+class BiparietalDiameterMeasurement(
+    SonographicMeasurement, measurement_type="biparietal_diameter"
+):
     """
     Represents a sonographic measurement of fetal biparietal diameter (BPD).
 
