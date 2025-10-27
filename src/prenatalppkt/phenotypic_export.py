@@ -76,11 +76,11 @@ class PhenotypicExporter:
     # ------------------------------------------------------------------ #
     # Mapping loader
     # ------------------------------------------------------------------ #
-    def _load_mappings(self, path: Path) -> dict:
+    def _load_mappings(self, path: Path) -> Dict:
         """Load and parse HPO term mappings from YAML."""
         if not path.exists():
-            logger.warning(f"Mappings file not found: {path}. Using empty mappings.")
-            return {}
+            logger.error(f"Mappings file not found: {path}. Using empty mappings.")
+            raise FileNotFoundError(f"Mappings file not found: {path}. Using empty mappings.")
 
         with open(path, "r") as f:
             raw_mappings = yaml.safe_load(f)
@@ -90,19 +90,14 @@ class PhenotypicExporter:
             bins_cfg = cfg["bins"]
             abnormal_cfg = cfg["abnormal_term"]
             normal_bins = set(cfg.get("normal_bins", []))
-
-            # Convert bins -> MinimalTerm
-            bins = {}
+            bins: Dict[str, MinimalTerm] = dict()
             for k, v in bins_cfg.items():
-                if v is None:
-                    bins[k] = None
-                else:
-                    bins[k] = MinimalTerm.create_minimal_term(
-                        term_id=v["id"],
-                        name=v["label"],
-                        alt_term_ids=(),
-                        is_obsolete=False,
-                    )
+                bins[k] = MinimalTerm.create_minimal_term(
+                    term_id=v["id"],
+                    name=v["label"],
+                    alt_term_ids=(),
+                    is_obsolete=False,
+                )
 
             abnormal_term = MinimalTerm.create_minimal_term(
                 term_id=abnormal_cfg["id"],
@@ -117,6 +112,9 @@ class PhenotypicExporter:
                 "abnormal_term": abnormal_term,
             }
         return processed
+    
+
+    
 
     # ------------------------------------------------------------------ #
     # Evaluation and export (refactored)
@@ -126,7 +124,6 @@ class PhenotypicExporter:
         measurement_type: str,
         value_mm: float,
         gestational_age_weeks: float,
-        population: Optional[str] = None,
         normal_bins: Optional[Set[str]] = None,
     ) -> TermObservation:
         """
@@ -164,7 +161,7 @@ class PhenotypicExporter:
                 for c in df.columns
                 if "percentile" in c.lower() and c != "Gestational Age (weeks)"
             ]
-            thresholds = row[percentile_cols].iloc[0].astype(float).tolist()
+            thresholds: List[float] = row[percentile_cols].iloc[0].astype(float).tolist()
         except KeyError:
             raise ValueError(
                 f"Measurement type '{measurement_type}' not available in {self.source} reference"
