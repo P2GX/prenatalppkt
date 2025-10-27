@@ -1,0 +1,10 @@
+
+head_circumference:
+  below_3p:        { id: "HP:0000252", label: "Microcephaly", normal: false}
+  between_3p_5p:   { id: "HP:0040195", label: "Decreased head circumference", normal: false }
+  between_5p_10p:  { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+  between_10p_50p: { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+  between_50p_90p: { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+  between_90p_95p: { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+  between_95p_97p: { id: "HP:0040194", label: "Increased head circumference", normal: false }
+  above_97p:       { id: "HP:0000256", label: "Macrocephaly", normal: false }
