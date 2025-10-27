@@ -7,10 +7,11 @@ circumference (AC). Automatically registered under `"abdominal_circumference"`.
 
 from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.biometry_type import BiometryType
 
 
 class AbdominalCircumferenceMeasurement(
-    SonographicMeasurement, measurement_type="abdominal_circumference"
+    SonographicMeasurement, measurement_type=BiometryType.ABDOMINAL_CIRCUMFERENCE
 ):
     """Represents a fetal abdominal circumference (AC) measurement."""
 

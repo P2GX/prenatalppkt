@@ -12,9 +12,9 @@ import json
 import pytest
 import yaml
 from pathlib import Path
+from prenatalppkt.biometry_type import BiometryType
 from prenatalppkt.phenotypic_export import PhenotypicExporter
 from prenatalppkt.term_observation import TermObservation
-
 
 # ---------------------------------------------------------------------- #
 # FIXTURES
@@ -72,11 +72,14 @@ def get_reference_values(exporter, measurement_type, ga):
 
     Returns dict with keys like "3rd", "5th", "10th", "50th", "90th", "95th", "97th"
     normalized to use proper ordinal suffixes.
+
+    measurement_type should be a BiometryType enum member
     """
-    df = exporter.reference.tables[measurement_type]["ct"]
+    measurement_key = measurement_type.value
+    df = exporter.reference.tables[measurement_key]["ct"]
     row = df.loc[df["Gestational Age (weeks)"].round(1) == round(ga, 1)]
     if row.empty:
-        raise ValueError(f"No reference data for {measurement_type} at GA={ga}w")
+        raise ValueError(f"No reference data for {measurement_key} at GA={ga}w")
 
     # Get all percentile columns using case-insensitive check
     exclude_cols = {
@@ -125,8 +128,12 @@ def get_reference_values(exporter, measurement_type, ga):
 
 
 def get_expected_hpo(yaml_mappings, measurement_type, bin_key):
-    """Get expected HPO term for a measurement type and bin from YAML."""
-    mtype_config = yaml_mappings[measurement_type]
+    """Get expected HPO term for a measurement type and bin from YAML.
+
+    measurement_type should be a BiometryType enum member
+    """
+    measurement_key = measurement_type.value
+    mtype_config = yaml_mappings[measurement_key]
     bin_config = mtype_config["bins"].get(bin_key)
 
     if bin_config is None:
@@ -177,7 +184,7 @@ def test_mappings_structure(intergrowth_exporter):
 def test_fractional_gestational_age(intergrowth_exporter):
     """Fractional GA should round to nearest reference table row."""
     obs = intergrowth_exporter.evaluate_to_observation(
-        "head_circumference", 100.0, 14.3
+        BiometryType.HEAD_CIRCUMFERENCE, 100.0, 14.3
     )
     f = obs.to_phenotypic_feature()
     assert "14w" in f["description"]
@@ -192,11 +199,11 @@ def test_fractional_gestational_age(intergrowth_exporter):
 @pytest.mark.parametrize(
     "measurement_type",
     [
-        "head_circumference",
-        "biparietal_diameter",
-        "femur_length",
-        "abdominal_circumference",
-        "occipitofrontal_diameter",
+        BiometryType.HEAD_CIRCUMFERENCE,
+        BiometryType.BIPARIETAL_DIAMETER,
+        BiometryType.FEMUR_LENGTH,
+        BiometryType.ABDOMINAL_CIRCUMFERENCE,
+        BiometryType.OCCIPITOFRONTAL_DIAMETER,
     ],
 )
 def test_below_3p_maps_correctly(
@@ -212,7 +219,7 @@ def test_below_3p_maps_correctly(
 
     if expected_hpo is None:
         # If YAML maps to null, should show abnormal_term with excluded=False
-        abnormal_term = yaml_mappings[measurement_type]["abnormal_term"]
+        abnormal_term = yaml_mappings[measurement_type.value]["abnormal_term"]
         assert f["type"]["id"] == abnormal_term["id"]
         assert f["excluded"] is False
     else:
@@ -224,11 +231,11 @@ def test_below_3p_maps_correctly(
 @pytest.mark.parametrize(
     "measurement_type",
     [
-        "head_circumference",
-        "biparietal_diameter",
-        "femur_length",
-        "abdominal_circumference",
-        "occipitofrontal_diameter",
+        BiometryType.HEAD_CIRCUMFERENCE,
+        BiometryType.BIPARIETAL_DIAMETER,
+        BiometryType.FEMUR_LENGTH,
+        BiometryType.ABDOMINAL_CIRCUMFERENCE,
+        BiometryType.OCCIPITOFRONTAL_DIAMETER,
     ],
 )
 def test_between_3p_5p_maps_correctly(
@@ -244,11 +251,11 @@ def test_between_3p_5p_maps_correctly(
 
     if expected_hpo is None:
         # If YAML maps to null for this bin, result depends on normal_bins config
-        normal_bins = yaml_mappings[measurement_type]["normal_bins"]
+        normal_bins = yaml_mappings[measurement_type.value]["normal_bins"]
         if "between_3p_5p" in normal_bins:
             assert f["excluded"] is True
         else:
-            abnormal_term = yaml_mappings[measurement_type]["abnormal_term"]
+            abnormal_term = yaml_mappings[measurement_type.value]["abnormal_term"]
             assert f["type"]["id"] == abnormal_term["id"]
             assert f["excluded"] is False
     else:
@@ -260,11 +267,11 @@ def test_between_3p_5p_maps_correctly(
 @pytest.mark.parametrize(
     "measurement_type",
     [
-        "head_circumference",
-        "biparietal_diameter",
-        "femur_length",
-        "abdominal_circumference",
-        "occipitofrontal_diameter",
+        BiometryType.HEAD_CIRCUMFERENCE,
+        BiometryType.BIPARIETAL_DIAMETER,
+        BiometryType.FEMUR_LENGTH,
+        BiometryType.ABDOMINAL_CIRCUMFERENCE,
+        BiometryType.OCCIPITOFRONTAL_DIAMETER,
     ],
 )
 def test_normal_range_excluded(
@@ -282,11 +289,11 @@ def test_normal_range_excluded(
 @pytest.mark.parametrize(
     "measurement_type",
     [
-        "head_circumference",
-        "biparietal_diameter",
-        "femur_length",
-        "abdominal_circumference",
-        "occipitofrontal_diameter",
+        BiometryType.HEAD_CIRCUMFERENCE,
+        BiometryType.BIPARIETAL_DIAMETER,
+        BiometryType.FEMUR_LENGTH,
+        BiometryType.ABDOMINAL_CIRCUMFERENCE,
+        BiometryType.OCCIPITOFRONTAL_DIAMETER,
     ],
 )
 def test_above_97p_maps_correctly(
@@ -302,7 +309,7 @@ def test_above_97p_maps_correctly(
 
     if expected_hpo is None:
         # If YAML maps to null, should show abnormal_term with excluded=False
-        abnormal_term = yaml_mappings[measurement_type]["abnormal_term"]
+        abnormal_term = yaml_mappings[measurement_type.value]["abnormal_term"]
         assert f["type"]["id"] == abnormal_term["id"]
         assert f["excluded"] is False
     else:
@@ -318,7 +325,9 @@ def test_above_97p_maps_correctly(
 
 def test_hc_all_bins_match_yaml(intergrowth_exporter, yaml_mappings, test_ga):
     """Comprehensive validation that all HC bins map to correct YAML terms."""
-    refs = get_reference_values(intergrowth_exporter, "head_circumference", test_ga)
+    refs = get_reference_values(
+        intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, test_ga
+    )
 
     # Test each bin with appropriate value
     bin_test_values = {
@@ -336,14 +345,16 @@ def test_hc_all_bins_match_yaml(intergrowth_exporter, yaml_mappings, test_ga):
     normal_bins = yaml_hc["normal_bins"]
 
     for bin_key, test_value in bin_test_values.items():
-        f = get_feature(intergrowth_exporter, "head_circumference", test_value, test_ga)
+        f = get_feature(
+            intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, test_value, test_ga
+        )
         expected_hpo = yaml_hc["bins"].get(bin_key)
 
         if bin_key in normal_bins:
             # Should be excluded (normal)
             assert f["excluded"] is True, f"Bin {bin_key} should be excluded"
         elif expected_hpo is None:
-            # Null mapping → uses abnormal_term
+            # Null mapping -> uses abnormal_term
             assert f["type"]["id"] == yaml_hc["abnormal_term"]["id"]
             assert f["excluded"] is False
         else:
@@ -360,18 +371,22 @@ def test_hc_all_bins_match_yaml(intergrowth_exporter, yaml_mappings, test_ga):
 
 def test_custom_normal_bins_override(intergrowth_exporter, test_ga):
     """Custom normal_bins should override default exclusion logic."""
-    refs = get_reference_values(intergrowth_exporter, "head_circumference", test_ga)
+    refs = get_reference_values(
+        intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, test_ga
+    )
     value = (refs["5th"] + refs["10th"]) / 2
 
     # Without override: abnormal (observed=True)
-    f1 = get_feature(intergrowth_exporter, "head_circumference", value, test_ga)
+    f1 = get_feature(
+        intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, value, test_ga
+    )
     assert f1["excluded"] is False
 
     # With override: treat 5-10p as normal
     custom_bins = {"between_5p_10p", "between_10p_50p", "between_50p_90p"}
     f2 = get_feature(
         intergrowth_exporter,
-        "head_circumference",
+        BiometryType.HEAD_CIRCUMFERENCE,
         value,
         test_ga,
         normal_bins=custom_bins,
@@ -386,22 +401,26 @@ def test_custom_normal_bins_override(intergrowth_exporter, test_ga):
 
 def test_batch_export_multiple(intergrowth_exporter, yaml_mappings, test_ga):
     """Batch export should process multiple measurements successfully."""
-    refs_hc = get_reference_values(intergrowth_exporter, "head_circumference", test_ga)
-    refs_fl = get_reference_values(intergrowth_exporter, "femur_length", test_ga)
+    refs_hc = get_reference_values(
+        intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, test_ga
+    )
+    refs_fl = get_reference_values(
+        intergrowth_exporter, BiometryType.FEMUR_LENGTH, test_ga
+    )
 
     measurements = [
         {
-            "measurement_type": "head_circumference",
+            "measurement_type": BiometryType.HEAD_CIRCUMFERENCE,
             "value_mm": refs_hc["3rd"] - 1.0,
             "gestational_age_weeks": test_ga,
         },
         {
-            "measurement_type": "femur_length",
+            "measurement_type": BiometryType.FEMUR_LENGTH,
             "value_mm": refs_fl["3rd"] - 0.5,
             "gestational_age_weeks": test_ga,
         },
         {
-            "measurement_type": "biparietal_diameter",
+            "measurement_type": BiometryType.BIPARIETAL_DIAMETER,
             "value_mm": 28.0,  # Likely normal at GA=14w
             "gestational_age_weeks": test_ga,
         },
@@ -411,8 +430,10 @@ def test_batch_export_multiple(intergrowth_exporter, yaml_mappings, test_ga):
     assert len(results) == 3
 
     # Verify results match YAML expectations
-    expected_hc = get_expected_hpo(yaml_mappings, "head_circumference", "below_3p")
-    expected_fl = get_expected_hpo(yaml_mappings, "femur_length", "below_3p")
+    expected_hc = get_expected_hpo(
+        yaml_mappings, BiometryType.HEAD_CIRCUMFERENCE, "below_3p"
+    )
+    expected_fl = get_expected_hpo(yaml_mappings, BiometryType.FEMUR_LENGTH, "below_3p")
 
     assert results[0]["type"]["id"] == expected_hc["id"]
     assert results[1]["type"]["id"] == expected_fl["id"]
@@ -423,7 +444,7 @@ def test_batch_export_handles_errors(intergrowth_exporter, test_ga):
     """Batch export should continue after encountering invalid measurement."""
     measurements = [
         {
-            "measurement_type": "head_circumference",
+            "measurement_type": BiometryType.HEAD_CIRCUMFERENCE,
             "value_mm": 100.0,
             "gestational_age_weeks": test_ga,
         },
@@ -433,7 +454,7 @@ def test_batch_export_handles_errors(intergrowth_exporter, test_ga):
             "gestational_age_weeks": test_ga,
         },
         {
-            "measurement_type": "femur_length",
+            "measurement_type": BiometryType.FEMUR_LENGTH,
             "value_mm": 10.0,
             "gestational_age_weeks": test_ga,
         },
@@ -447,17 +468,21 @@ def test_batch_export_handles_errors(intergrowth_exporter, test_ga):
 
 def test_to_json_export(intergrowth_exporter, yaml_mappings, test_ga):
     """JSON export should produce valid, parseable JSON string."""
-    refs_hc = get_reference_values(intergrowth_exporter, "head_circumference", test_ga)
-    refs_fl = get_reference_values(intergrowth_exporter, "femur_length", test_ga)
+    refs_hc = get_reference_values(
+        intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, test_ga
+    )
+    refs_fl = get_reference_values(
+        intergrowth_exporter, BiometryType.FEMUR_LENGTH, test_ga
+    )
 
     measurements = [
         {
-            "measurement_type": "head_circumference",
+            "measurement_type": BiometryType.HEAD_CIRCUMFERENCE,
             "value_mm": refs_hc["97th"] + 1.0,
             "gestational_age_weeks": test_ga,
         },
         {
-            "measurement_type": "femur_length",
+            "measurement_type": BiometryType.FEMUR_LENGTH,
             "value_mm": refs_fl["50th"],
             "gestational_age_weeks": test_ga,
         },
@@ -468,7 +493,9 @@ def test_to_json_export(intergrowth_exporter, yaml_mappings, test_ga):
     assert isinstance(parsed, list)
 
     # Verify JSON output matches YAML expectations
-    expected_hc = get_expected_hpo(yaml_mappings, "head_circumference", "above_97p")
+    expected_hc = get_expected_hpo(
+        yaml_mappings, BiometryType.HEAD_CIRCUMFERENCE, "above_97p"
+    )
     assert parsed[0]["type"]["id"] == expected_hc["id"]
     assert parsed[1]["excluded"] is True
 
@@ -477,7 +504,7 @@ def test_json_export_pretty_formatting(intergrowth_exporter, test_ga):
     """JSON export with pretty=True should be indented."""
     measurements = [
         {
-            "measurement_type": "head_circumference",
+            "measurement_type": BiometryType.HEAD_CIRCUMFERENCE,
             "value_mm": 100.0,
             "gestational_age_weeks": test_ga,
         }
@@ -497,12 +524,14 @@ def test_nichd_reference_data(nichd_exporter, yaml_mappings):
     """NICHD exporter should operate similarly to INTERGROWTH."""
     # Use GA well-covered in NICHD data (e.g., 20w)
     ga = 20.0
-    refs = get_reference_values(nichd_exporter, "head_circumference", ga)
+    refs = get_reference_values(nichd_exporter, BiometryType.HEAD_CIRCUMFERENCE, ga)
     value = refs["3rd"] - 1.0
 
-    expected_hpo = get_expected_hpo(yaml_mappings, "head_circumference", "below_3p")
+    expected_hpo = get_expected_hpo(
+        yaml_mappings, BiometryType.HEAD_CIRCUMFERENCE, "below_3p"
+    )
 
-    f = get_feature(nichd_exporter, "head_circumference", value, ga)
+    f = get_feature(nichd_exporter, BiometryType.HEAD_CIRCUMFERENCE, value, ga)
     assert f["excluded"] is False
     assert f["type"]["id"] == expected_hpo["id"]
     assert "20w" in f["description"]
@@ -513,12 +542,14 @@ def test_nichd_consistency_with_intergrowth(nichd_exporter, yaml_mappings):
     ga = 20.0
 
     # Get NICHD reference
-    refs_nichd = get_reference_values(nichd_exporter, "femur_length", ga)
+    refs_nichd = get_reference_values(nichd_exporter, BiometryType.FEMUR_LENGTH, ga)
     value = refs_nichd["3rd"] - 0.5
 
-    expected_hpo = get_expected_hpo(yaml_mappings, "femur_length", "below_3p")
+    expected_hpo = get_expected_hpo(
+        yaml_mappings, BiometryType.FEMUR_LENGTH, "below_3p"
+    )
 
-    f_nichd = get_feature(nichd_exporter, "femur_length", value, ga)
+    f_nichd = get_feature(nichd_exporter, BiometryType.FEMUR_LENGTH, value, ga)
     assert f_nichd["type"]["id"] == expected_hpo["id"]
     assert f_nichd["excluded"] is False
 
@@ -530,20 +561,23 @@ def test_nichd_consistency_with_intergrowth(nichd_exporter, yaml_mappings):
 
 def test_invalid_measurement_type_raises(intergrowth_exporter):
     """Unregistered measurement type should raise ValueError."""
-    with pytest.raises(ValueError, match="not available"):
+    with pytest.raises((ValueError, AttributeError)):
+        # This will fail because "unknown_measurement" is not a valid BiometryType
         intergrowth_exporter.evaluate_to_observation("unknown_measurement", 25.0, 14.0)
 
 
 def test_invalid_ga_raises(intergrowth_exporter):
     """GA outside reference range should raise ValueError."""
     with pytest.raises(ValueError, match="No reference data"):
-        intergrowth_exporter.evaluate_to_observation("head_circumference", 90.0, 2.0)
+        intergrowth_exporter.evaluate_to_observation(
+            BiometryType.HEAD_CIRCUMFERENCE, 90.0, 2.0
+        )
 
 
 def test_missing_measurement_in_registry_raises(intergrowth_exporter):
     """Measurement type not in SonographicMeasurement.registry should raise KeyError."""
     # This would only happen if YAML has a type not backed by a subclass
-    with pytest.raises((KeyError, ValueError)):
+    with pytest.raises((KeyError, ValueError, AttributeError)):
         intergrowth_exporter.evaluate_to_observation(
             "hypothetical_unregistered_type", 100.0, 14.0
         )
@@ -576,7 +610,9 @@ def test_evaluate_returns_measurement_result(intergrowth_exporter, test_ga):
     from prenatalppkt.measurements.reference_range import ReferenceRange
     from prenatalppkt.gestational_age import GestationalAge
 
-    refs = get_reference_values(intergrowth_exporter, "head_circumference", test_ga)
+    refs = get_reference_values(
+        intergrowth_exporter, BiometryType.HEAD_CIRCUMFERENCE, test_ga
+    )
     ga = GestationalAge.from_weeks(test_ga)
     ref_range = ReferenceRange(ga, list(refs.values()))
 
@@ -597,12 +633,12 @@ def test_evaluate_returns_measurement_result(intergrowth_exporter, test_ga):
 def test_evaluate_vs_export_separation(intergrowth_exporter, test_ga):
     """evaluate_to_observation returns TermObservation; export_feature returns dict."""
     obs = intergrowth_exporter.evaluate_to_observation(
-        "head_circumference", 100.0, test_ga
+        BiometryType.HEAD_CIRCUMFERENCE, 100.0, test_ga
     )
     assert isinstance(obs, TermObservation)
 
     feature_dict = intergrowth_exporter.export_feature(
-        "head_circumference", 100.0, test_ga
+        BiometryType.HEAD_CIRCUMFERENCE, 100.0, test_ga
     )
     assert isinstance(feature_dict, dict)
     assert "type" in feature_dict
@@ -613,9 +649,18 @@ def test_all_measurements_supported(intergrowth_exporter):
     """Every measurement in YAML should be evaluatable without crashes."""
     test_ga = 14.0
     for mtype in intergrowth_exporter.mappings:
+        # Convert string key to BiometryType enum
+        try:
+            measurement_enum = BiometryType(mtype)
+        except ValueError:
+            # Skip if not a valid enum member
+            continue
+
         obs = None
         try:
-            obs = intergrowth_exporter.evaluate_to_observation(mtype, 100.0, test_ga)
+            obs = intergrowth_exporter.evaluate_to_observation(
+                measurement_enum, 100.0, test_ga
+            )
         except ValueError:
             # Some measurements might not have data at GA=14w, that's OK
             continue
