@@ -6,19 +6,10 @@ Supports percentile calculation and mapping to ontology terms.
 """
 
 from dataclasses import dataclass
+from .biometry_type import BiometryType
 from typing import Optional
 from . import constants
 from .biometry_reference import FetalGrowthPercentiles
-
-
-class BiometryType:
-    """Types of biometric measurements supported by this library."""
-
-    HEAD_CIRCUMFERENCE = "head_circumference"
-    BIPARIETAL_DIAMETER = "biparietal_diameter"
-    ABDOMINAL_CIRCUMFERENCE = "abdominal_circumference"
-    FEMUR_LENGTH = "femur_length"
-    ESTIMATED_FETAL_WEIGHT = "estimated_fetal_weight"
 
 
 # Mock reference data for demonstration purposes.
@@ -37,7 +28,7 @@ class BiometryMeasurement:
 
     Attributes
     ----------
-    measurement_type : str
+    measurement_type : BiometryType
         The type of measurement, e.g., BiometryType.HEAD_CIRCUMFERENCE.
     gestational_age_weeks : float
         Gestational age in completed weeks.
@@ -45,7 +36,7 @@ class BiometryMeasurement:
         Measurement value in millimeters.
     """
 
-    measurement_type: str
+    measurement_type: BiometryType
     gestational_age_weeks: float
     value_mm: float
 

@@ -15,16 +15,17 @@ converting that result into a `TermObservation`.
 Key improvements (OOP refactor)
 -------------------------------
 - Added automatic subclass registration via `__init_subclass__` for clean
- polymorphism (no dynamic lookups or fragile imports).
+polymorphism (no dynamic lookups or fragile imports).
 - Enforced consistent evaluation interface (must return `MeasurementResult`).
 - Clarified docstrings to highlight strict separation between numeric and
- ontology evaluation.
+ontology evaluation.
 """
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, ClassVar
 from hpotk import MinimalTerm
+from prenatalppkt.biometry_type import BiometryType
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.measurement_result import MeasurementResult
 from prenatalppkt.term_observation import TermObservation
@@ -56,15 +57,28 @@ class SonographicMeasurement(ABC):
     # ------------------------------------------------------------------ #
     registry: ClassVar[dict[str, type["SonographicMeasurement"]]] = {}
 
-    def __init_subclass__(cls, measurement_type: Optional[str] = None, **kwargs):
+    def __init_subclass__(cls, measurement_type: BiometryType, **kwargs):
         """
         Automatically register subclasses in the measurement registry.
 
-        If `measurement_type` is not explicitly provided, it defaults to the lowercase class name with 'Measurement' stripped (e.g., 'BiparietalDiameterMeasurement' -> 'biparietaldiameter').
+        Parameters
+        ----------
+        measurement_type : BiometryType
+            The BiometryType enum member for this measurement class.
         """
         super().__init_subclass__(**kwargs)
-        key = measurement_type or cls.__name__.replace("Measurement", "").lower()
+
+        # key = measurement_type or cls.__name__.replace("Measurement", "").lower()
+        # cls.registry[key] = cls
+
+        if not isinstance(measurement_type, BiometryType):
+            raise TypeError(
+                f"measurement_type must be a BiometryType enum member, got {type(measurement_type)}"
+            )
+
+        key = measurement_type.value
         cls.registry[key] = cls
+        cls._measurement_type = measurement_type.value
 
     # ------------------------------------------------------------------ #
     # Abstract metadata

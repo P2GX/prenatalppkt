@@ -11,9 +11,12 @@ will be injected via parsing utilities in a future PR.
 
 from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.biometry_type import BiometryType
 
 
-class FemurLengthMeasurement(SonographicMeasurement, measurement_type="femur_length"):
+class FemurLengthMeasurement(
+    SonographicMeasurement, measurement_type=BiometryType.FEMUR_LENGTH
+):
     """
     Represents a sonographic measurement of fetal femur length (FL).
 
