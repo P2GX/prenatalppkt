@@ -17,6 +17,7 @@ Data provenance:
 """
 
 from __future__ import annotations
+from prenatalppkt.biometry_type import BiometryType
 
 import logging
 import pandas as pd
@@ -281,7 +282,10 @@ class FetalGrowthPercentiles:
     # -----------------------
 
     def lookup_percentile(
-        self, measurement_type: str, gestational_age_weeks: int, value_mm: float
+        self,
+        measurement_type: BiometryType,
+        gestational_age_weeks: int,
+        value_mm: float,
     ) -> float:
         """
         Lookup the percentile of a measurement value at a given GA.
@@ -289,15 +293,17 @@ class FetalGrowthPercentiles:
         Uses interpolation between bounding centile values if the
         measurement falls between two reference percentiles.
         """
-        if measurement_type not in SUPPORTED_MEASURES:
-            raise ValueError(f"Unsupported measurement type: {measurement_type}")
+        measurement_key = measurement_type.value
 
-        if measurement_type not in self.tables:
+        if measurement_key not in SUPPORTED_MEASURES:
+            raise ValueError(f"Unsupported measurement type: {measurement_key}")
+
+        if measurement_key not in self.tables:
             raise ValueError(
-                f"No table for measurement '{measurement_type}' in source {self.source}"
+                f"No table for measurement '{measurement_key}' in source {self.source}"
             )
 
-        df = self.tables[measurement_type]["ct"]
+        df = self.tables[measurement_key]["ct"]
         row = df[df["Gestational Age (weeks)"] == gestational_age_weeks]
         if row.empty:
             raise ValueError(f"No reference data for GA={gestational_age_weeks}")
@@ -306,7 +312,7 @@ class FetalGrowthPercentiles:
         centile_cols = [c for c in df.columns if "percentile" in c.lower()]
         if not centile_cols:
             raise ValueError(
-                f"No percentile columns found for {measurement_type} in source {self.source}"
+                f"No percentile columns found for {measurement_key} in source {self.source}"
             )
 
         # Interpolate observed value against row of reference values
@@ -322,17 +328,20 @@ class FetalGrowthPercentiles:
         Uses interpolation between bounding z-scores. Returns None if
         z-score tables are not available (e.g., NIHCD).
         """
-        if measurement_type not in SUPPORTED_MEASURES:
-            raise ValueError(f"Unsupported measurement type: {measurement_type}")
 
-        if measurement_type not in self.tables:
+        # Convert enum to string for dictionary lookups
+        measurement_key = measurement_type.value
+        if measurement_type not in SUPPORTED_MEASURES:
+            raise ValueError(f"Unsupported measurement type: {measurement_key}")
+
+        if measurement_key not in self.tables:
             raise ValueError(
-                f"No table for measurement '{measurement_type}' in source {self.source}"
+                f"No table for measurement '{measurement_key}' in source {self.source}"
             )
-        if "zs" not in self.tables[measurement_type]:
+        if "zs" not in self.tables[measurement_key]:
             return None  # NIHCD has no z-scores
 
-        df = self.tables[measurement_type]["zs"]
+        df = self.tables[measurement_key]["zs"]
         row = df[df["Gestational Age (weeks)"] == gestational_age_weeks]
         if row.empty:
             raise ValueError(f"No z-score data for GA={gestational_age_weeks}")

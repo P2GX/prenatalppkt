@@ -9,10 +9,11 @@ Automatically registered under `"head_circumference"`.
 
 from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.biometry_type import BiometryType
 
 
 class HeadCircumferenceMeasurement(
-    SonographicMeasurement, measurement_type="head_circumference"
+    SonographicMeasurement, measurement_type=BiometryType.HEAD_CIRCUMFERENCE
 ):
     """Represents a sonographic measurement of fetal head circumference (HC)."""
 

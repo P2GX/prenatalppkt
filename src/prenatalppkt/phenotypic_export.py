@@ -7,11 +7,11 @@ ontology-aware `TermObservation` objects suitable for Phenopacket export.
 Refactor summary (Issue #27)
 ----------------------------
 - Replaced fragile subclass lookup (`measurement_type_map`) with a
- robust registry pattern via `SonographicMeasurement`.
+robust registry pattern via `SonographicMeasurement`.
 - Enforced a consistent return type: `TermObservation` only.
 - Split `evaluate_and_export` into:
-   * `evaluate_to_observation()` - evaluation + mapping
-   * `export_feature()` - serialization to dict
+  * `evaluate_to_observation()` - evaluation + mapping
+  * `export_feature()` - serialization to dict
 - Improved docstrings, error handling, and separation of concerns.
 """
 
@@ -22,6 +22,7 @@ from typing import Dict, Optional, Set, List
 import yaml
 import json
 
+from prenatalppkt.biometry_type import BiometryType
 from prenatalppkt.biometry_reference import FetalGrowthPercentiles
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.reference_range import ReferenceRange
@@ -121,7 +122,7 @@ class PhenotypicExporter:
     # ------------------------------------------------------------------ #
     def evaluate_to_observation(
         self,
-        measurement_type: str,
+        measurement_type: BiometryType,
         value_mm: float,
         gestational_age_weeks: float,
         normal_bins: Optional[Set[str]] = None,
@@ -135,25 +136,35 @@ class PhenotypicExporter:
         3. Evaluate the measurement into a `MeasurementResult`.
         4. Map percentile bin to ontology terms using YAML configuration.
 
+
+        Parameters
+        ----------
+        measurement_type : BiometryType
+            The type of measurement (enum).
+        value_mm : float
+            The measured value in millimeters.
+        gestational_age_weeks : float
+            Gestational age in weeks.
+        normal_bins : Set[str], optional
+            Override default normal bins.
+
         Returns
         -------
         TermObservation
-        Raises
-        ------
-        KeyError
-            If measurement type is not registered.
-        ValueError
-            If reference data is missing.
+            The evaluation result with HPO term mapping.
         """
+        # Convert enum to string for internal lookups
+        measurement_key = measurement_type.value
+
         ga = GestationalAge.from_weeks(gestational_age_weeks)
 
         # Step 1: Lookup reference thresholds
         try:
-            df = self.reference.tables[measurement_type]["ct"]
+            df = self.reference.tables[measurement_key]["ct"]
             row = df.loc[df["Gestational Age (weeks)"].round(1) == round(ga.weeks, 1)]
             if row.empty:
                 raise ValueError(
-                    f"No reference data for {measurement_type} at GA={ga.weeks}w"
+                    f"No reference data for {measurement_key} at GA={ga.weeks}w"
                 )
 
             percentile_cols = [
@@ -164,17 +175,17 @@ class PhenotypicExporter:
             thresholds: List[float] = row[percentile_cols].iloc[0].astype(float).tolist()
         except KeyError:
             raise ValueError(
-                f"Measurement type '{measurement_type}' not available in {self.source} reference"
+                f"Measurement type '{measurement_key}' not available in {self.source} reference"
             )
 
         # Step 2: Get subclass (strict registry-based polymorphism)
-        if measurement_type not in SonographicMeasurement.registry:
+        if measurement_key not in SonographicMeasurement.registry:
             raise KeyError(
-                f"Measurement type '{measurement_type}' is not registered. "
+                f"Measurement type '{measurement_key}' is not registered. "
                 "Ensure a SonographicMeasurement subclass defines it."
             )
 
-        measurement_cls = SonographicMeasurement.registry[measurement_type]
+        measurement_cls = SonographicMeasurement.registry[measurement_key]
         instance = measurement_cls()
 
         # Step 3: Evaluate numeric result
@@ -186,7 +197,7 @@ class PhenotypicExporter:
             )
 
         # Step 4: Map to ontology
-        cfg = self.mappings[measurement_type]
+        cfg = self.mappings[measurement_key]
         term_obs = TermObservation.from_measurement_result(
             measurement_result=measurement_result,
             bin_to_term=cfg["bins"],
@@ -201,7 +212,7 @@ class PhenotypicExporter:
     # ------------------------------------------------------------------ #
     def export_feature(
         self,
-        measurement_type: str,
+        measurement_type: BiometryType,
         value_mm: float,
         gestational_age_weeks: float,
         **kwargs,

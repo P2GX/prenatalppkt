@@ -12,10 +12,11 @@ percentile parsing pipeline (NIHCD/INTERGROWTH tables).
 
 from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.biometry_type import BiometryType
 
 
 class BiparietalDiameterMeasurement(
-    SonographicMeasurement, measurement_type="biparietal_diameter"
+    SonographicMeasurement, measurement_type=BiometryType.BIPARIETAL_DIAMETER
 ):
     """
     Represents a sonographic measurement of fetal biparietal diameter (BPD).

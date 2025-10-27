@@ -7,10 +7,11 @@ occipitofrontal diameter (OFD). Registered under `"occipitofrontal_diameter"`.
 
 from __future__ import annotations
 from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.biometry_type import BiometryType
 
 
 class OccipitofrontalDiameterMeasurement(
-    SonographicMeasurement, measurement_type="occipitofrontal_diameter"
+    SonographicMeasurement, measurement_type=BiometryType.OCCIPITOFRONTAL_DIAMETER
 ):
     """Represents a sonographic measurement of fetal occipitofrontal diameter (OFD)."""
 
