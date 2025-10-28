@@ -81,7 +81,9 @@ class PhenotypicExporter:
         """Load and parse HPO term mappings from YAML."""
         if not path.exists():
             logger.error(f"Mappings file not found: {path}. Using empty mappings.")
-            raise FileNotFoundError(f"Mappings file not found: {path}. Using empty mappings.")
+            raise FileNotFoundError(
+                f"Mappings file not found: {path}. Using empty mappings."
+            )
 
         with open(path, "r") as f:
             raw_mappings = yaml.safe_load(f)
@@ -94,10 +96,7 @@ class PhenotypicExporter:
             bins: Dict[str, MinimalTerm] = dict()
             for k, v in bins_cfg.items():
                 bins[k] = MinimalTerm.create_minimal_term(
-                    term_id=v["id"],
-                    name=v["label"],
-                    alt_term_ids=(),
-                    is_obsolete=False,
+                    term_id=v["id"], name=v["label"], alt_term_ids=(), is_obsolete=False
                 )
 
             abnormal_term = MinimalTerm.create_minimal_term(
@@ -113,9 +112,6 @@ class PhenotypicExporter:
                 "abnormal_term": abnormal_term,
             }
         return processed
-    
-
-    
 
     # ------------------------------------------------------------------ #
     # Evaluation and export (refactored)
@@ -172,7 +168,9 @@ class PhenotypicExporter:
                 for c in df.columns
                 if "percentile" in c.lower() and c != "Gestational Age (weeks)"
             ]
-            thresholds: List[float] = row[percentile_cols].iloc[0].astype(float).tolist()
+            thresholds: List[float] = (
+                row[percentile_cols].iloc[0].astype(float).tolist()
+            )
         except KeyError:
             raise ValueError(
                 f"Measurement type '{measurement_key}' not available in {self.source} reference"

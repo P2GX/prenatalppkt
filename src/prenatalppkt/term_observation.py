@@ -11,11 +11,7 @@ This version is fully aligned with the refactored exporter:
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, Set
-import typing
-from hpotk import MinimalTerm
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.measurement_result import MeasurementResult
 
 
 @dataclass
@@ -32,13 +28,8 @@ class TermObservation:
     gestational_age : GestationalAge
         Context for interpretation.
     """
+
     hpo_id: str
     hpo_label: str
     observed: bool
     gestational_age: GestationalAge
-   
-    
-    
-
-
-    

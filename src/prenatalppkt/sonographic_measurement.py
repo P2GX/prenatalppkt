@@ -23,14 +23,12 @@ ontology evaluation.
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from hpotk import MinimalTerm
 from prenatalppkt.biometry_type import BiometryType
-from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.measurement_result import MeasurementResult
 from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.percentile_bin import PercentileRange
 from prenatalppkt.term_observation import TermObservation
 import typing
+
 
 class SonographicMeasurement(ABC):
     """
@@ -43,13 +41,11 @@ class SonographicMeasurement(ABC):
         measurement falls into. Always returns a `MeasurementResult`.
     """
 
- 
-
     def __init__(
-            self, 
-            measurement_type: BiometryType, 
-            termbin_d: typing.Dict[PercentileRange, TermBin],
-            ):
+        self,
+        measurement_type: BiometryType,
+        termbin_d: typing.Dict[PercentileRange, TermBin],
+    ):
         """
         Parameters
         ----------
@@ -67,11 +63,7 @@ class SonographicMeasurement(ABC):
         """Return the canonical name for this measurement (e.g., 'biparietal diameter')."""
         raise NotImplementedError
 
-    def from_percentile(
-            self,
-            percentile: float,
-            gestational_age
-    ) -> TermObservation:
+    def from_percentile(self, percentile: float, gestational_age) -> TermObservation:
         if percentile < 3.0:
             term_bin = self._termbin_d.get(PercentileRange.BELOW_3P)
         elif percentile < 5.0:
@@ -80,11 +72,10 @@ class SonographicMeasurement(ABC):
         else:
             term_bin = self._termbin_d.get(PercentileRange.ABOVE_97P)
         if term_bin is None:
-            raise ValueError(f"Could not get TermBin")
+            raise ValueError("Could not get TermBin")
         return TermObservation(
             hpo_id=term_bin.termid,
             hpo_label=term_bin.termlabel,
-            observed= not term_bin.normal,
-            gestational_age=gestational_age
+            observed=not term_bin.normal,
+            gestational_age=gestational_age,
         )
-

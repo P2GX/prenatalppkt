@@ -15,16 +15,14 @@ from prenatalppkt.sonographic_measurement import SonographicMeasurement
 from prenatalppkt.biometry_type import BiometryType
 
 
-class HeadCircumferenceMeasurement(
-    SonographicMeasurement
-):
+class HeadCircumferenceMeasurement(SonographicMeasurement):
     """Represents a sonographic measurement of fetal head circumference (HC)."""
 
-    def __init__(
-            self,
-            termbin_d: typing.Dict[PercentileRange, TermBin]) -> None:
+    def __init__(self, termbin_d: typing.Dict[PercentileRange, TermBin]) -> None:
         """Initialize HC measurement."""
-        super().__init__(measurement_type=BiometryType.HEAD_CIRCUMFERENCE, termbin_d=termbin_d)
+        super().__init__(
+            measurement_type=BiometryType.HEAD_CIRCUMFERENCE, termbin_d=termbin_d
+        )
 
     def name(self) -> str:
         """Return the canonical name for this measurement."""

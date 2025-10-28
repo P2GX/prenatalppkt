@@ -1,6 +1,3 @@
-
-
-
 class TermBin:
     def __init__(self, termid: str, termlabel: str, normal: bool) -> None:
         self._termid = termid
