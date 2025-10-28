@@ -1,3 +1,16 @@
+# data/mappings/biometry2hpo.yaml
+
+# Structure:
+
+# "below_3p":         HPO_ID, lower_extreme_term, normal/abnormal
+# "between_3p_5p":    HPO_ID, lower_term, normal/abnormal
+# "between_5p_10p":   HPO_ID, abnormal_term, normal/abnormal
+# "between_10p_50p":  HPO_ID, normal_term, normal/abnormal
+# "between_50p_90p":  HPO_ID, normal_term, normal/abnormal
+# "between_90p_95p":  HPO_ID, abnormal_term, normal/abnormal
+# "between_95p_97p":  HPO_ID, upper_term, normal/abnormal
+# "above_97p":        HPO_ID, upper_extreme_term, normal/abnormal
+
 head_circumference:
  below_3p:        { id: "HP:0000252", label: "Microcephaly", normal: false }
  between_3p_5p:   { id: "HP:0040195", label: "Decreased head circumference", normal: false }
