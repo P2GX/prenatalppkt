@@ -4,114 +4,80 @@
 # Each measurement type maps percentile bins to appropriate HPO terms.
 #
 # Bin Keys (from MeasurementResult):
-#   - below_3p: < 3rd percentile
-#   - between_3p_5p: 3rd-5th percentile
-#   - between_5p_10p: 5th-10th percentile
-#   - between_10p_50p: 10th-50th percentile (normal range)
-#   - between_50p_90p: 50th-90th percentile (normal range)
-#   - between_90p_95p: 90th-95th percentile
-#   - between_95p_97p: 95th-97th percentile
-#   - above_97p: >97th percentile
+#   - (0,3): < 3rd percentile
+#   - (3,5): 3rd-5th percentile
+#   - (5,10): 5th-10th percentile
+#   - (10,50): 10th-50th percentile (normal range)
+#   - (50,90): 50th-90th percentile (normal range)
+#   - (90,95): 90th-95th percentile
+#   - (95,97): 95th-97th percentile
+#   - (97,100): >97th percentile
 #
 # Structure:
 #   measurement_type:
 #     abnormal_term:
 #       id: "HP:XXXXXXX"
 #       label: "Parent abnormal term"
-#     normal_bins: ["between_10p_50p", "between_50p_90p"]
+#     normal_bins: ["(10,50)", "(50,90)"]
 #     bins:
 #       <bin_key>: {id: "...", label: "..."} or null
 
-# "below_3p": lower_extreme_term,
-# "between_3p_5p": lower_term,
-# "between_5p_10p": abnormal_term,
-# "between_10p_50p": normal_term,
-# "between_50p_90p": normal_term,
-# "between_90p_95p": abnormal_term,
-# "between_95p_97p": upper_term,
-# "above_97p": upper_extreme_term,
+# "(0,3)": lower_extreme_term,
+# "(3,5)": lower_term,
+# "(5,10)": abnormal_term,
+# "(10,50)": normal_term,
+# "(50,90)": normal_term,
+# "(90,95)": abnormal_term,
+# "(95,97)": upper_term,
+# "(97,100)": upper_extreme_term,
 
 
 head_circumference:
- abnormal_term:
-   id: "HP:0000240"
-   label: "Abnormality of skull size"
- normal_bins: ["between_10p_50p", "between_50p_90p"]
-
- bins:
-   below_3p:        { id: "HP:0000252", label: "Microcephaly" }
-   between_3p_5p:   { id: "HP:0040195", label: "Decreased head circumference" }
-   between_5p_10p:  { id: "HP:0000240", label: "Abnormality of skull size" }
-   between_10p_50p: null  # Normal range
-   between_50p_90p: null  # Normal range
-   between_90p_95p: { id: "HP:0000240", label: "Abnormality of skull size" }
-   between_95p_97p: { id: "HP:0040194", label: "Increased head circumference" }
-   above_97p:       { id: "HP:0000256", label: "Macrocephaly" }
-
+ (0,3):        { id: "HP:0000252", label: "Microcephaly", normal: false }
+ (3,5):   { id: "HP:0040195", label: "Decreased head circumference", normal: false }
+ (5,10):  { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+ (10,50): { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+ (50,90): { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+ (90,95): { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+ (95,97): { id: "HP:0040194", label: "Increased head circumference", normal: false }
+ (97,100):       { id: "HP:0000256", label: "Macrocephaly", normal: false }
 
 biparietal_diameter:
- abnormal_term:
-   id: "HP:0000240"
-   label: "Abnormality of skull size"
- normal_bins: ["between_10p_50p", "between_50p_90p"]
-
- bins:
-   below_3p:        { id: "HP:0011451", label: "Primary microcephaly" }
-   between_3p_5p:   null  # no specific HPO term found
-   between_5p_10p:  { id: "HP:0000240", label: "Abnormality of skull size" }
-   between_10p_50p: null  # Normal range
-   between_50p_90p: null  # Normal range
-   between_90p_95p: { id: "HP:0000240", label: "Abnormality of skull size" }
-   between_95p_97p: null  # no specific HPO term found
-   above_97p:       { id: "HP:0004488", label: "Macrocephaly at birth" }
-
+ (0,3):        { id: "HP:0011451", label: "Primary microcephaly", normal: false }
+ (3,5):   { id: "@TODO", label: "@TODO", normal: false }
+ (5,10):  { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+ (10,50): { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+ (50,90): { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+ (90,95): { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+ (95,97): { id: "@TODO", label: "@TODO", normal: false }
+ (97,100):       { id: "HP:0004488", label: "Macrocephaly at birth", normal: false }
 
 femur_length:
- abnormal_term:
-   id: "HP:0002823"
-   label: "Abnormal femur morphology"
- normal_bins: ["between_10p_50p", "between_50p_90p"]
-
- bins:
-   below_3p:        { id: "HP:0011428", label: "Short fetal femur length" }
-   between_3p_5p:   { id: "HP:0003097", label: "Short femur" }
-   between_5p_10p:  { id: "HP:0002823", label: "Abnormal femur morphology" }
-   between_10p_50p: null  # Normal range
-   between_50p_90p: null  # Normal range
-   between_90p_95p: { id: "HP:0002823", label: "Abnormal femur morphology" }
-   between_95p_97p: null  # no specific HPO term found
-   above_97p:       null  # no specific HPO term found
-
+ (0,3):        { id: "HP:0011428", label: "Short fetal femur length", normal: false }
+ (3,5):   { id: "HP:0003097", label: "Short femur", normal: false }
+ (5,10):  { id: "HP:0002823", label: "Abnormal femur morphology", normal: false }
+ (10,50): { id: "HP:0002823", label: "Abnormal femur morphology", normal: true }
+ (50,90): { id: "HP:0002823", label: "Abnormal femur morphology", normal: true }
+ (90,95): { id: "HP:0002823", label: "Abnormal femur morphology", normal: false }
+ (95,97): { id: "@TODO", label: "@TODO", normal: false }
+ (97,100):       { id: "@TODO", label: "@TODO", normal: false }
 
 abdominal_circumference:
- abnormal_term:
-   id: "HP:0034207"
-   label: "Abnormal fetal gastrointestinal system morphology"
- normal_bins: ["between_10p_50p", "between_50p_90p"]
-
- bins:
-   below_3p:        { id: "HP:6000339", label: "Small fetal abdominal circumference" }
-   between_3p_5p:   null  # no specific HPO term found
-   between_5p_10p:  { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology" }
-   between_10p_50p: null  # Normal range
-   between_50p_90p: null  # Normal range
-   between_90p_95p: { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology" }
-   between_95p_97p: null  # no specific HPO term found
-   above_97p:       null  # no specific HPO term found
-
+ (0,3):        { id: "HP:6000339", label: "Small fetal abdominal circumference", normal: false }
+ (3,5):   { id: "@TODO", label: "@TODO", normal: false }
+ (5,10):  { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false }
+ (10,50): { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: true }
+ (50,90): { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: true }
+ (90,95): { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false }
+ (95,97): { id: "@TODO", label: "@TODO", normal: false }
+ (97,100):       { id: "@TODO", label: "@TODO", normal: false }
 
 occipitofrontal_diameter:
- abnormal_term:
-   id: "HP:0000240"
-   label: "Abnormality of skull size"
- normal_bins: ["between_10p_50p", "between_50p_90p"]
-
- bins:
-   below_3p:        null  # no specific HPO term found
-   between_3p_5p:   null  # no specific HPO term found
-   between_5p_10p:  { id: "HP:0000240", label: "Abnormality of skull size" }
-   between_10p_50p: null  # Normal range
-   between_50p_90p: null  # Normal range
-   between_90p_95p: { id: "HP:0000240", label: "Abnormality of skull size" }
-   between_95p_97p: null  # no specific HPO term found
-   above_97p:       null  # no specific HPO term found
+ (0,3):        { id: "@TODO", label: "@TODO", normal: false }
+ (3,5):   { id: "@TODO", label: "@TODO", normal: false }
+ (5,10):  { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+ (10,50): { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+ (50,90): { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
+ (90,95): { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
+ (95,97): { id: "@TODO", label: "@TODO", normal: false }
+ (97,100):       { id: "@TODO", label: "@TODO", normal: false }
