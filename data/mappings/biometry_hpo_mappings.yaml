@@ -1,83 +1,52 @@
-# data/mappings/biometry_hpo_mappings.yaml
-#
-# HPO term mappings for fetal biometric measurements.
-# Each measurement type maps percentile bins to appropriate HPO terms.
-#
-# Bin Keys (from MeasurementResult):
-#   - (0,3): < 3rd percentile
-#   - (3,5): 3rd-5th percentile
-#   - (5,10): 5th-10th percentile
-#   - (10,50): 10th-50th percentile (normal range)
-#   - (50,90): 50th-90th percentile (normal range)
-#   - (90,95): 90th-95th percentile
-#   - (95,97): 95th-97th percentile
-#   - (97,100): >97th percentile
-#
-# Structure:
-#   measurement_type:
-#     abnormal_term:
-#       id: "HP:XXXXXXX"
-#       label: "Parent abnormal term"
-#     normal_bins: ["(10,50)", "(50,90)"]
-#     bins:
-#       <bin_key>: {id: "...", label: "..."} or null
-
-# "(0,3)": lower_extreme_term,
-# "(3,5)": lower_term,
-# "(5,10)": abnormal_term,
-# "(10,50)": normal_term,
-# "(50,90)": normal_term,
-# "(90,95)": abnormal_term,
-# "(95,97)": upper_term,
-# "(97,100)": upper_extreme_term,
-
-
-head_circumference:
- (0,3):                 { id: "HP:0000252", label: "Microcephaly", normal: false }
- (3,5):                 { id: "HP:0040195", label: "Decreased head circumference", normal: false }
- (5,10):                { id: "HP:0000240", label: "Abnormality of skull size", normal: false }
- (10,50):               { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
- (50,90):               { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
- (90,95):               { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (95,97):               { id: "HP:0040194", label: "Increased head circumference", normal: false }
- (97,100):              { id: "HP:0000256", label: "Macrocephaly", normal: false }
-
-biparietal_diameter:
- (0,3):                 { id: "HP:0011451", label: "Primary microcephaly", normal: false }
- (3,5):                 { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (5,10):                { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (10,50):               { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
- (50,90):               { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
- (90,95):               { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (95,97):               { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (97,100):              { id: "HP:0004488", label: "Macrocephaly at birth", normal: false }
-
-femur_length:
- (0,3):                 { id: "HP:0011428", label: "Short fetal femur length", normal: false }
- (3,5):                 { id: "HP:0003097", label: "Short femur", normal: false }
- (5,10):                { id: "HP:0002823", label: "Abnormal femur morphology", normal: false } # Need a specific term here
- (10,50):               { id: "HP:0002823", label: "Abnormal femur morphology", normal: true }
- (50,90):               { id: "HP:0002823", label: "Abnormal femur morphology", normal: true }
- (90,95):               { id: "HP:0002823", label: "Abnormal femur morphology", normal: false } # Need a specific term here
- (95,97):               { id: "HP:0002823", label: "Abnormal femur morphology", normal: false } # Need a specific term here
- (97,100):              { id: "HP:0002823", label: "Abnormal femur morphology", normal: false }
-
-abdominal_circumference:
- (0,3):                 { id: "HP:6000339", label: "Small fetal abdominal circumference", normal: false }
- (3,5):                 { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false } # Need a specific term here
- (5,10):                { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false } # Need a specific term here
- (10,50):               { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: true }
- (50,90):               { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: true }
- (90,95):               { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false } # Need a specific term here
- (95,97):               { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false } # Need a specific term here
- (97,100):              { id: "HP:0034207", label: "Abnormal fetal gastrointestinal system morphology", normal: false } # Need a specific term here
-
-occipitofrontal_diameter:
- (0,3):                 { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (3,5):                 { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (5,10):                { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (10,50):               { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
- (50,90):               { id: "HP:0000240", label: "Abnormality of skull size", normal: true }
- (90,95):               { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (95,97):               { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
- (97,100):              { id: "HP:0000240", label: "Abnormality of skull size", normal: false } # Need a specific term here
+HPO_TERM_MAPPINGS = {
+   "head_circumference": [
+       {"min": 0, "max": 3, "id": "HP:0000252", "label": "Microcephaly", "normal": False},
+       {"min": 3, "max": 5, "id": "HP:0040195", "label": "Decreased head circumference", "normal": False},
+       {"min": 5, "max": 10, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False},
+       {"min": 10, "max": 50, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": True},
+       {"min": 50, "max": 90, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": True},
+       {"min": 90, "max": 95, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False}
+       {"min": 95, "max": 97, "id": "HP:0040194", "label": "Increased head circumference", "normal": False},
+       {"min": 97, "max": 100, "id": "HP:0000256", "label": "Macrocephaly", "normal": False}
+   ],
+   "biparietal_diameter": [
+       {"min": 0, "max": 3, "id": "HP:0011451", "label": "Primary microcephaly", "normal": False},
+       {"min": 3, "max": 5, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False}, # Need a specific term here
+       {"min": 5, "max": 10, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False},
+       {"min": 10, "max": 50, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": True},
+       {"min": 50, "max": 90, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": True},
+       {"min": 90, "max": 95, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False},
+       {"min": 95, "max": 97, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False}, # Need a specific term here
+       {"min": 97, "max": 100, "id": "HP:0004488", "label": "Macrocephaly at birth", "normal": False}
+   ],
+   "femur_length": [
+       {"min": 0, "max": 3, "id": "HP:0011428", "label": "Short fetal femur length", "normal": False},
+       {"min": 3, "max": 5, "id": "HP:0003097", "label": "Short femur", "normal": False},
+       {"min": 5, "max": 10, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": False}, # Need a specific term here
+       {"min": 10, "max": 50, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": True},
+       {"min": 50, "max": 90, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": True},
+       {"min": 90, "max": 95, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": False},
+       {"min": 95, "max": 97, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": False}, # Need a specific term here
+       {"min": 97, "max": 100, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": False}
+   ],
+   "abdominal_circumference": [
+       {"min": 0, "max": 3, "id": "HP:6000339", "label": "Small fetal abdominal circumference", "normal": False},
+       {"min": 3, "max": 5, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False}, # Need a specific term here
+       {"min": 5, "max": 10, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False},
+       {"min": 10, "max": 50, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": True},
+       {"min": 50, "max": 90, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": True},
+       {"min": 90, "max": 95, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False},
+       {"min": 95, "max": 97, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False}, # Need a specific term here
+       {"min": 97, "max": 100, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False} # Need a specific term here
+   ],
+   "occipitofrontal_diameter": [
+       {"min": 0, "max": 3, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False}, # Need a specific term here
+       {"min": 3, "max": 5, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False}, # Need a specific term here
+       {"min": 5, "max": 10, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False},
+       {"min": 10, "max": 50, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": True},
+       {"min": 50, "max": 90, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": True},
+       {"min": 90, "max": 95, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False},
+       {"min": 95, "max": 97, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False}, # Need a specific term here
+       {"min": 97, "max": 100, "id": "HP:0000240", "label": "Abnormality of skull size", "normal": False} # Need a specific term here
+   ]
+}
