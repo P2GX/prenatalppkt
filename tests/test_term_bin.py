@@ -2,6 +2,7 @@
 test_term_bin.py - Tests for PercentileRange and TermBin
 """
 
+import pytest
 from prenatalppkt.measurements.term_bin import PercentileRange, TermBin
 
 
@@ -22,15 +23,20 @@ class TestPercentileRange:
         assert prange.contains(5.0) is False  # Upper bound exclusive
         assert prange.contains(5.1) is False
 
+    @pytest.mark.skip(
+        reason="from_yaml_key() removed in new architecture - ranges come directly from YAML as {min, max} dicts"
+    )
     def test_from_yaml_key(self):
-        """Test parsing YAML keys."""
-        prange = PercentileRange.from_yaml_key("(0,3)")
-        assert prange.min_percentile == 0
-        assert prange.max_percentile == 3
+        """
+        Test parsing YAML keys.
 
-        prange = PercentileRange.from_yaml_key("(10, 50)")  # With spaces
-        assert prange.min_percentile == 10
-        assert prange.max_percentile == 50
+        NOTE: This method no longer exists. In the new architecture,
+        ranges are defined directly in YAML as:
+          - min: 0
+            max: 3
+        Instead of string keys like "(0,3)".
+        """
+        pass
 
 
 class TestTermBin:

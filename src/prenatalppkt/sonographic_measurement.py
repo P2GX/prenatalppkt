@@ -16,7 +16,6 @@ class SonographicMeasurement:
     Configuration is injected via TermBins.
     """
 
-    # registry: ClassVar[Dict[str, Type[SonographicMeasurement]]] = {}
     registry: ClassVar[Dict[str, Type["SonographicMeasurement"]]] = {}
 
     def __init__(self, measurement_type: str, term_bins: List[TermBin]) -> None:

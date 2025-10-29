@@ -32,12 +32,6 @@ class BiometryMappingLoader:
 
         Raises:
             FileNotFoundError: If YAML file doesn't exist
-
-        Example:
-            >>> mappings = BiometryMappingLoader.load(yaml_path)
-            >>> hc_bins = mappings["head_circumference"]
-            >>> len(hc_bins)
-            8
         """
         if not path.exists():
             logger.warning("Mappings file not found: %s", path)
@@ -48,17 +42,20 @@ class BiometryMappingLoader:
 
         processed: Dict[str, List[TermBin]] = {}
 
-        for measurement_type, ranges in raw_mappings.items():
+        for measurement_type, range_list in raw_mappings.items():
             bins: List[TermBin] = []
 
-            for range_key, config in ranges.items():
-                prange = PercentileRange.from_yaml_key(str(range_key))
+            for range_dict in range_list:
+                prange = PercentileRange(
+                    min_percentile=float(range_dict["min"]),
+                    max_percentile=float(range_dict["max"]),
+                )
 
                 term_bin = TermBin(
                     range=prange,
-                    hpo_id=config["id"],
-                    hpo_label=config["label"],
-                    normal=config["normal"],
+                    hpo_id=range_dict["id"],
+                    hpo_label=range_dict["label"],
+                    normal=range_dict["normal"],
                 )
                 bins.append(term_bin)
 

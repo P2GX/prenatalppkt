@@ -36,26 +36,6 @@ class PercentileRange:
         """
         return self.min_percentile <= percentile < self.max_percentile
 
-    @staticmethod
-    def from_yaml_key(key: str) -> PercentileRange:
-        """
-        Parse YAML key format into PercentileRange.
-
-        Args:
-            key: String like "(3,5)" or "(0, 3)"
-
-        Returns:
-            PercentileRange with parsed boundaries
-
-        Examples:
-            "(0,3)" -> PercentileRange(0, 3)
-            "(10, 50)" -> PercentileRange(10, 50)
-        """
-        clean = key.strip().strip("()").split(",")
-        min_p = float(clean[0].strip())
-        max_p = float(clean[1].strip())
-        return PercentileRange(min_p, max_p)
-
     def __str__(self) -> str:
         """Return string representation."""
         return f"({self.min_percentile},{self.max_percentile})"

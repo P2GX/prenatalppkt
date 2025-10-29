@@ -1,335 +1,328 @@
 """
-test_phenotypic_export.py - Tests updated for new architecture
+test_term_bin.py - Tests for TermBin and PercentileRange
 """
 
 import pytest
-import yaml
-from pathlib import Path
-
-from prenatalppkt.biometry_type import BiometryType
-from prenatalppkt.phenotypic_export import PhenotypicExporter
+from prenatalppkt.measurements.term_bin import TermBin, PercentileRange
 
 
-@pytest.fixture
-def yaml_mappings():
-    """Load YAML mappings in NEW format."""
-    yaml_path = Path("data/mappings/biometry_hpo_mappings.yaml")
-    with open(yaml_path) as f:
-        return yaml.safe_load(f)
+class TestPercentileRange:
+    """Tests for PercentileRange."""
 
+    def test_contains(self):
+        """Test percentile containment check."""
+        prange = PercentileRange(min_percentile=10.0, max_percentile=50.0)
 
-@pytest.fixture
-def intergrowth_exporter():
-    """Create PhenotypicExporter with INTERGROWTH-21st reference."""
-    return PhenotypicExporter(source="intergrowth")
+        assert prange.contains(10.0) is True
+        assert prange.contains(30.0) is True
+        assert prange.contains(50.0) is False  # Upper bound exclusive
+        assert prange.contains(9.9) is False
+        assert prange.contains(50.1) is False
 
+    def test_contains_edge_cases(self):
+        """Test edge cases for contains method."""
+        prange = PercentileRange(min_percentile=0.0, max_percentile=3.0)
 
-@pytest.fixture
-def test_ga():
-    """Standard test gestational age (20 weeks)."""
-    return 20.0
+        assert prange.contains(0.0) is True  # Lower bound inclusive
+        assert prange.contains(1.5) is True
+        assert prange.contains(2.9) is True
+        assert prange.contains(3.0) is False  # Upper bound exclusive
+        assert prange.contains(-0.1) is False
 
+    def test_boundary_values(self):
+        """Test boundary behavior across different ranges."""
+        # Test (3, 5) range
+        prange_3_5 = PercentileRange(min_percentile=3.0, max_percentile=5.0)
+        assert prange_3_5.contains(3.0) is True
+        assert prange_3_5.contains(4.0) is True
+        assert prange_3_5.contains(5.0) is False
 
-# ============================================================================
-# BASIC INITIALIZATION TESTS
-# ============================================================================
+        # Test (90, 95) range
+        prange_90_95 = PercentileRange(min_percentile=90.0, max_percentile=95.0)
+        assert prange_90_95.contains(89.9) is False
+        assert prange_90_95.contains(90.0) is True
+        assert prange_90_95.contains(92.5) is True
+        assert prange_90_95.contains(95.0) is False
 
-
-def test_exporter_initialization(intergrowth_exporter):
-    """Test that exporter initializes correctly."""
-    assert intergrowth_exporter.source == "intergrowth"
-    assert intergrowth_exporter.reference is not None
-    assert intergrowth_exporter.evaluator is not None
-    assert hasattr(intergrowth_exporter, "mappings")
-
-
-def test_mappings_structure(intergrowth_exporter):
-    """Test that mappings have expected structure (compatibility format)."""
-    mappings = intergrowth_exporter.mappings
-
-    assert "head_circumference" in mappings
-    hc = mappings["head_circumference"]
-
-    # Check structure
-    assert "bins" in hc
-    assert "normal_bins" in hc
-    assert "abnormal_term" in hc
-
-    # normal_bins should be a list (will convert to set if needed)
-    assert isinstance(hc["normal_bins"], (list, set))
-
-
-def test_available_measurements(intergrowth_exporter):
-    """Test that all measurement types are available."""
-    available = intergrowth_exporter.evaluator.get_available_measurements()
-
-    assert "head_circumference" in available
-    assert "biparietal_diameter" in available
-    assert "femur_length" in available
-    assert "abdominal_circumference" in available
-    assert "occipitofrontal_diameter" in available
-
-
-# ============================================================================
-# SKIP TESTS THAT REQUIRE OLD STRUCTURE
-# ============================================================================
-
-
-@pytest.mark.skip(
-    reason="Test requires old YAML structure - needs rewrite for new architecture"
-)
-def test_fractional_gestational_age():
-    pass
-
-
-@pytest.mark.skip(reason="Test requires old fixture structure - needs rewrite")
-def test_below_3p_maps_correctly():
-    pass
-
-
-@pytest.mark.skip(reason="Test requires old fixture structure - needs rewrite")
-def test_between_3p_5p_maps_correctly():
-    pass
-
-
-@pytest.mark.skip(reason="Test requires old fixture structure - needs rewrite")
-def test_above_97p_maps_correctly():
-    pass
-
-
-@pytest.mark.skip(reason="Test requires old YAML structure - needs rewrite")
-def test_hc_all_bins_match_yaml():
-    pass
-
-
-@pytest.mark.skip(reason="Test requires old structure - needs rewrite")
-def test_nichd_reference_data():
-    pass
-
-
-@pytest.mark.skip(reason="Test requires old structure - needs rewrite")
-def test_nichd_consistency_with_intergrowth():
-    pass
-
-
-# ============================================================================
-# NEW ARCHITECTURE TESTS
-# ============================================================================
-
-
-def test_evaluate_to_observation_normal(intergrowth_exporter):
-    """Test evaluating a normal-range measurement."""
-    # Use GA that exists in INTERGROWTH (20 weeks)
-    # Use value in normal range
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=180.0,  # Should be in normal range at 20 weeks
-        gestational_age_weeks=20.0,
+    @pytest.mark.skip(
+        reason="from_yaml_key() removed in new architecture - ranges come directly from YAML as {min, max} dicts"
     )
+    def test_from_yaml_key(self):
+        """
+        Test parsing YAML keys.
 
-    assert term_obs is not None
-    assert term_obs.hpo_id is not None
-    assert term_obs.observed is False  # Normal range = excluded
-
-
-def test_evaluate_to_observation_abnormal_low(intergrowth_exporter):
-    """Test evaluating an abnormally low measurement."""
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=150.0,  # Should be below 3rd percentile at 20 weeks
-        gestational_age_weeks=20.0,
-    )
-
-    assert term_obs is not None
-    assert term_obs.observed is True  # Abnormal = observed
-    assert "microcephaly" in term_obs.hpo_label.lower()
+        NOTE: This method no longer exists. In the new architecture,
+        ranges are defined directly in YAML as:
+          - min: 0
+            max: 3
+        Instead of string keys like "(0,3)".
+        """
+        pass
 
 
-def test_evaluate_to_observation_abnormal_high(intergrowth_exporter):
-    """Test evaluating an abnormally high measurement."""
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=230.0,  # Should be above 97th percentile at 20 weeks
-        gestational_age_weeks=20.0,
-    )
+class TestTermBin:
+    """Tests for TermBin."""
 
-    assert term_obs is not None
-    assert term_obs.observed is True  # Abnormal = observed
-    assert "macrocephaly" in term_obs.hpo_label.lower()
-
-
-def test_normal_range_excluded(intergrowth_exporter):
-    """Test that normal range measurements are marked as excluded."""
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=185.0,  # Mid-range value
-        gestational_age_weeks=20.0,
-    )
-
-    feature = term_obs.to_phenotypic_feature()
-    assert feature["excluded"] is True
-    # Description should mention it's normal/excluded
-    assert "description" in feature
-
-
-def test_batch_export_multiple(intergrowth_exporter):
-    """Test batch export of multiple measurements."""
-    measurements = [
-        (BiometryType.HEAD_CIRCUMFERENCE, 150.0, 20.0),
-        (BiometryType.FEMUR_LENGTH, 25.0, 20.0),
-        (BiometryType.BIPARIETAL_DIAMETER, 40.0, 20.0),
-    ]
-
-    results = intergrowth_exporter.batch_export(measurements)
-
-    # Should have results for valid measurements
-    assert len(results) >= 1
-    assert all(hasattr(r, "hpo_id") for r in results)
-
-
-def test_batch_export_handles_errors(intergrowth_exporter):
-    """Test that batch export handles errors gracefully."""
-    measurements = [
-        (BiometryType.HEAD_CIRCUMFERENCE, 180.0, 20.0),  # Valid
-        (BiometryType.BIPARIETAL_DIAMETER, -1.0, 20.0),  # Invalid value
-        (BiometryType.FEMUR_LENGTH, 30.0, 20.0),  # Valid
-    ]
-
-    results = intergrowth_exporter.batch_export(measurements)
-
-    # Should have some results even with errors
-    assert len(results) >= 1
-
-
-def test_to_json_export(intergrowth_exporter):
-    """Test JSON export."""
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=150.0,
-        gestational_age_weeks=20.0,
-    )
-
-    json_str = intergrowth_exporter.to_json([term_obs])
-
-    assert isinstance(json_str, str)
-    assert "phenotypicFeatures" in json_str
-    assert "HP:" in json_str
-
-
-def test_json_export_pretty_formatting(intergrowth_exporter):
-    """Test pretty-printed JSON export."""
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=150.0,
-        gestational_age_weeks=20.0,
-    )
-
-    json_str = intergrowth_exporter.to_json([term_obs], pretty=True)
-
-    assert isinstance(json_str, str)
-    assert "\n" in json_str  # Pretty print has newlines
-    assert "  " in json_str  # Pretty print has indentation
-
-
-def test_custom_normal_bins_override():
-    """Test that custom normal bins work (legacy support)."""
-    # This test is for backward compatibility
-    # In new architecture, normal ranges are in YAML
-    pytest.skip("Custom normal bins now defined in YAML")
-
-
-@pytest.mark.skip(reason="Registry pattern no longer used")
-def test_registry_based_dispatch():
-    pass
-
-
-@pytest.mark.skip(reason="Old implementation detail")
-def test_evaluate_returns_measurement_result():
-    pass
-
-
-@pytest.mark.skip(reason="API changed in new architecture")
-def test_evaluate_vs_export_separation():
-    pass
-
-
-def test_all_measurements_supported(intergrowth_exporter):
-    """Test that all BiometryType measurements are supported."""
-    expected_measurements = [
-        BiometryType.HEAD_CIRCUMFERENCE,
-        BiometryType.BIPARIETAL_DIAMETER,
-        BiometryType.FEMUR_LENGTH,
-        BiometryType.ABDOMINAL_CIRCUMFERENCE,
-        BiometryType.OCCIPITOFRONTAL_DIAMETER,
-    ]
-
-    for meas_type in expected_measurements:
-        mapper = intergrowth_exporter.evaluator.get_measurement_mapper(meas_type.value)
-        assert mapper is not None, f"{meas_type.value} should have a mapper"
-
-
-# ============================================================================
-# INTEGRATION TESTS
-# ============================================================================
-
-
-def test_end_to_end_workflow(intergrowth_exporter):
-    """Test complete workflow from measurement to JSON."""
-    # Evaluate measurement
-    term_obs = intergrowth_exporter.evaluate_to_observation(
-        measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-        value_mm=150.0,
-        gestational_age_weeks=20.0,
-    )
-
-    # Convert to feature dict
-    feature = term_obs.to_phenotypic_feature()
-    assert "type" in feature
-    assert "excluded" in feature
-    assert "onset" in feature
-
-    # Export to JSON
-    json_str = intergrowth_exporter.to_json([term_obs])
-    assert "HP:" in json_str
-
-
-def test_multiple_measurements_same_ga(intergrowth_exporter):
-    """Test processing multiple measurements at same GA."""
-    ga = 20.0
-
-    measurements = [
-        (BiometryType.HEAD_CIRCUMFERENCE, 150.0),
-        (BiometryType.FEMUR_LENGTH, 25.0),
-        (BiometryType.BIPARIETAL_DIAMETER, 40.0),
-    ]
-
-    results = []
-    for meas_type, value in measurements:
-        try:
-            term_obs = intergrowth_exporter.evaluate_to_observation(
-                measurement_type=meas_type, value_mm=value, gestational_age_weeks=ga
-            )
-            results.append(term_obs)
-        except ValueError:  # noqa: PERF203  (test intentionally tolerates per-iteration failures)
-            # Some values might be out of range
-            pass
-
-    assert len(results) >= 1
-
-
-@pytest.mark.parametrize("ga", [18.0, 20.0, 25.0, 30.0])
-def test_different_gestational_ages(intergrowth_exporter, ga):
-    """Test measurements at different gestational ages."""
-    try:
-        term_obs = intergrowth_exporter.evaluate_to_observation(
-            measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-            value_mm=180.0,
-            gestational_age_weeks=ga,
+    def test_init(self):
+        """Test TermBin initialization."""
+        prange = PercentileRange(min_percentile=0.0, max_percentile=3.0)
+        term_bin = TermBin(
+            range=prange, hpo_id="HP:0000252", hpo_label="Microcephaly", normal=False
         )
-        assert term_obs is not None
-    except ValueError as e:
-        # Some GAs might not be in reference data
-        if "No reference data" in str(e):
-            pytest.skip(f"GA {ga} not in reference data")
-        else:
-            raise
+
+        assert term_bin.range == prange
+        assert term_bin.hpo_id == "HP:0000252"
+        assert term_bin.hpo_label == "Microcephaly"
+        assert term_bin.normal is False
+
+    def test_fits_method(self):
+        """Test the fits method delegates to range.contains()."""
+        prange = PercentileRange(min_percentile=10.0, max_percentile=50.0)
+        term_bin = TermBin(
+            range=prange, hpo_id="HP:0000001", hpo_label="Test term", normal=True
+        )
+
+        assert term_bin.fits(10.0) is True
+        assert term_bin.fits(30.0) is True
+        assert term_bin.fits(50.0) is False  # Upper bound exclusive
+        assert term_bin.fits(9.9) is False
+
+    def test_category_property(self):
+        """Test that category is derived from range boundaries."""
+        # Lower extreme: 0-3
+        bin1 = TermBin(
+            range=PercentileRange(0.0, 3.0),
+            hpo_id="HP:0000252",
+            hpo_label="Microcephaly",
+            normal=False,
+        )
+        assert bin1.category == "lower_extreme_term"
+
+        # Lower term: 3-5
+        bin2 = TermBin(
+            range=PercentileRange(3.0, 5.0),
+            hpo_id="HP:0040195",
+            hpo_label="Decreased head circumference",
+            normal=False,
+        )
+        assert bin2.category == "lower_term"
+
+        # Abnormal term: 5-10
+        bin3 = TermBin(
+            range=PercentileRange(5.0, 10.0),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=False,
+        )
+        assert bin3.category == "abnormal_term"
+
+        # Normal term: 10-50
+        bin4 = TermBin(
+            range=PercentileRange(10.0, 50.0),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+        )
+        assert bin4.category == "normal_term"
+
+        # Normal term: 50-90
+        bin5 = TermBin(
+            range=PercentileRange(50.0, 90.0),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+        )
+        assert bin5.category == "normal_term"
+
+        # Abnormal term: 90-95
+        bin6 = TermBin(
+            range=PercentileRange(90.0, 95.0),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=False,
+        )
+        assert bin6.category == "abnormal_term"
+
+        # Upper term: 95-97
+        bin7 = TermBin(
+            range=PercentileRange(95.0, 97.0),
+            hpo_id="HP:0040194",
+            hpo_label="Increased head circumference",
+            normal=False,
+        )
+        assert bin7.category == "upper_term"
+
+        # Upper extreme: 97-100
+        bin8 = TermBin(
+            range=PercentileRange(97.0, 100.0),
+            hpo_id="HP:0000256",
+            hpo_label="Macrocephaly",
+            normal=False,
+        )
+        assert bin8.category == "upper_extreme_term"
+
+    def test_normal_flag(self):
+        """Test that normal flag is preserved."""
+        prange = PercentileRange(10.0, 50.0)
+
+        normal_bin = TermBin(
+            range=prange,
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+        )
+        assert normal_bin.normal is True
+
+        abnormal_bin = TermBin(
+            range=prange,
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=False,
+        )
+        assert abnormal_bin.normal is False
+
+    def test_multiple_bins_for_same_hpo(self):
+        """Test that same HPO can be used in multiple bins (normal vs abnormal)."""
+        hpo_id = "HP:0000240"
+        hpo_label = "Abnormality of skull size"
+
+        # Normal range bins
+        normal_bin_lower = TermBin(
+            range=PercentileRange(10.0, 50.0),
+            hpo_id=hpo_id,
+            hpo_label=hpo_label,
+            normal=True,
+        )
+
+        normal_bin_upper = TermBin(
+            range=PercentileRange(50.0, 90.0),
+            hpo_id=hpo_id,
+            hpo_label=hpo_label,
+            normal=True,
+        )
+
+        # Abnormal range bin
+        abnormal_bin = TermBin(
+            range=PercentileRange(5.0, 10.0),
+            hpo_id=hpo_id,
+            hpo_label=hpo_label,
+            normal=False,
+        )
+
+        assert normal_bin_lower.normal is True
+        assert normal_bin_upper.normal is True
+        assert abnormal_bin.normal is False
+
+        # All share same HPO
+        assert normal_bin_lower.hpo_id == normal_bin_upper.hpo_id == abnormal_bin.hpo_id
+
+    def test_fits_boundary_behavior(self):
+        """Test fits behavior at exact boundaries."""
+        # Create bin for (10, 50) range
+        bin_10_50 = TermBin(
+            range=PercentileRange(10.0, 50.0),
+            hpo_id="HP:0000001",
+            hpo_label="Test",
+            normal=True,
+        )
+
+        # Lower boundary: inclusive
+        assert bin_10_50.fits(10.0) is True
+        assert bin_10_50.fits(10.1) is True
+
+        # Upper boundary: exclusive
+        assert bin_10_50.fits(49.9) is True
+        assert bin_10_50.fits(50.0) is False
+
+        # Outside range
+        assert bin_10_50.fits(9.9) is False
+        assert bin_10_50.fits(50.1) is False
+
+
+class TestTermBinIntegration:
+    """Integration tests for TermBin with realistic scenarios."""
+
+    def test_all_eight_bins_for_head_circumference(self):
+        """Test complete set of 8 bins for head circumference."""
+        bins = [
+            TermBin(PercentileRange(0.0, 3.0), "HP:0000252", "Microcephaly", False),
+            TermBin(
+                PercentileRange(3.0, 5.0),
+                "HP:0040195",
+                "Decreased head circumference",
+                False,
+            ),
+            TermBin(
+                PercentileRange(5.0, 10.0),
+                "HP:0000240",
+                "Abnormality of skull size",
+                False,
+            ),
+            TermBin(
+                PercentileRange(10.0, 50.0),
+                "HP:0000240",
+                "Abnormality of skull size",
+                True,
+            ),
+            TermBin(
+                PercentileRange(50.0, 90.0),
+                "HP:0000240",
+                "Abnormality of skull size",
+                True,
+            ),
+            TermBin(
+                PercentileRange(90.0, 95.0),
+                "HP:0000240",
+                "Abnormality of skull size",
+                False,
+            ),
+            TermBin(
+                PercentileRange(95.0, 97.0),
+                "HP:0040194",
+                "Increased head circumference",
+                False,
+            ),
+            TermBin(PercentileRange(97.0, 100.0), "HP:0000256", "Macrocephaly", False),
+        ]
+
+        # Test that each percentile finds exactly one bin
+        test_percentiles = [1.5, 4.0, 7.5, 30.0, 70.0, 92.5, 96.0, 98.5]
+
+        for percentile in test_percentiles:
+            matching_bins = [b for b in bins if b.fits(percentile)]
+            assert len(matching_bins) == 1, (
+                f"Percentile {percentile} should match exactly 1 bin"
+            )
+
+        # Test that all bins have correct categories
+        expected_categories = [
+            "lower_extreme_term",
+            "lower_term",
+            "abnormal_term",
+            "normal_term",
+            "normal_term",
+            "abnormal_term",
+            "upper_term",
+            "upper_extreme_term",
+        ]
+
+        for bin, expected_cat in zip(bins, expected_categories):
+            assert bin.category == expected_cat
+
+    def test_finding_appropriate_bin(self):
+        """Test finding the appropriate bin for a given percentile."""
+        bins = [
+            TermBin(PercentileRange(0.0, 3.0), "HP:0000252", "Microcephaly", False),
+            TermBin(PercentileRange(10.0, 50.0), "HP:0000240", "Normal", True),
+            TermBin(PercentileRange(97.0, 100.0), "HP:0000256", "Macrocephaly", False),
+        ]
+
+        # Test finding bins
+        assert bins[0].fits(1.5) is True  # Microcephaly
+        assert bins[1].fits(30.0) is True  # Normal
+        assert bins[2].fits(98.5) is True  # Macrocephaly
+
+        # Test non-matching
+        assert bins[0].fits(30.0) is False
+        assert bins[1].fits(1.5) is False
+        assert bins[2].fits(30.0) is False

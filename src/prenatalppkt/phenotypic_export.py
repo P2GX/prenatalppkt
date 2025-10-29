@@ -1,9 +1,7 @@
-"""
-phenotypic_export.py - High-level orchestrator for phenotypic exports
-"""
+"""High-level orchestrator for phenotypic exports."""
 
 from pathlib import Path
-from typing import Optional, Dict, Set, List, Any, Tuple
+from typing import Optional, Dict, Set, List, Any, Tuple, ClassVar
 import logging
 import json
 
@@ -21,6 +19,18 @@ logger = logging.getLogger(__name__)
 
 class PhenotypicExporter:
     """High-level orchestrator for phenotypic exports."""
+
+    # Lookup table for range to bin_key conversion
+    _RANGE_TO_BIN: ClassVar[Dict[Tuple[int, int], str]] = {
+        (0, 3): "below_3p",
+        (3, 5): "between_3p_5p",
+        (5, 10): "between_5p_10p",
+        (10, 50): "between_10p_50p",
+        (50, 90): "between_50p_90p",
+        (90, 95): "between_90p_95p",
+        (95, 97): "between_95p_97p",
+        (97, 100): "above_97p",
+    }
 
     def __init__(
         self, source: str = "intergrowth", mappings_path: Optional[Path] = None
@@ -61,33 +71,26 @@ class PhenotypicExporter:
         """Convert new YAML format to old format for backward compatibility."""
         result: Dict[str, Any] = {}
 
-        range_to_bin: Dict[str, str] = {
-            "(0,3)": "below_3p",
-            "(3,5)": "between_3p_5p",
-            "(5,10)": "between_5p_10p",
-            "(10,50)": "between_10p_50p",
-            "(50,90)": "between_50p_90p",
-            "(90,95)": "between_90p_95p",
-            "(95,97)": "between_95p_97p",
-            "(97,100)": "above_97p",
-        }
-
-        for meas_type, ranges in raw.items():
+        for meas_type, range_list in raw.items():
             result[meas_type] = {
                 "bins": {},
                 "normal_bins": [],
                 "abnormal_term": {"id": "HP:0000240", "label": "Abnormality"},
             }
 
-            for range_key, config in ranges.items():
-                bin_key = range_to_bin.get(str(range_key))
+            for range_dict in range_list:
+                min_p = int(range_dict["min"])
+                max_p = int(range_dict["max"])
+                range_key = (min_p, max_p)
+
+                bin_key = self._RANGE_TO_BIN.get(range_key)
                 if bin_key:
                     result[meas_type]["bins"][bin_key] = {
-                        "id": config["id"],
-                        "label": config["label"],
+                        "id": range_dict["id"],
+                        "label": range_dict["label"],
                     }
 
-                    if config["normal"]:
+                    if range_dict["normal"]:
                         result[meas_type]["normal_bins"].append(bin_key)
 
         return result
@@ -204,8 +207,8 @@ class PhenotypicExporter:
                     gestational_age_weeks=ga_weeks,
                 )
                 results.append(term_obs)
-            except (ValueError, KeyError) as e:  # noqa: PERF203
-                logger.error("Error processing %s: %s", meas_type, e)  # noqa: PERF203  (per-iteration isolation intentional)
+            except (ValueError, KeyError) as e:  # noqa: PERF203  # Batch processing requires per-item error handling
+                logger.error("Error processing %s: %s", meas_type, e)
                 errors.append((meas_type, str(e)))
 
         if errors:
