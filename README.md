@@ -9,19 +9,20 @@ A Python library for transforming raw prenatal sonography data into standardized
 1. [Overview](#overview)
 2. [Motivation](#motivation)
 3. [Architecture](#architecture)
-4. [Module Breakdown](#module-breakdown)
-5. [Data Flow](#data-flow)
-6. [Inputs and Outputs](#inputs-and-outputs)
-7. [Installation](#installation)
-8. [Usage Examples](#usage-examples)
-9. [Testing](#testing)
-10. [Future Roadmap](#future-roadmap)
-11. [Contributing](#contributing)
-12. [License](#license)
-13. [Acknowledgments](#acknowledgments)
-14. [Citation](#citation)
-15. [Support](#support)
-16. [Internal Layout](#internal-layout)
+4. [Data Flow](#data-flow)
+5. [Module Breakdown](#module-breakdown)
+6. [Configuration Guide](#configuration-guide)
+7. [Inputs and Outputs](#inputs-and-outputs)
+8. [Installation](#installation)
+9. [Usage Examples](#usage-examples)
+10. [Testing](#testing)
+11. [Future Roadmap](#future-roadmap)
+12. [Contributing](#contributing)
+13. [License](#license)
+14. [Acknowledgments](#acknowledgments)
+15. [Citation](#citation)
+16. [Support](#support)
+17. [Visuals](#visuals)
 
 ---
 
@@ -44,12 +45,12 @@ This enables federated genomic repositories to integrate prenatal phenotype data
 
 Prenatal ultrasound biometry provides critical developmental markers for fetal health assessment. Key measurements include:
 
-- Head Circumference (HC)
-- Biparietal Diameter (BPD)
-- Abdominal Circumference (AC)
-- Femur Length (FL)
-- Occipito-Frontal Diameter (OFD)
-- Estimated Fetal Weight (EFW)
+- **Head Circumference (HC)**: Marker for brain development
+- **Biparietal Diameter (BPD)**: Skull width measurement
+- **Abdominal Circumference (AC)**: Indicates fetal nutrition status
+- **Femur Length (FL)**: Long bone growth indicator
+- **Occipito-Frontal Diameter (OFD)**: Alternative skull measurement
+- **Estimated Fetal Weight (EFW)**: Overall growth assessment
 
 ### Technical Challenges
 
@@ -57,768 +58,916 @@ Prenatal ultrasound biometry provides critical developmental markers for fetal h
 2. **Reference ambiguity**: Multiple growth standards exist (NIHCD, INTERGROWTH-21st) with different population bases
 3. **Ontology mapping**: Converting numeric percentiles to standardized phenotype terms requires domain expertise
 4. **Genomic integration**: Linking prenatal observations to genetic data demands structured, machine-readable formats
+5. **Maintainability**: Hard-coded mapping logic becomes brittle as clinical guidelines evolve
 
 ### Solution
 
-`prenatalppkt` provides a unified pipeline from raw measurements to Phenopackets, enabling:
+`prenatalppkt` provides a unified, configuration-driven pipeline from raw measurements to Phenopackets, enabling:
 
-- Reproducible phenotype analysis across institutions
-- Integration with genomic variant interpretation workflows
-- Federated data sharing with privacy-preserving pseudonymization
-- Longitudinal tracking of fetal development
-
----
-
-## Initial Design
-
-```mermaid
-flowchart TD
-   subgraph Input["Input Processing"]
-       JSON["JSON/XLSX Input"] --> Parser["Parser Layer"]
-       Parser --> GA["Gestational Age
-       Calculation"]
-       GA --> Measurements["Extract Measurements
-       o BPD
-       o HC
-       o AC
-       o FL
-       o OFD"]
-   end
-
-   subgraph Reference["Reference Data"]
-       NIH["NIHCD Reference
-       o Percentiles
-       o Growth Charts"]
-       IG21["INTERGROWTH-21st
-       o Z-scores
-       o Centiles"]
-   end
-
-   subgraph Processing["Measurement Processing"]
-       Measurements --> Eval["Measurement Evaluation"]
-       Eval --> Percentile["Percentile
-       Classification"]
-       Eval --> ZScore["Z-score
-       Calculation"]
-
-       Percentile --> HPO["HPO Term Mapping
-       o Abnormalities
-       o Normal ranges"]
-       ZScore --> HPO
-   end
-
-   subgraph Output["Output Generation"]
-       HPO --> Phenopacket["Phenopacket Builder"]
-       Phenopacket --> QC["QC Reports"]
-       Phenopacket --> Final["Final Phenopackets"]
-   end
-
-   NIH --> Eval
-   IG21 --> Eval
-
-   classDef input fill:#a8d5ff,stroke:#333,stroke-width:2px,color:#000000
-   classDef reference fill:#ffe6cc,stroke:#333,stroke-width:2px,color:#000000
-   classDef process fill:#d5ffa8,stroke:#333,stroke-width:2px,color:#000000
-   classDef output fill:#ffafcc,stroke:#333,stroke-width:2px,color:#000000
-
-   class JSON,Parser,GA,Measurements input
-   class NIH,IG21 reference
-   class Eval,Percentile,ZScore,HPO process
-   class Phenopacket,QC,Final output
-```
-
-```mermaid
-sequenceDiagram
-   participant Input as Input Parser
-   participant GA as Gestational Age
-   participant Eval as Measurement Evaluator
-   participant Ref as Reference Data
-   participant HPO as HPO Mapper
-   participant QC as QC Reporter
-   participant PP as Phenopacket Builder
-
-   Input->>GA: Parse gestational age
-   Input->>Eval: Extract measurements
-
-   Eval->>Ref: Request reference data
-   Ref-->>Eval: Return NIHCD/INTERGROWTH-21st data
-
-   Eval->>Eval: Calculate percentiles/z-scores
-   Eval->>HPO: Map to HPO terms
-
-   HPO->>QC: Send results for validation
-   QC-->>HPO: QC report
-
-   HPO->>PP: Send validated data
-   PP->>PP: Assemble Phenopacket
-   PP-->>QC: Final QC check
-   QC-->>PP: QC approval
-
-   PP-->>Input: Return completed Phenopacket
-```
+- **Reproducible phenotype analysis** across institutions
+- **Integration with genomic variant interpretation** workflows
+- **Federated data sharing** with privacy-preserving pseudonymization
+- **Flexible ontology mapping** through declarative YAML configuration
+- **Longitudinal tracking** of fetal development
 
 ---
 
 ## Architecture
 
-The system implements a clean separation of concerns across five functional layers:
+The system implements a **data-driven, configuration-based architecture** with clean separation between measurement evaluation, ontology mapping, and export logic.
+
+### Core Design Principles
+
+1. **Configuration over Code**: HPO term mappings are defined declaratively in YAML, not hard-coded in Python classes
+2. **Dependency Injection**: Measurement evaluators receive configuration at instantiation, enabling flexible testing and deployment
+3. **Single Responsibility**: Each component has one well-defined purpose
+4. **Open/Closed Principle**: New measurements and mapping rules are added via configuration files, not code changes
+
+### System Layers
 
 ```mermaid
 flowchart TD
-   subgraph L1["Layer 1: Input Parsing"]
-       JSON["Observer JSON Parser"]
-       XLSX["ViewPoint Excel Parser"]
-       GA["Gestational Age Calculator"]
-   end
+    subgraph L1["Layer 1: Configuration (YAML)"]
+        YAML["data/mappings/biometry_hpo_mappings.yaml
+        • Percentile ranges (min/max)
+        • HPO term IDs and labels
+        • Normal/abnormal flags"]
+    end
 
-   subgraph L2["Layer 2: Reference Data"]
-       NIHCD["NIHCD Tableso HC, BPD, AC, FL, EFWo Percentiles by race/ethnicity"]
-       IG21["INTERGROWTH-21st Tableso HC, BPD, AC, FL, OFDo Centiles + Z-scores"]
-       RefMgr["Reference Manager(biometry_reference.py)"]
-   end
+    subgraph L2["Layer 2: Data Models"]
+        PR["PercentileRange
+        • min_percentile
+        • max_percentile
+        • contains(percentile)"]
+        
+        TB["TermBin
+        • range: PercentileRange
+        • hpo_id, hpo_label
+        • normal: bool
+        • category (auto-detected)"]
+        
+        TO["TermObservation
+        • hpo_id, hpo_label
+        • observed: bool
+        • gestational_age
+        • percentile"]
+    end
 
-   subgraph L3["Layer 3: Measurement Evaluation"]
-       RR["Reference Range(Percentile thresholds)"]
-       Eval["Measurement Evaluator(SonographicMeasurement)"]
-       Result["Measurement Result(Percentile bins)"]
-   end
+    subgraph L3["Layer 3: Loading & Validation"]
+        Loader["BiometryMappingLoader
+        • load(yaml_path)
+        • Parses YAML → TermBin objects
+        • Validates ranges
+        • Sorts by min_percentile"]
+    end
 
-   subgraph L4["Layer 4: Ontology Mapping"]
-       YAML["biometry_hpo_mappings.yamlo Percentile -> HPO ruleso Normal range definitions"]
-       TermObs["Term Observation(HPO term + context)"]
-       Export["Phenotypic Exporter"]
-   end
+    subgraph L4["Layer 4: Business Logic"]
+        SM["SonographicMeasurement
+        • measurement_type: str
+        • term_bins: List[TermBin]
+        • from_percentile() → TermObservation"]
+        
+        Factory["MeasurementEvaluation
+        • Factory pattern
+        • Loads all mappings once
+        • get_measurement_mapper()"]
+    end
 
-   subgraph L5["Layer 5: Output Generation"]
-       QC["QC Validator(Schema + completeness)"]
-       PP["Phenopacket Builder"]
-       OUT["Phenopacket JSON + QC Reports"]
-   end
+    subgraph L5["Layer 5: Reference Data"]
+        Ref["FetalGrowthPercentiles
+        • NIHCD / INTERGROWTH-21st tables
+        • Percentile calculation
+        • Z-score calculation"]
+    end
 
-   JSON --> GA
-   XLSX --> GA
-   GA --> Eval
+    subgraph L6["Layer 6: Export"]
+        Export["PhenotypicExporter
+        • Phenopacket v2 assembly
+        • QC validation
+        • JSON serialization"]
+    end
 
-   NIHCD --> RefMgr
-   IG21 --> RefMgr
-   RefMgr --> RR
+    YAML --> Loader
+    Loader --> PR
+    Loader --> TB
+    
+    Loader --> Factory
+    Factory --> SM
+    SM --> TO
+    
+    Ref --> SM
+    TO --> Export
 
-   Eval --> RR
-   RR --> Result
-   Result --> TermObs
+    classDef config fill:#fff4e6,stroke:#333,stroke-width:2px
+    classDef model fill:#e3f2fd,stroke:#333,stroke-width:2px
+    classDef logic fill:#f3e5f5,stroke:#333,stroke-width:2px
+    classDef export fill:#e8f5e9,stroke:#333,stroke-width:2px
+    
+    class YAML config
+    class PR,TB,TO model
+    class Loader,SM,Factory logic
+    class Ref logic
+    class Export export
+```
 
-   YAML --> TermObs
-   TermObs --> Export
-   Export --> QC
-   QC --> PP
-   PP --> OUT
+### Key Architectural Change: Configuration-Driven Mapping
 
-   classDef layer1 fill:#e1f5ff,stroke:#01579b,stroke-width:2px
-   classDef layer2 fill:#fff3e0,stroke:#e65100,stroke-width:2px
-   classDef layer3 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-   classDef layer4 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-   classDef layer5 fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+**OLD APPROACH** (Hard-coded):
+```python
+# Each measurement had its own class with hard-coded logic
+class HeadCircumferenceMeasurement(SonographicMeasurement):
+    def get_bin_to_term_mapping(self):
+        return {
+            "below_3p": MinimalTerm("HP:0000252", "Microcephaly"),
+            "between_3p_5p": MinimalTerm("HP:0040195", "Decreased HC"),
+            # ... 6 more hard-coded bins
+        }
+```
 
-   class JSON,XLSX,GA layer1
-   class NIHCD,IG21,RefMgr layer2
-   class RR,Eval,Result layer3
-   class YAML,TermObs,Export layer4
-   class QC,PP,OUT layer5
+**NEW APPROACH** (Data-driven):
+```yaml
+# data/mappings/biometry_hpo_mappings.yaml
+head_circumference:
+  - min: 0
+    max: 3
+    id: "HP:0000252"
+    label: "Microcephaly"
+    normal: false
+  
+  - min: 3
+    max: 5
+    id: "HP:0040195"
+    label: "Decreased head circumference"
+    normal: false
+  # ... all 8 ranges covering 0-100 percentile
+```
+
+```python
+# Python code loads configuration, no hard-coding needed
+factory = MeasurementEvaluation()  # Loads YAML once
+mapper = factory.get_measurement_mapper("head_circumference")
+observation = mapper.from_percentile(2.1, gestational_age)
+# Returns: TermObservation(hpo_id="HP:0000252", hpo_label="Microcephaly", ...)
+```
+
+### System Class Diagram
+
+```mermaid
+classDiagram
+    %% Configuration Layer
+    class BiometryMappingsYAML {
+        <<Configuration>>
+        head_circumference[]
+        biparietal_diameter[]
+        femur_length[]
+        abdominal_circumference[]
+        occipitofrontal_diameter[]
+    }
+
+    %% Data Models
+    class PercentileRange {
+        +min_percentile: float
+        +max_percentile: float
+        +contains(percentile: float) bool
+    }
+
+    class TermBin {
+        +range: PercentileRange
+        +hpo_id: str
+        +hpo_label: str
+        +normal: bool
+        +fits(percentile: float) bool
+        +category: str
+    }
+
+    class TermObservation {
+        +hpo_id: str
+        +hpo_label: str
+        +category: str
+        +observed: bool
+        +gestational_age: GestationalAge
+        +percentile: float
+        +to_phenotypic_feature() dict
+    }
+
+    class GestationalAge {
+        +weeks: int
+        +days: int
+        +from_weeks(float) GestationalAge
+        +to_iso() str
+    }
+
+    %% Loading Layer
+    class BiometryMappingLoader {
+        <<Service>>
+        +load(path: Path) Dict[str, List[TermBin]]
+    }
+
+    %% Business Logic Layer
+    class SonographicMeasurement {
+        +measurement_type: str
+        +term_bins: List[TermBin]
+        +from_percentile(percentile, ga) TermObservation
+        +name() str
+    }
+
+    class MeasurementEvaluation {
+        <<Factory>>
+        -_mappings: Dict[str, List[TermBin]]
+        +__init__(mappings_path?)
+        +get_measurement_mapper(type: str) SonographicMeasurement
+    }
+
+    %% Reference Data Layer
+    class FetalGrowthPercentiles {
+        +source: str
+        +tables: Dict[str, DataFrame]
+        +calculate_percentile(measurement, ga, value) float
+        +get_z_score(measurement, ga, value) float
+        +lookup_percentile(measurement, ga, value) float
+    }
+
+    %% Export Layer
+    class PhenotypicExporter {
+        +term_observations: List[TermObservation]
+        +build_phenopacket() dict
+        +to_json() str
+        +validate() QCReport
+    }
+
+    class QCValidator {
+        +validate_schema(json) List[Error]
+        +validate_ontology_terms() List[Error]
+        +check_completeness() List[Warning]
+    }
+
+    %% Relationships
+    BiometryMappingsYAML ..> BiometryMappingLoader : reads
+    BiometryMappingLoader --> PercentileRange : creates
+    BiometryMappingLoader --> TermBin : creates
+    TermBin *-- PercentileRange : contains
+    
+    BiometryMappingLoader --> MeasurementEvaluation : provides mappings
+    MeasurementEvaluation --> SonographicMeasurement : creates
+    SonographicMeasurement *-- TermBin : configured with
+    SonographicMeasurement --> TermObservation : produces
+    
+    TermObservation *-- GestationalAge : includes
+    FetalGrowthPercentiles ..> SonographicMeasurement : provides percentiles
+    
+    PhenotypicExporter *-- TermObservation : collects
+    PhenotypicExporter --> QCValidator : uses
+```
+
+---
+
+## Data Flow
+
+### End-to-End Processing Pipeline
+
+The new architecture streamlines the flow from raw measurement to Phenopacket:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Parser as Input Parser
+    participant GA as GestationalAge
+    participant Ref as FetalGrowthPercentiles
+    participant Factory as MeasurementEvaluation
+    participant Mapper as SonographicMeasurement
+    participant Export as PhenotypicExporter
+    participant Output as Phenopacket JSON
+
+    User->>Parser: Load ultrasound report (JSON/XLSX)
+    Parser->>GA: Parse gestational age string
+    GA-->>Parser: GestationalAge(weeks=20, days=6)
+
+    Note over Factory: ONE-TIME INITIALIZATION
+    Factory->>Factory: Load biometry_hpo_mappings.yaml
+    Factory->>Factory: Create TermBins for all measurements
+
+    Parser->>Ref: Request percentile for HC at 20w6d
+    Ref->>Ref: Interpolate INTERGROWTH table
+    Ref-->>Parser: percentile = 2.1
+
+    Parser->>Factory: get_measurement_mapper("head_circumference")
+    Factory-->>Parser: SonographicMeasurement(term_bins=[...])
+
+    Parser->>Mapper: from_percentile(2.1, gestational_age)
+    
+    Note over Mapper: DATA-DRIVEN LOOKUP
+    Mapper->>Mapper: Iterate through term_bins
+    Mapper->>Mapper: Find TermBin where range.contains(2.1)
+    Mapper->>Mapper: Found: [0, 3) → HP:0000252 "Microcephaly"
+    
+    Mapper-->>Parser: TermObservation(
+    Note right of Mapper: hpo_id="HP:0000252"
+    Note right of Mapper: hpo_label="Microcephaly"
+    Note right of Mapper: observed=True
+    Note right of Mapper: category="lower_extreme_term"
+    Note right of Mapper: percentile=2.1)
+
+    Parser->>Export: Add TermObservation to export batch
+    Export->>Export: Build Phenopacket structure
+    Export->>Export: QC validation
+    Export-->>Output: Write JSON file
+
+    Output-->>User: Phenopacket with HPO term + provenance
+```
+
+### Detailed Step-by-Step Flow
+
+#### 1. Configuration Loading (Happens Once)
+
+```
+Application Startup
+  ↓
+MeasurementEvaluation.__init__()
+  ↓
+BiometryMappingLoader.load("biometry_hpo_mappings.yaml")
+  ↓
+Parse YAML → Create PercentileRange objects
+  ↓
+Create TermBin objects linking ranges to HPO terms
+  ↓
+Store in dictionary: {
+    "head_circumference": [TermBin(...), TermBin(...), ...],
+    "biparietal_diameter": [...],
+    ...
+}
+```
+
+#### 2. Measurement Processing (Per Observation)
+
+```
+Raw Input: HC = 175mm at 20 weeks 6 days
+  ↓
+GestationalAge.from_weeks(20.86)
+  → GestationalAge(weeks=20, days=6)
+  ↓
+FetalGrowthPercentiles.calculate_percentile("head_circumference", 20.86, 175.0)
+  → Lookup INTERGROWTH table
+  → Interpolate between 20w and 21w rows
+  → Return percentile: 2.1
+  ↓
+factory.get_measurement_mapper("head_circumference")
+  → Returns SonographicMeasurement with 8 pre-configured TermBins
+  ↓
+mapper.from_percentile(2.1, gestational_age)
+  → Loop through term_bins:
+     - TermBin[0]: range=[0,3), hpo_id="HP:0000252" → MATCH!
+  → Create TermObservation(
+        hpo_id="HP:0000252",
+        hpo_label="Microcephaly",
+        category="lower_extreme_term",
+        observed=True,  # normal=false in YAML
+        gestational_age=GestationalAge(20, 6),
+        percentile=2.1
+    )
+  ↓
+TermObservation.to_phenotypic_feature()
+  → {
+      "type": {"id": "HP:0000252", "label": "Microcephaly"},
+      "excluded": false,
+      "onset": {"gestationalAge": {"weeks": 20, "days": 6}},
+      "description": "Measurement at 20w6d"
+    }
+```
+
+#### 3. Multi-Measurement Workflow
+
+```mermaid
+flowchart LR
+    Input[Ultrasound Report] --> Parse[Parse Measurements]
+    
+    Parse --> HC[HC: 175mm]
+    Parse --> BPD[BPD: 45mm]
+    Parse --> FL[FL: 30mm]
+    
+    subgraph Processing["Parallel Processing"]
+        HC --> HCMap[HC Mapper]
+        BPD --> BPDMap[BPD Mapper]
+        FL --> FLMap[FL Mapper]
+        
+        HCMap --> HCObs[TermObservation]
+        BPDMap --> BPDObs[TermObservation]
+        FLMap --> FLObs[TermObservation]
+    end
+    
+    HCObs --> Collect[Collect All Observations]
+    BPDObs --> Collect
+    FLObs --> Collect
+    
+    Collect --> PP[Build Phenopacket]
+    PP --> QC[Quality Control]
+    QC --> Output[JSON Output]
 ```
 
 ---
 
 ## Module Breakdown
 
-### Core Modules (`src/prenatalppkt/`)
+### Core Architecture Modules
 
-#### 1. **`__init__.py`**
+#### `src/prenatalppkt/measurements/term_bin.py`
 
-Package initialization. Exposes version information.
-
-#### 2. **`_version.py`** (auto-generated)
-
-Version string managed by `setuptools_scm`. Current: `0.1.dev<TBD>`
-
-#### 3. **`constants.py`**
-
-Centralized ontology term identifiers, e.g.:
+Data structures for configuration-driven ontology mapping:
 
 ```python
-HPO_MICROCEPHALY = "HP:0000252"
-HPO_MACROCEPHALY = "HP:0000256"
-HPO_SHORT_FETAL_FEMUR_LENGTH = "HP:0011428"
-# ... additional terms
+@dataclass
+class PercentileRange:
+    """Represents a percentile interval [min, max)."""
+    min_percentile: float
+    max_percentile: float
+    
+    def contains(self, percentile: float) -> bool:
+        """Check if percentile falls within this range."""
+        return self.min_percentile <= percentile < self.max_percentile
+
+
+@dataclass
+class TermBin:
+    """Links a percentile range to an HPO term."""
+    range: PercentileRange
+    hpo_id: str
+    hpo_label: str
+    normal: bool  # Explicit flag: is this range considered normal?
+    
+    def fits(self, percentile: float) -> bool:
+        """Check if percentile fits in this bin."""
+        return self.range.contains(percentile)
+    
+    @property
+    def category(self) -> str:
+        """Auto-categorize based on boundaries."""
+        if self.range.min_percentile == 0:
+            return "lower_extreme_term"
+        elif self.range.max_percentile == 100:
+            return "upper_extreme_term"
+        elif self.normal:
+            return "normal_term"
+        else:
+            return "abnormal_term"
 ```
 
-#### 4. **`gestational_age.py`**
-
-Represents gestational age in standard obstetric notation (weeks + days):
-
-```python
-class GestationalAge:
-   weeks: int  # Completed weeks since LMP
-   days: int   # Additional days (0-6)
-
-   @classmethod
-   def from_weeks(cls, weeks_float: float) -> GestationalAge:
-       """Convert decimal weeks (e.g., 20.86) to weeks+days format."""
-       ...
-```
-
-**Why it matters**: Percentile tables index by gestational age. This class handles conversions and provides consistent formatting (e.g., "20w6d").
+**Purpose**: Pure data structures with no business logic. Can be easily serialized, tested, and validated.
 
 ---
 
-#### 5. **`biometry.py`**
+#### `src/prenatalppkt/mapping_loader.py`
 
-High-level wrapper combining measurement types with reference lookups:
+Handles all YAML parsing and TermBin construction:
 
 ```python
-class BiometryType(Enum):
-   HEAD_CIRCUMFERENCE = "head_circumference"
-   BIPARIETAL_DIAMETER = "biparietal_diameter"
-   ABDOMINAL_CIRCUMFERENCE = "abdominal_circumference"
-   FEMUR_LENGTH = "femur_length"
-   OCCIPITOFRONTAL_DIAMETER = "occipitofrontal_diameter"
-   ESTIMATED_FETAL_WEIGHT = "estimated_fetal_weight"
-
-class BiometryMeasurement:
-   def percentile_and_hpo(self, reference: FetalGrowthPercentiles) -> tuple[float, str | None]:
-       """Look up percentile and apply abnormality rules (<=3rd or >=97th percentile)."""
-       ...
+class BiometryMappingLoader:
+    """
+    Loads HPO mappings from YAML configuration.
+    Separates file I/O from measurement evaluation logic.
+    """
+    
+    @staticmethod
+    def load(path: Path) -> Dict[str, List[TermBin]]:
+        """
+        Load biometry-to-HPO mappings from YAML.
+        
+        Returns:
+            Dictionary mapping measurement types to sorted lists of TermBins
+            
+        Example:
+            {
+                "head_circumference": [
+                    TermBin(range=[0,3), id="HP:0000252", ...),
+                    TermBin(range=[3,5), id="HP:0040195", ...),
+                    ...
+                ],
+                "biparietal_diameter": [...]
+            }
+        """
 ```
 
-**File interactions**:
-
-- Calls `biometry_reference.py` to load growth tables
-- Invokes `constants.py` for HPO term mappings
-- Used by input parsers to convert raw measurements to clinical findings
+**Key Features**:
+- Validates YAML structure
+- Creates PercentileRange and TermBin objects
+- Sorts bins by min_percentile for efficient lookup
+- Logs warnings for gaps or overlaps
+- Single point of failure for configuration errors
 
 ---
 
-#### 6. **`biometry_reference.py`**
+#### `src/prenatalppkt/measurement_eval.py`
 
-Manages reference data loading and percentile/z-score lookups:
+Factory pattern for creating measurement evaluators:
 
 ```python
-class FetalGrowthPercentiles:
-   source: str  # "intergrowth" or "nichd"
-   tables: Dict[str, pd.DataFrame]
-
-   def lookup_percentile(self, measurement_type: str, gestational_age_weeks: float, value_mm: float) -> float:
-       """Return percentile (0-100) for a given measurement."""
-       ...
-
-   def get_zscore(self, measurement_type: str, gestational_age_weeks: float, value_mm: float) -> float:
-       """Return z-score for INTERGROWTH-21st tables."""
-       ...
+class MeasurementEvaluation:
+    """
+    Factory for measurement mappers.
+    Loads configuration once, creates mappers on demand.
+    """
+    
+    def __init__(self, mappings_path: Optional[Path] = None) -> None:
+        """Initialize with YAML path (defaults to bundled config)."""
+        self._mappings = BiometryMappingLoader.load(
+            mappings_path or DEFAULT_MAPPINGS_FILE
+        )
+    
+    def get_measurement_mapper(
+        self, 
+        measurement_type: str
+    ) -> Optional[SonographicMeasurement]:
+        """
+        Get a configured mapper for the specified measurement.
+        
+        Example:
+            factory = MeasurementEvaluation()
+            hc_mapper = factory.get_measurement_mapper("head_circumference")
+            observation = hc_mapper.from_percentile(2.1, gestational_age)
+        """
 ```
 
-**Data flow**:
-
-1. On initialization, loads TSV files from `data/parsed/`
-2. Normalizes column names across sources
-3. Interpolates between gestational ages for non-tabled values
-4. Provides unified API regardless of underlying reference standard
-
-**Key design decision**: The class _owns_ the reference data but _delegates_ clinical interpretation to higher layers. It returns raw percentiles/z-scores without making clinical judgments.
+**Design Pattern**: Factory + Singleton behavior (loads YAML once, reuses mappings)
 
 ---
 
-### Measurement Evaluation Layer (`src/prenatalppkt/measurements/`)
+#### `src/prenatalppkt/sonographic_measurement.py`
 
-This subsystem implements percentile-based classification using the Strategy pattern:
-
-#### 7. **`percentile.py`**
-
-Enumeration of standard percentile cutoffs:
+Generic measurement mapper (no longer abstract, no subclasses needed):
 
 ```python
-class Percentile(Enum):
-   Third = "Third percentile"
-   Fifth = "Fifth percentile"
-   Tenth = "Tenth percentile"
-   # ... up to Ninetyseventh
+class SonographicMeasurement:
+    """
+    Generic measurement mapper using configured TermBins.
+    Replaces all measurement-specific subclasses.
+    """
+    
+    def __init__(self, measurement_type: str, term_bins: List[TermBin]) -> None:
+        """Configuration is INJECTED at instantiation."""
+        self.measurement_type = measurement_type
+        self.term_bins = term_bins
+    
+    def from_percentile(
+        self, 
+        percentile: float, 
+        gestational_age: GestationalAge
+    ) -> TermObservation:
+        """
+        Map a percentile to an HPO term observation.
+        DATA-DRIVEN - no hard-coded if/elif chains!
+        """
+        for term_bin in self.term_bins:
+            if term_bin.fits(percentile):
+                return TermObservation(
+                    hpo_id=term_bin.hpo_id,
+                    hpo_label=term_bin.hpo_label,
+                    category=term_bin.category,
+                    observed=not term_bin.normal,
+                    gestational_age=gestational_age,
+                    percentile=percentile,
+                )
+        
+        raise ValueError(
+            f"No HPO mapping found for {self.measurement_type} "
+            f"percentile {percentile:.1f}"
+        )
 ```
 
-#### 8. **`measurement_result.py`**
-
-Encapsulates which percentile interval a measurement falls into:
-
-```python
-class MeasurementResult:
-   lower: Optional[Percentile]  # Lower bound (e.g., 5th percentile)
-   upper: Optional[Percentile]  # Upper bound (e.g., 10th percentile)
-
-   @property
-   def bin_key(self) -> str:
-       """Return semantic bin label: 'below_3p', 'between_5p_10p', etc."""
-       ...
-
-   @staticmethod
-   def below_3p() -> MeasurementResult: ...
-   @staticmethod
-   def between_10p_50p() -> MeasurementResult: ...
-   # ... factory methods for all standard intervals
-```
-
-**Why bins matter**: Different percentile ranges have different clinical meanings:
-
-- `below_3p`: Severe abnormality (e.g., microcephaly)
-- `between_3p_10p`: Mild concern
-- `between_10p_90p`: Normal range
-- `above_97p`: Macrosomia/overgrowth
+**Key Change**: No more inheritance hierarchy! One generic class works for all measurements.
 
 ---
 
-#### 9. **`reference_range.py`**
+#### `src/prenatalppkt/term_observation.py`
 
-Compares a numeric measurement to percentile thresholds:
-
-```python
-class ReferenceRange:
-   gestational_age: GestationalAge
-   percentile_thresholds: List[float]  # [3rd, 5th, 10th, 50th, 90th, 95th, 97th] in mm
-
-   def evaluate(self, value: float) -> MeasurementResult:
-       """Classify value into percentile bin."""
-       if value < self.percentile_thresholds[0]:
-           return MeasurementResult.below_3p()
-       elif value < self.percentile_thresholds[1]:
-           return MeasurementResult.between_3p_5p()
-       # ... continue through all thresholds
-```
-
-**Critical logic**: This is where raw millimeter measurements become clinically meaningful categories. The class is agnostic to measurement type--it just compares numbers.
-
----
-
-#### 10. **`sonographic_measurement.py`** (Abstract Base Class)
-
-Defines the evaluation contract for all biometric measurements:
-
-```python
-class SonographicMeasurement(ABC):
-   @abstractmethod
-   def name(self) -> str:
-       """Return canonical name (e.g., 'biparietal diameter')."""
-       pass
-
-   def evaluate(self, gestational_age: GestationalAge,
-                measurement_value: float,
-                reference_range: ReferenceRange) -> MeasurementResult:
-       """Delegate to ReferenceRange, return MeasurementResult."""
-       return reference_range.evaluate(measurement_value)
-
-   def to_term_observation(self, result: MeasurementResult,
-                           gestational_age: GestationalAge,
-                           parent_term: Optional[MinimalTerm] = None) -> TermObservation:
-       """Convert MeasurementResult to ontology-aware TermObservation."""
-       ...
-```
-
-**Design rationale**:
-
-- **Separation of concerns**: Numeric evaluation (percentile classification) is distinct from semantic interpretation (HPO mapping)
-- **Extensibility**: New measurements (e.g., crown-rump length) just inherit and implement `name()`
-- **Testability**: Can unit-test percentile logic without loading ontologies
-
----
-
-#### 11. **`bpd_measurement.py`**
-
-Concrete implementation for Biparietal Diameter:
-
-```python
-class BiparietalDiameterMeasurement(SonographicMeasurement):
-   def name(self) -> str:
-       return "biparietal diameter"
-```
-
-**That's it!** All evaluation logic is inherited. Future enhancements (e.g., asymmetry detection) would add methods here without touching the base class.
-
----
-
-#### 12. **`femur_length_measurement.py`**
-
-Analogous to BPD, demonstrates the pattern:
-
-```python
-class FemurLengthMeasurement(SonographicMeasurement):
-   def name(self) -> str:
-       return "femur length"
-```
-
----
-
-### Ontology Integration Layer
-
-#### 13. **`term_observation.py`**
-
-Bridges quantitative results with ontology terms:
+Lightweight data holder (no complex logic or external dependencies):
 
 ```python
 @dataclass
 class TermObservation:
-   hpo_term: Optional[MinimalTerm]
-   observed: bool  # True = abnormality present, False = explicitly excluded
-   gestational_age: GestationalAge
-   parent_term: Optional[MinimalTerm] = None
-
-   @staticmethod
-   def from_measurement_result(measurement_result: MeasurementResult,
-                                bin_to_term: Dict[str, MinimalTerm],
-                                gestational_age: GestationalAge,
-                                normal_bins: Set[str]) -> TermObservation:
-       """
-       Convert MeasurementResult to TermObservation using provided mappings.
-
-       Logic:
-       - If bin_key in normal_bins -> observed=False (excluded abnormality)
-       - If bin_key has mapped term -> observed=True (confirmed abnormality)
-       - Otherwise -> no term assigned
-       """
-       ...
-
-   def to_phenotypic_feature(self) -> dict:
-       """Serialize to Phenopacket PhenotypicFeature format."""
-       return {
-           "type": {"id": self.hpo_id, "label": self.hpo_label},
-           "excluded": not self.observed,
-           "onset": {"gestationalAge": {"weeks": self.gestational_age.weeks,
-                                        "days": self.gestational_age.days}}
-       }
+    """HPO term observation with gestational age context."""
+    hpo_id: str
+    hpo_label: str
+    category: str
+    observed: bool
+    gestational_age: GestationalAge
+    percentile: Optional[float] = None
+    
+    def to_phenotypic_feature(self) -> Dict[str, object]:
+        """Convert to Phenopacket v2 format."""
+        ga_str = f"{self.gestational_age.weeks}w{self.gestational_age.days}d"
+        
+        return {
+            "type": {"id": self.hpo_id, "label": self.hpo_label},
+            "excluded": not self.observed,
+            "onset": {"gestationalAge": self.gestational_age.to_iso()},
+            "description": f"Measurement at {ga_str}"
+        }
 ```
 
-**Critical design choice**: `normal_bins` is _injected_ by the caller, not hardcoded. This allows:
-
-- Population-specific definitions (e.g., INTERGROWTH vs NIHCD normal ranges differ)
-- Study-specific thresholds (some cohorts may use 5th-95th as normal)
-- Clinical context adjustments (high-risk pregnancies may have tighter criteria)
+**Removed Dependencies**:
+- No longer depends on `MinimalTerm` from hpo-toolkit
+- No `__post_init__` logic
+- No `build_standard_bin_mapping()` method
 
 ---
 
-#### 14. **`phenotypic_export.py`**
+### Reference Data Modules
 
-High-level orchestrator that applies YAML-defined mappings:
+#### `src/prenatalppkt/biometry_reference.py`
+
+Unified interface for loading and querying fetal growth reference data:
+
+```python
+class FetalGrowthPercentiles:
+    """
+    Load and query NIHCD or INTERGROWTH-21st fetal growth references.
+    
+    Supports:
+    - Percentile lookup by gestational age
+    - Z-score calculation
+    - Linear interpolation for non-integer gestational ages
+    """
+    
+    def __init__(self, source: str = "intergrowth") -> None:
+        """
+        Initialize with reference data source.
+        
+        Args:
+            source: "nihcd" or "intergrowth"
+        """
+    
+    def calculate_percentile(
+        self,
+        measurement_type: str,
+        gestational_age_weeks: float,
+        value_mm: float
+    ) -> float:
+        """
+        Calculate which percentile a measurement falls into.
+        
+        Returns:
+            Percentile value (0-100)
+        """
+```
+
+**Key features**:
+- Loads parsed TSV tables from `data/parsed/`
+- Handles gestational age interpolation
+- Supports both centile and z-score tables
+- Validates measurement types and ranges
+
+---
+
+#### `src/prenatalppkt/gestational_age.py`
+
+Represents gestational age with weeks + days:
+
+```python
+@dataclass
+class GestationalAge:
+    """Gestational age representation."""
+    weeks: int
+    days: int
+    
+    @classmethod
+    def from_weeks(cls, total_weeks: float) -> GestationalAge:
+        """Convert decimal weeks to weeks+days."""
+        weeks = int(total_weeks)
+        days = int((total_weeks - weeks) * 7)
+        return cls(weeks=weeks, days=days)
+    
+    def to_iso(self) -> dict:
+        """Convert to Phenopacket ISO format."""
+        return {"weeks": self.weeks, "days": self.days}
+```
+
+---
+
+### Data Parsing Modules
+
+#### `scripts/parse_nichd_raw.py`
+
+Parses NIHCD raw text data into standardized TSV format:
+
+```python
+def parse_nichd_raw(input_file: Path, output_dir: Path) -> None:
+    """
+    Parse NIHCD fetal growth calculator text export.
+    
+    Handles:
+    - Multi-word measurement names
+    - Race/ethnicity categories
+    - Multiple percentile columns
+    - Header/footer junk lines
+    """
+```
+
+---
+
+#### `scripts/parse_intergrowth_txt_all.py`
+
+Parses INTERGROWTH-21st centile and z-score tables:
+
+```python
+def parse_intergrowth_tables(raw_dir: Path, out_dir: Path) -> None:
+    """
+    Parse INTERGROWTH centile (_ct_) and z-score (_zs_) tables.
+    
+    Handles:
+    - Text file parsing
+    - Gestational age range validation
+    - Measure name normalization
+    - Provenance metadata
+    """
+```
+
+---
+
+### Export Modules
+
+#### `src/prenatalppkt/phenotypic_export.py`
+
+Assembles Phenopackets from TermObservations:
 
 ```python
 class PhenotypicExporter:
-   source: str  # "intergrowth" or "nichd"
-   mappings: Dict[str, Dict]  # Loaded from biometry_hpo_mappings.yaml
-
-   def evaluate_and_export(self, measurement_type: str,
-                           measurement_result: MeasurementResult,
-                           gestational_age: GestationalAge) -> dict:
-       """
-       Apply YAML-defined rules to convert MeasurementResult to Phenopacket feature.
-
-       Steps:
-       1. Load mapping for measurement_type (e.g., "head_circumference")
-       2. Extract bin_to_term mapping and normal_bins set
-       3. Create TermObservation using TermObservation.from_measurement_result()
-       4. Serialize to Phenopacket JSON
-       """
-       ...
+    """
+    Build GA4GH Phenopackets v2 from term observations.
+    """
+    
+    def __init__(self) -> None:
+        self.term_observations: List[TermObservation] = []
+    
+    def add_observation(self, obs: TermObservation) -> None:
+        """Add an observation to the export batch."""
+        self.term_observations.append(obs)
+    
+    def build_phenopacket(
+        self,
+        subject_id: str,
+        maternal_id: Optional[str] = None
+    ) -> dict:
+        """
+        Build complete Phenopacket structure.
+        
+        Returns:
+            Phenopacket v2 compliant dictionary
+        """
 ```
 
-**Why YAML configuration?**
+---
 
-- Clinical rules change over time (e.g., HPO term definitions are updated)
-- Different institutions may use different cutoffs
-- Non-programmers (clinicians, curators) can review and modify mappings
-- Version control tracks rule changes independently of code
+## Configuration Guide
 
-**Example `biometry_hpo_mappings.yaml` structure**:
+### YAML Mapping Structure
+
+The `data/mappings/biometry_hpo_mappings.yaml` file defines how percentile values map to HPO terms:
+
+```yaml
+# Template for each measurement
+measurement_name:
+  - min: <float>        # Minimum percentile (inclusive)
+    max: <float>        # Maximum percentile (exclusive)
+    id: "<HPO:ID>"      # HPO term identifier
+    label: "<string>"   # Human-readable label
+    normal: <boolean>   # Is this range considered normal?
+```
+
+### Complete Example: Head Circumference
 
 ```yaml
 head_circumference:
-  abnormal_term:
+  # Extreme low: <3rd percentile
+  - min: 0
+    max: 3
+    id: "HP:0000252"
+    label: "Microcephaly"
+    normal: false
+  
+  # Borderline low: 3rd-5th percentile
+  - min: 3
+    max: 5
+    id: "HP:0040195"
+    label: "Decreased head circumference"
+    normal: false
+  
+  # Mildly abnormal low: 5th-10th percentile
+  - min: 5
+    max: 10
     id: "HP:0000240"
-    label: "Abnormal skull morphology"
-  bins:
-    below_3p:
-      id: "HP:0000252"
-      label: "Microcephaly"
-    above_97p:
-      id: "HP:0000256"
-      label: "Macrocephaly"
-  normal_bins:
-    - "between_10p_50p"
-    - "between_50p_90p"
+    label: "Abnormality of skull size"
+    normal: false
+  
+  # Normal range: 10th-50th percentile
+  - min: 10
+    max: 50
+    id: "HP:0000240"
+    label: "Abnormality of skull size"
+    normal: true  # Marked as normal
+  
+  # Normal range: 50th-90th percentile
+  - min: 50
+    max: 90
+    id: "HP:0000240"
+    label: "Abnormality of skull size"
+    normal: true
+  
+  # Mildly abnormal high: 90th-95th percentile
+  - min: 90
+    max: 95
+    id: "HP:0000240"
+    label: "Abnormality of skull size"
+    normal: false
+  
+  # Borderline high: 95th-97th percentile
+  - min: 95
+    max: 97
+    id: "HP:0040194"
+    label: "Increased head circumference"
+    normal: false
+  
+  # Extreme high: >97th percentile
+  - min: 97
+    max: 100
+    id: "HP:0000256"
+    label: "Macrocephaly"
+    normal: false
 ```
 
----
+### Validation Rules
 
-### Parsing Utilities (`src/prenatalppkt/scripts/`)
+The system automatically validates:
 
-These scripts transform raw reference PDFs/text into normalized TSV files consumed by `biometry_reference.py`.
+1. **Complete Coverage**: Ranges must span [0, 100) with no gaps
+2. **No Overlaps**: Each percentile value must map to exactly one bin
+3. **Sorted Order**: Ranges must be in ascending order by `min`
+4. **Valid Percentiles**: `0 ≤ min < max ≤ 100`
+5. **HPO Term Format**: IDs must match pattern `HP:\d{7}`
 
-#### 15. **`parse_nichd_raw.py`**
+### Adding a New Measurement
 
-Parses NIHCD plain-text tables into structured TSV:
+```yaml
+# 1. Add to biometry_hpo_mappings.yaml
+estimated_fetal_weight:
+  - min: 0
+    max: 10
+    id: "HP:0001518"
+    label: "Small for gestational age"
+    normal: false
+  
+  - min: 10
+    max: 90
+    id: "HP:0000118"  # Generic placeholder
+    label: "Phenotypic abnormality"
+    normal: true
+  
+  - min: 90
+    max: 100
+    id: "HP:0001520"
+    label: "Large for gestational age"
+    normal: false
 
-**Input**: `data/raw/raw_NIHCD_feta_growth_calculator_percentile_range.txt`
-
+# 2. Use immediately (no code changes needed!)
+factory = MeasurementEvaluation()
+efw_mapper = factory.get_measurement_mapper("estimated_fetal_weight")
 ```
-Age (weeks) Race Measure 3rd 5th 10th 50th 90th 95th 97th
-20 White Abdominal Circ 120 140 160 180 200 220 240
-20 Black Abdominal Circ 115 135 155 175 195 215 235
-...
+
+### Customizing Normal Ranges
+
+Different clinical contexts may define "normal" differently:
+
+```yaml
+# Conservative definition (narrower normal range)
+head_circumference_conservative:
+  - min: 0
+    max: 5
+    id: "HP:0000252"
+    label: "Microcephaly"
+    normal: false
+  
+  - min: 5
+    max: 15    # More restrictive
+    id: "HP:0040195"
+    label: "Decreased head circumference"
+    normal: false
+  
+  - min: 15
+    max: 85    # Narrower normal range
+    id: "HP:0000240"
+    label: "Abnormality of skull size"
+    normal: true
+  
+  # ... continue pattern
 ```
 
-**Output**: `data/parsed/raw_NIHCD_feta_growth_calculator_percentile_range.tsv`
-
-**Key functions**:
-
+Load with:
 ```python
-def is_header_or_junk(line: str) -> bool:
-   """Detect and skip page headers, percentile labels, page numbers."""
-   ...
-
-def parse_line(line: str) -> Optional[List[str]]:
-   """Extract [GA, race, measure, 7 percentiles] from mixed-format text."""
-   # Handles: "20 White Abdominal Circ 120 140 160 180 200 220 240"
-   # Returns: ["20", "White", "Abdominal Circ.", "120", ..., "240"]
-   ...
+factory = MeasurementEvaluation(
+    mappings_path=Path("config/conservative_mappings.yaml")
+)
 ```
-
-**Challenges addressed**:
-
-- Inconsistent whitespace (tab vs space delimiters)
-- Multi-word measurements ("Abdominal Circ" vs "AbdominalCirc")
-- Page artifacts (headers repeated on each page)
-
----
-
-#### 16. **`parse_intergrowth_txt_all.py`**
-
-Parses INTERGROWTH-21st text tables (one file per measure x table type):
-
-**Input structure**:
-
-```
-data/raw/intergrowth21/
-+-- hc_ct_table.txt      (Head Circumference centiles)
-+-- hc_zs_table.txt      (Head Circumference z-scores)
-+-- bpd_ct_table.txt
-+-- bpd_zs_table.txt
-... (5 measures x 2 table types = 10 files)
-```
-
-**Output**:
-
-```
-data/parsed/intergrowth_text/
-+-- intergrowth21_hc_ct.tsv
-+-- intergrowth21_hc_zs.tsv
-... (10 TSV files)
-```
-
-**Key logic**:
-
-```python
-def parse_table(lines: List[str], headers: List[str], measure: str) -> pd.DataFrame:
-   """
-   Extract data rows, validate numeric columns, add provenance.
-
-   Validation:
-   - GA range: 14-40 weeks (INTERGROWTH standard)
-   - Column count: Must match expected headers
-   - Numeric coercion: Handle malformed values gracefully
-   """
-   records = []
-   for line in lines:
-       if is_data_line(line):
-           row = line.split()
-           if len(row) == len(headers):
-               records.append(row)
-
-   df = pd.DataFrame(records, columns=headers)
-   df.insert(1, "Measure", measure)
-   df = df.apply(pd.to_numeric, errors='coerce')
-   df = df.dropna()  # Remove rows with unparseable values
-   return df
-```
-
-**Why separate centile and z-score tables?**
-
-- Centiles are used for clinical interpretation (percentiles)
-- Z-scores enable statistical analysis (standard deviations from mean)
-- Some research requires both (e.g., comparing growth trajectories)
-
----
-
-#### 17. **`parse_intergrowth_docling_all.py`**
-
-Alternative parser using the Docling library for ML/LLM-based PDF table extraction:
-
-```python
-from docling.document_converter import DocumentConverter
-
-def build_converter(do_table_structure: bool, do_cell_matching: Optional[bool]) -> DocumentConverter:
-   """
-   Configure Docling pipeline with adaptive strategies.
-
-   Strategies:
-   1. structure+match: Use ML model for table reconstruction
-   2. structure-no-match: Disable cell matching (faster, less accurate)
-   3. no-structure: Raw text block extraction
-   """
-   ...
-
-def try_extract_tables(pdf_path: Path) -> List[pd.DataFrame]:
-   """
-   Attempt extraction with fallback strategies.
-
-   Why: Different INTERGROWTH PDFs have variable table quality.
-   Some parse perfectly with ML, others need simpler heuristics.
-   """
-   for strategy in [(True, True), (True, False), (False, None)]:
-       tables = extract_with_strategy(pdf_path, *strategy)
-       if tables:
-           return tables
-   return []
-```
-
-**When to use this vs text parsing?**
-
-- Docling: When source is PDF with complex layouts and using an LLM engine is acceptable
-- Text parser: When source is already extracted text (faster, more reliable)
-
----
-
-#### 18. **`normalize_tsv_to_csv.py`**
-
-Post-processing utility to harmonize TSV outputs:
-
-```python
-def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-   """
-   Standardize column names across sources.
-
-   Transformations:
-   - "Gestational age (weeks)" -> "Gestational Age (weeks)"
-   - "3rd Pct" -> "3rd Percentile"
-   - Handle Unicode artifacts (em-dashes, non-breaking spaces)
-   """
-   ...
-```
-
----
-
-### Quality Control (Planned: `src/prenatalppkt/qc/`)
-
-**Not yet implemented**, but designed modules include:
-
-- **`validator.py`**: Schema validation, ontology term checks, range validation
-- **`completeness_checker.py`**: Flag missing required fields
-- **`anomaly_detector.py`**: Statistical outliers, biologically implausible values
-
----
-
-## Data Flow
-
-### End-to-End Processing
-
-The following sequence diagram illustrates how a single measurement flows through the system:
-
-```mermaid
-sequenceDiagram
-   participant User
-   participant Parser as Input Parser
-   participant GA as gestational_age.py
-   participant Ref as biometry_reference.py
-   participant Range as reference_range.py
-   participant Result as measurement_result.py
-   participant TermObs as term_observation.py
-   participant YAML as biometry_hpo_mappings.yaml
-   participant Export as phenotypic_export.py
-   participant Output as Phenopacket JSON
-
-   User->>Parser: Load ultrasound report (JSON/XLSX)
-   Parser->>GA: Parse gestational age (e.g., "20.86 weeks")
-   GA-->>Parser: GestationalAge(weeks=20, days=6)
-
-   Parser->>Ref: Request reference data for HC at 20w6d
-   Ref->>Ref: Load INTERGROWTH HC centile table
-   Ref->>Ref: Interpolate thresholds for 20.86 weeks
-   Ref-->>Parser: [3rd, 5th, 10th, 50th, 90th, 95th, 97th] in mm
-
-   Parser->>Range: Create ReferenceRange(GA, thresholds)
-   Parser->>Range: Evaluate HC measurement (175 mm)
-   Range->>Range: Compare 175 mm to thresholds
-   Range->>Result: Create MeasurementResult
-   Result-->>Range: bin_key = "between_10p_50p"
-   Range-->>Parser: MeasurementResult(lower=10th, upper=50th)
-
-   Parser->>Export: evaluate_and_export("head_circumference", result, GA)
-   Export->>YAML: Load HC mappings
-   YAML-->>Export: {bins: {...}, normal_bins: ["between_10p_50p", "between_50p_90p"]}
-
-   Export->>TermObs: from_measurement_result(result, mappings, GA, normal_bins)
-   TermObs->>TermObs: Check: "between_10p_50p" in normal_bins? YES
-   TermObs-->>Export: TermObservation(hpo_term=None, observed=False, excluded=True)
-
-   Export->>Export: to_phenotypic_feature()
-   Export-->>Output: {"type": null, "excluded": true, "onset": {"gestationalAge": {...}}}
-
-   Output-->>User: Phenopacket with normal HC finding
-```
-
-### Multi-Fetus Workflow
-
-For twin/triplet pregnancies:
-
-```mermaid
-flowchart LR
-   Input[Ultrasound Report] --> ParseExam[Parse Exam Metadata]
-   ParseExam --> FetusLoop{For Each Fetus}
-
-   FetusLoop -->|Fetus 1| M1[Extract Measurements]
-   FetusLoop -->|Fetus 2| M2[Extract Measurements]
-
-   M1 --> Eval1[Evaluate vs Reference]
-   M2 --> Eval2[Evaluate vs Reference]
-
-   Eval1 --> PP1[Build Phenopacket 1]
-   Eval2 --> PP2[Build Phenopacket 2]
-
-   PP1 --> Link[Link via Family ID]
-   PP2 --> Link
-
-   Link --> Output[Output: 2 Phenopackets+ Family Structure]
-```
-
-**Design decision**: One Phenopacket per fetus (default) vs one per pregnancy (configurable). This mirrors GA4GH's approach for multi-subject studies.
 
 ---
 
 ## Inputs and Outputs
-
-### Basic Format:
-
-#### Inputs
-
-- **Observer JSON** (e.g. `data/EVMS_SAMPLE.json`)
-- **ViewPoint Excel workbook** (`.xlsx` / `.xls`) with fetal biometry rows
-- Typical sections:
-  - - exam: DOB, LMP, GA by dates, exam date, ICD-10, referring clinicians
-  - - fetuses[*]: anatomy blocks, measurements, vessels, procedures
-
-#### Outputs
-
-- **Phenopackets (v2)**: one JSON per fetus (default) or per pregnancy (configurable)
-  - subject: pseudo-ID for fetus; optional family link/pedigree
-  - phenotypicFeatures: HPO terms with gestational onset (via ontology mapping)
-  - measurements: BPD / HC / AC / FL / OFD, EFW, ratios
-  - diseases: ICD-10 indications; optional MONDO/OMIM mappings
-  - metaData: versioning, ontology versions, pipeline provenance
-- **QC reports** per input record with structured issues
-- **Optional flat CSV** with per-fetus features for downstream analysis
-
-No command-line interface is provided in this release.
 
 ### Input Formats
 
@@ -860,414 +1009,328 @@ No command-line interface is provided in this release.
 
 ---
 
-### Output Format: GA4GH Phenopacket v2
+### Output Format: Phenopacket v2
 
 ```json
 {
- "id": "prenatal-case-0000001-fetus-X",
- "subject": {
-   "id": "fetus-0000001",
-   "timeAtLastEncounter": {
-     "gestationalAge": {
-       "weeks": 22,
-       "days": 3
-     }
-   }
- },
- "phenotypicFeatures": [
-   {
-     "type": {
-       "id": "HP:0000252",
-       "label": "Microcephaly"
-     },
-     "excluded": false,
-     "onset": {
-       "gestationalAge": {
-         "weeks": 22,
-         "days": 3
-       }
-     },
-     "evidence": [
-       {
-         "evidenceCode": {
-           "id": "ECO:0000033",
-           "label": "author statement supported by traceable reference"
-         },
-         "reference": {
-           "id": "PMID:29422205",
-           "description": "The INTERGROWTH-21st fetal growth standards: toward the global integration of pregnancy and pediatric care"
-         }
-       }
-     ]
-   }
- ],
- "measurements": [
-   {
-     "assay": {
-       "id": "LOINC:11984-2",
-       "label": "Fetal Head Circumference US"
-     },
-     "value": {
-       "quantity": {
-         "unit": {
-           "id": "UCUM:mm",
-           "label": "millimeter"
-         },
-         "value": 165.0
-       }
-     },
-     "timeObserved": {
-       "gestationalAge": {
-         "weeks": 22,
-         "days": 3
-       }
-     }
-   }
- ],
- "diseases": [
-   {
-     "term": {
-       "id": "ICD10:Z34.00",
-       "label": "Encounter for supervision of normal first pregnancy, unspecified trimester"
-     }
-   }
- ],
- "metaData": {
-   "created": "2025-10-21T15:48:00Z",
-   "createdBy": "prenatalppkt",
-   "resources": [
-     {"id": "hp",
-       "name": "Human Phenotype Ontology",
-       "url": "http://purl.obolibrary.org/obo/hp.owl",
-       "version": "2024-09-01",
-       "namespacePrefix": "HP",
-       "iriPrefix": "http://purl.obolibrary.org/obo/hp.owl"
-     },
-     {
-       "id": "loinc",
-       "name": "Logical Observation Identifiers Names and Codes",
-       "url": "http://loinc.org",
-       "version": "2.81",
-       "namespacePrefix": "LOINC",
-       "iriPrefix": "http://loinc.org/rdf/"
-     }
-   ],
-   "phenopacketSchemaVersion": "2.0"
- }
-}
-Additional Outputs
-Quality Control Report (Planned)
-json{
- "case_id": "prenatal-case-0000001",
- "validation_status": "PASS",
- "warnings": [
-   {
-     "field": "measurements.bpd_mm",
-     "message": "BPD measurement at edge of reference range (2.8th percentile)",
-     "severity": "LOW"
-   }
- ],
- "completeness": {
-   "required_fields": 12,
-   "present_fields": 12,
-   "missing_fields": []
- }
+  "id": "prenatal-exam-20240815-fetus1",
+  "subject": {
+    "id": "FETUS_001",
+    "timeAtLastEncounter": {
+      "gestationalAge": {
+        "weeks": 20,
+        "days": 6
+      }
+    }
+  },
+  "phenotypicFeatures": [
+    {
+      "type": {
+        "id": "HP:0000252",
+        "label": "Microcephaly"
+      },
+      "excluded": false,
+      "onset": {
+        "gestationalAge": {
+          "weeks": 20,
+          "days": 6
+        }
+      },
+      "description": "Measurement at 20w6d"
+    },
+    {
+      "type": {
+        "id": "HP:0000240",
+        "label": "Abnormality of skull size"
+      },
+      "excluded": true,
+      "onset": {
+        "gestationalAge": {
+          "weeks": 20,
+          "days": 6
+        }
+      },
+      "description": "Measurement within normal range for gestational age (20w6d)"
+    }
+  ],
+  "measurements": [
+    {
+      "assay": {
+        "id": "LOINC:11820-8",
+        "label": "Head circumference"
+      },
+      "value": {
+        "quantity": {
+          "unit": {
+            "id": "UCUM:mm",
+            "label": "millimeter"
+          },
+          "value": 175.3
+        }
+      },
+      "timeObserved": {
+        "gestationalAge": {
+          "weeks": 20,
+          "days": 6
+        }
+      }
+    }
+  ],
+  "metaData": {
+    "created": "2024-08-15T14:30:00Z",
+    "createdBy": "prenatalppkt-v0.1.0",
+    "resources": [
+      {
+        "id": "hp",
+        "name": "Human Phenotype Ontology",
+        "url": "http://purl.obolibrary.org/obo/hp.owl",
+        "version": "2024-04-26",
+        "namespacePrefix": "HP",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
+      },
+      {
+        "id": "intergrowth",
+        "name": "INTERGROWTH-21st Standards",
+        "url": "https://intergrowth21.tghn.org/",
+        "version": "2014",
+        "namespacePrefix": "INTERGROWTH"
+      }
+    ],
+    "phenopacketSchemaVersion": "2.0"
+  }
 }
 ```
 
-### Flat CSV Summary (Optional)
-
-For downstream statistical analysis:
-TBD: ~
-`<case_idfetus_idga_weeksga_dayshc_mmhc_percentilehc_hpo_idbpd_mmbpd_percentile...case0011223165.02.1HP:000025245.28.5...>`
+---
 
 ## Installation
 
-Prerequisites
+### Prerequisites
 
-- Python >= 3.10
+- Python 3.10 or higher
 - pip package manager
 
-### Standard Installation
+### Install from Source
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/P2GX/prenatalppkt.git
 cd prenatalppkt
-```
 
-### Create virtual environment (recommended)
-
-```bash
-python -m venv venv
+# Create virtual environment
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-### Install package in editable mode
-
-```bash
-pip install -e .
-Development Installation
-bash# Install with test dependencies
+# Install in development mode
 pip install -e ".[test]"
+
+# Verify installation
+python -c "import prenatalppkt; print(prenatalppkt.__version__)"
 ```
 
-### Verify installation
+### Install Dependencies Only
 
 ```bash
-pytest -v
+pip install -r requirements/requirements.txt
 ```
 
-Dependencies
-Core dependencies (from pyproject.toml):
+### Optional: Documentation Build
 
-```toml
-- click==8.2.1           # CLI framework
-- hpo-toolkit==0.5.5     # HPO ontology utilities
-- pandas==2.3.2          # Data manipulation
-- phenopackets==2.0.2    # GA4GH Phenopacket schema
-- pyphetools==0.9.118    # Phenotype analysis utilities
-- PyYAML==6.0.2          # Configuration files
-- rich==14.1.0           # Terminal formatting
+```bash
+pip install -e ".[docs]"
+mkdocs serve  # View docs at http://localhost:8000
 ```
 
-Optional dependencies:
-
-```toml
-- docling==2.54.0        # PDF table extraction (for parse_intergrowth_docling_all.py)
-- pytest==8.4.0          # Testing framework
-- ruff==0.12.4           # Linting and formatting
-```
+---
 
 ## Usage Examples
 
-```bash
-# Example 1: Basic Measurement Evaluation
-pythonfrom prenatalppkt.biometry import BiometryMeasurement, BiometryType
-from prenatalppkt.biometry_reference import FetalGrowthPercentiles
+### Basic Workflow
 
-# Initialize reference data (INTERGROWTH-21st)
-reference = FetalGrowthPercentiles(source="intergrowth")
-
-# Create measurement
-measurement = BiometryMeasurement(
-   measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-   gestational_age_weeks=22.5,
-   value_mm=196.3
-)
-
-# Evaluate against reference
-percentile, hpo_term = measurement.percentile_and_hpo(reference=reference)
-
-print(f"Head circumference at 22w3d: {percentile:.1f}th percentile")
-if hpo_term:
-   print(f"Abnormality detected: {hpo_term}")
-else:
-   print("Measurement within normal range")
-```
-
-```bash
-# Output:
-Head circumference at 22w3d: 52.3th percentile
-Measurement within normal range
-```
-
-```bash
-# Example 2: Using the Measurement Layer
-pythonfrom prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.reference_range import ReferenceRange
-from prenatalppkt.measurements.bpd_measurement import BiparietalDiameterMeasurement
-
-#### NIHCD BPD thresholds for 20.86 weeks (Non-Hispanic White)
-thresholds = [145.25, 147.25, 150.37, 161.95, 174.41, 178.12, 180.56]
-ga = GestationalAge.from_weeks(20.86)
-reference_range = ReferenceRange(gestational_age=ga, percentiles=thresholds)
-
-# Create measurement evaluator
-bpd = BiparietalDiameterMeasurement()
-
-# Evaluate measurement
-result = bpd.evaluate(
-   gestational_age=ga,
-   measurement_value=170.0,
-   reference_range=reference_range
-)
-
-print(f"BPD bin: {result.bin_key}")
-print(f"Bounds: {result.lower.value if result.lower else 'None'} to {result.upper.value if result.upper else 'None'}")
-```
-
-```bash
-# Output:
-BPD bin: between_50p_90p
-Bounds: Fiftieth percentile to Ninetieth percentile
-```
-
-```bash
-# Example 3: Full Ontology Integration
-pythonfrom prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.biometry_reference import FetalGrowthPercentiles
-from prenatalppkt.measurements.reference_range import ReferenceRange
-from prenatalppkt.measurements.bpd_measurement import BiparietalDiameterMeasurement
-from prenatalppkt.phenotypic_export import PhenotypicExporter
-
-# # Setup
-ga = GestationalAge.from_weeks(20.86)
-reference = FetalGrowthPercentiles(source="intergrowth")
-
-# Get reference thresholds
-thresholds = reference.get_row("biparietal_diameter", ga.to_weeks())
-reference_range = ReferenceRange(gestational_age=ga, percentiles=thresholds)
-
-# Evaluate measurement
-bpd = BiparietalDiameterMeasurement()
-result = bpd.evaluate(ga, 140.0, reference_range)  # Very small BPD
-
-# Export to Phenopacket format
-exporter = PhenotypicExporter(source="intergrowth")
-phenotypic_feature = exporter.evaluate_and_export(
-   measurement_type="biparietal_diameter",
-   measurement_result=result,
-   gestational_age=ga
-)
-
-print(phenotypic_feature)
-```
-
-```bash
-# Output:
-{
- "type": {
-   "id": "HP:0012369",
-   "label": "Decreased biparietal diameter"
- },
- "excluded": false,
- "onset": {
-   "gestationalAge": {"weeks": 20, "days": 6}
- }
-}
-```
-
-```bash
-# Example 4: Batch Processing Multiple Fetuses
-pythonfrom prenatalppkt.biometry import BiometryMeasurement, BiometryType
+```python
+from prenatalppkt.measurement_eval import MeasurementEvaluation
 from prenatalppkt.biometry_reference import FetalGrowthPercentiles
 from prenatalppkt.gestational_age import GestationalAge
 
-# Simulated ultrasound data
-ultrasound_data = {
-   "exam_date": "2024-08-15",
-   "lmp_date": "2024-03-10",
-   "fetuses": [
-       {
-           "id": 1,
-           "measurements": {"hc_mm": 165.0, "bpd_mm": 45.2, "fl_mm": 32.5}
-       },
-       {
-           "id": 2,
-           "measurements": {"hc_mm": 198.0, "bpd_mm": 52.1, "fl_mm": 35.8}
-       }
-   ]
+# 1. Initialize (loads YAML configuration once)
+factory = MeasurementEvaluation()
+ref_data = FetalGrowthPercentiles(source="intergrowth")
+
+# 2. Parse gestational age
+ga = GestationalAge.from_weeks(20.86)  # 20 weeks, 6 days
+
+# 3. Calculate percentile
+percentile = ref_data.calculate_percentile(
+    measurement_type="head_circumference",
+    gestational_age_weeks=20.86,
+    value_mm=175.0
+)
+# Returns: 2.1 (well below 3rd percentile)
+
+# 4. Get measurement mapper
+hc_mapper = factory.get_measurement_mapper("head_circumference")
+
+# 5. Map to HPO term
+observation = hc_mapper.from_percentile(percentile, ga)
+
+# Result:
+# TermObservation(
+#     hpo_id="HP:0000252",
+#     hpo_label="Microcephaly",
+#     category="lower_extreme_term",
+#     observed=True,
+#     gestational_age=GestationalAge(weeks=20, days=6),
+#     percentile=2.1
+# )
+
+# 6. Convert to Phenopacket format
+phenotypic_feature = observation.to_phenotypic_feature()
+# {
+#     "type": {"id": "HP:0000252", "label": "Microcephaly"},
+#     "excluded": false,
+#     "onset": {"gestationalAge": {"weeks": 20, "days": 6}},
+#     "description": "Measurement at 20w6d"
+# }
+```
+
+### Batch Processing Multiple Measurements
+
+```python
+from prenatalppkt.measurement_eval import MeasurementEvaluation
+from prenatalppkt.biometry_reference import FetalGrowthPercentiles
+from prenatalppkt.gestational_age import GestationalAge
+
+# Initialize once
+factory = MeasurementEvaluation()
+ref_data = FetalGrowthPercentiles(source="intergrowth")
+ga = GestationalAge.from_weeks(22.5)
+
+# Raw measurements from ultrasound
+measurements = {
+    "head_circumference": 196.3,
+    "biparietal_diameter": 52.1,
+    "femur_length": 35.8,
+    "abdominal_circumference": 170.2
 }
 
-# Calculate gestational age
-from datetime import datetime
-lmp = datetime.fromisoformat(ultrasound_data["lmp_date"])
-exam = datetime.fromisoformat(ultrasound_data["exam_date"])
-ga_days = (exam - lmp).days
-ga = GestationalAge.from_weeks(ga_days / 7)
+# Process all measurements
+observations = []
+for measurement_type, value_mm in measurements.items():
+    # Calculate percentile
+    percentile = ref_data.calculate_percentile(measurement_type, 22.5, value_mm)
+    
+    # Get mapper and create observation
+    mapper = factory.get_measurement_mapper(measurement_type)
+    obs = mapper.from_percentile(percentile, ga)
+    observations.append(obs)
 
-# Initialize reference
-reference = FetalGrowthPercentiles(source="intergrowth")
+# Build Phenopacket
+from prenatalppkt.phenotypic_export import PhenotypicExporter
+exporter = PhenotypicExporter()
+for obs in observations:
+    exporter.add_observation(obs)
 
-# Process each fetus
-results = []
-for fetus in ultrasound_data["fetuses"]:
-   fetus_results = {"fetus_id": fetus["id"], "findings": []}
-
-   for measure_type, value_mm in fetus["measurements"].items():
-       # Map measurement names to BiometryType
-       type_map = {
-           "hc_mm": BiometryType.HEAD_CIRCUMFERENCE,
-           "bpd_mm": BiometryType.BIPARIETAL_DIAMETER,
-           "fl_mm": BiometryType.FEMUR_LENGTH
-       }
-
-       measurement = BiometryMeasurement(
-           measurement_type=type_map[measure_type],
-           gestational_age_weeks=ga.to_weeks(),
-           value_mm=value_mm
-       )
-
-       percentile, hpo = measurement.percentile_and_hpo(reference=reference)
-
-       fetus_results["findings"].append({
-           "measurement": measure_type,
-           "value": value_mm,
-           "percentile": percentile,
-           "hpo_term": hpo
-       })
-
-   results.append(fetus_results)
-
-# Display results
-import json
-print(json.dumps(results, indent=2))
-
-Example 5: Comparing NIHCD vs INTERGROWTH References
-pythonfrom prenatalppkt.biometry import BiometryMeasurement, BiometryType
-from prenatalppkt.biometry_reference import FetalGrowthPercentiles
-
-# Same measurement evaluated against both references
-ga_weeks = 28.0
-hc_value = 265.0
-
-measurement = BiometryMeasurement(
-   measurement_type=BiometryType.HEAD_CIRCUMFERENCE,
-   gestational_age_weeks=ga_weeks,
-   value_mm=hc_value
+phenopacket = exporter.build_phenopacket(
+    subject_id="FETUS_001",
+    maternal_id="MOTHER_001"
 )
-
-# NIHCD evaluation
-nihcd_ref = FetalGrowthPercentiles(source="nichd")
-nihcd_pct, nihcd_hpo = measurement.percentile_and_hpo(reference=nihcd_ref)
-
-# INTERGROWTH evaluation
-intergrowth_ref = FetalGrowthPercentiles(source="intergrowth")
-intergrowth_pct, intergrowth_hpo = measurement.percentile_and_hpo(reference=intergrowth_ref)
-
-print(f"HC {hc_value} mm at {ga_weeks} weeks:")
-print(f"  NIHCD:        {nihcd_pct:.1f}th percentile - {nihcd_hpo or 'Normal'}")
-print(f"  INTERGROWTH:  {intergrowth_pct:.1f}th percentile - {intergrowth_hpo or 'Normal'}")
 ```
 
-```bash
-# Output (example):
-HC 265.0 mm at 28.0 weeks:
-NIHCD:        15.2th percentile - Normal
-INTERGROWTH:  8.7th percentile - Normal
+### Custom Configuration
 
-# Note: Differences reflect population composition:
-# - NIHCD: U.S. multi-ethnic cohort
-# - INTERGROWTH: International, optimally-nourished populations
+```python
+from pathlib import Path
+from prenatalppkt.measurement_eval import MeasurementEvaluation
+
+# Use custom YAML configuration
+custom_mappings = Path("config/custom_hpo_mappings.yaml")
+factory = MeasurementEvaluation(mappings_path=custom_mappings)
+
+# Rest of workflow is identical
+mapper = factory.get_measurement_mapper("head_circumference")
+observation = mapper.from_percentile(15.2, ga)
 ```
+
+### Testing with Mock Configuration
+
+```python
+from prenatalppkt.measurements.term_bin import TermBin, PercentileRange
+from prenatalppkt.sonographic_measurement import SonographicMeasurement
+from prenatalppkt.gestational_age import GestationalAge
+
+# Create mock configuration for testing
+test_bins = [
+    TermBin(
+        range=PercentileRange(0, 10),
+        hpo_id="HP:TEST001",
+        hpo_label="Low test value",
+        normal=False
+    ),
+    TermBin(
+        range=PercentileRange(10, 90),
+        hpo_id="HP:TEST002",
+        hpo_label="Normal test value",
+        normal=True
+    ),
+    TermBin(
+        range=PercentileRange(90, 100),
+        hpo_id="HP:TEST003",
+        hpo_label="High test value",
+        normal=False
+    ),
+]
+
+# Create mapper with mock config
+test_mapper = SonographicMeasurement("test_measurement", test_bins)
+
+# Test with various percentiles
+ga = GestationalAge(weeks=20, days=0)
+obs_low = test_mapper.from_percentile(5.0, ga)
+obs_normal = test_mapper.from_percentile(50.0, ga)
+obs_high = test_mapper.from_percentile(95.0, ga)
+
+assert obs_low.hpo_id == "HP:TEST001"
+assert obs_low.observed == True
+
+assert obs_normal.hpo_id == "HP:TEST002"
+assert obs_normal.observed == False  # Normal range
+
+assert obs_high.hpo_id == "HP:TEST003"
+assert obs_high.observed == True
+```
+
+---
 
 ## Testing
 
-Running Tests
+### Run All Tests
 
 ```bash
-# Run all tests with verbose output
 pytest -vv
+```
 
-# Run specific test module
-pytest tests/test_biometry.py -v
+### Run Specific Test Module
 
-# Run with coverage report
+```bash
+pytest tests/test_term_bin.py -v
+```
+
+### Run with Coverage
+
+```bash
 pytest --cov=prenatalppkt --cov-report=html
+```
 
-# Run linting and formatting checks
+### Linting and Formatting
+
+```bash
+# Format code
 ruff format .
+
+# Check for issues
+ruff check .
+
+# Auto-fix issues
 ruff check . --fix
 ```
 
@@ -1275,117 +1338,88 @@ ruff check . --fix
 
 Current test suite covers:
 
-```bash
-- Core Functionality Tests
-- tests/test_biometry.py
-```
+#### Core Functionality Tests
 
-```bash
-Normal growth patterns (10th-90th percentile)
-Microcephaly detection (<=3rd percentile)
-Macrocephaly detection (>=97th percentile)
-Short femur identification
-Edge cases (missing data, out-of-range GA)
-```
+**`tests/test_term_bin.py`**
+- `PercentileRange.contains()` for various ranges
+- `TermBin.fits()` boundary conditions
+- Automatic category detection
+- Edge cases (boundary values, overlaps)
 
-```bash
-# tests/test_biometry_reference.py (planned)
+**`tests/test_mapping_loader.py`**
+- YAML file loading
+- TermBin object creation
+- Validation of range coverage
+- Error handling for malformed YAML
 
-NIHCD table loading
-INTERGROWTH table loading
-Percentile interpolation
-Z-score calculation accuracy
-Cross-reference consistency checks
-```
+**`tests/test_measurement_eval.py`**
+- Factory initialization
+- Mapper creation
+- Configuration caching
+- Missing measurement handling
 
-```bash
-#tests/test_phenotypic_export.py
+**`tests/test_sonographic_measurement.py`**
+- Percentile-to-observation mapping
+- Data-driven lookup logic
+- Normal vs. abnormal classification
+- Edge percentiles (0.0, 99.9, etc.)
 
-HPO term assignment correctness
-Normal range exclusion logic
-YAML mapping application
-Phenopacket JSON serialization
-Batch export functionality
-```
+#### Reference Data Tests
 
-### Measurement Layer Tests
+**`tests/test_biometry_reference.py`**
+- NIHCD table loading
+- INTERGROWTH table loading
+- Percentile interpolation accuracy
+- Z-score calculation
+- Cross-reference consistency
 
-```bash
-tests/test_bpd_measurement.py
+#### Export Tests
 
-Percentile bin classification (all 8 bins)
-Boundary condition handling
-Reference range integration
-```
+**`tests/test_phenotypic_export.py`**
+- HPO term assignment correctness
+- Phenopacket JSON serialization
+- Batch export functionality
+- QC validation integration
 
-```bash
-tests/test_femur_length_measurement.py
+#### Parsing Tests
 
-Similar coverage for femur length
-Asymmetric ontology mapping (only lower abnormalities defined)
-```
+**`tests/test_parse_nichd_raw.py`**
+- Header/junk line detection
+- Multi-word measurement parsing
+- Race/ethnicity field extraction
+- Percentile value extraction
 
-```bash
-tests/test_reference_range.py
-
-Threshold comparison logic
-Edge value handling (exactly on threshold)
-Invalid input rejection
-```
-
-```bash
-tests/test_term_observation.py (planned)
-
-MeasurementResult -> TermObservation conversion
-Normal bin exclusion logic
-Custom normal range definitions
-Phenopacket feature serialization
-```
-
-### Parsing Tests
-
-```bash
-tests/test_parse_nichd_raw.py
-
-Header/junk line detection
-Multi-word measurement parsing
-Race/ethnicity field extraction
-Percentile value extraction
-```
-
-```bash
-tests/test_parse_intergrowth_txt_all.py
-
-Data line identification
-GA range validation
-Measure name normalization
-Provenance metadata addition
-```
+**`tests/test_parse_intergrowth_txt_all.py`**
+- Data line identification
+- GA range validation
+- Measure name normalization
+- Provenance metadata addition
 
 ### Test Data
 
-```bash
-# Test fixtures use validated reference values:
-python# Example: NIHCD BPD at 20.86 weeks (Non-Hispanic White)
+Test fixtures use validated reference values:
+
+```python
+# Example: NIHCD BPD at 20.86 weeks (Non-Hispanic White)
 NIHCD_BPD_20_86_WEEKS = {
-   "3rd": 145.25,
-   "5th": 147.25,
-   "10th": 150.37,
-   "50th": 161.95,
-   "90th": 174.41,
-   "95th": 178.12,
-   "97th": 180.56
+    "3rd": 145.25,
+    "5th": 147.25,
+    "10th": 150.37,
+    "50th": 161.95,
+    "90th": 174.41,
+    "95th": 178.12,
+    "97th": 180.56
 }
 
 # Example: INTERGROWTH HC z-scores at 22 weeks
 INTERGROWTH_HC_22_WEEKS_ZSCORES = {
-   "-3 SD": 169.2,
-   "-2 SD": 179.5,
-   "-1 SD": 189.8,
-   "0 SD": 200.1,
-   "+1 SD": 210.4,
-   "+2 SD": 220.7,
-   "+3 SD": 231.0
+    "-3 SD": 169.2,
+    "-2 SD": 179.5,
+    "-1 SD": 189.8,
+    "0 SD": 200.1,
+    "+1 SD": 210.4,
+    "+2 SD": 220.7,
+    "+3 SD": 231.0
 }
 ```
 
@@ -1393,227 +1427,134 @@ INTERGROWTH_HC_22_WEEKS_ZSCORES = {
 
 ## Future Roadmap
 
-```yaml
-Phase 1: Core Functionality (Current Release)
+### Phase 1: Core Functionality ✅ (Current Release)
 
-Reference data loading (NIHCD, INTERGROWTH-21st)
-Percentile-based evaluation
-Basic HPO term mapping
-Measurement layer architecture
-YAML-driven ontology mappings
-```
+- [x] Reference data loading (NIHCD, INTERGROWTH-21st)
+- [x] Percentile-based evaluation
+- [x] HPO term mapping via YAML configuration
+- [x] Data-driven measurement architecture
+- [x] TermBin and PercentileRange models
 
-```yaml
-Phase 2: Input Parsing (In Progress)
+### Phase 2: Input Parsing (In Progress)
 
-Observer JSON parser
-ViewPoint Excel parser
-Gestational age calculation from LMP/exam dates
-Multi-fetus handling
-Anatomy finding extraction (using ViewPoint dropdown lists)
-```
+- [ ] Observer JSON parser
+- [ ] ViewPoint Excel parser
+- [ ] Gestational age calculation from LMP/exam dates
+- [ ] Multi-fetus handling
+- [ ] Anatomy finding extraction (using ViewPoint dropdown lists)
 
-```yaml
-Phase 3: Quality Control (Planned Q1 2025)
+### Phase 3: Quality Control (Planned)
 
-Schema validation (JSON Schema, Protobuf)
-Completeness checking (required fields, measurement coverage)
-Range validation (biologically plausible values)
-Anomaly detection (statistical outliers)
-Cross-measurement consistency (e.g., BPD/HC ratio)
-```
+- [ ] Schema validation (JSON Schema, Protobuf)
+- [ ] Completeness checking (required fields, measurement coverage)
+- [ ] Range validation (biologically plausible values)
+- [ ] Anomaly detection (statistical outliers)
+- [ ] Cross-measurement consistency (e.g., BPD/HC ratio)
 
-```yaml
-Phase 4: Phenopacket Builder (Planned Q2 2025)
+### Phase 4: Phenopacket Builder (Planned)
 
-Full Phenopacket v2 assembly
-Family/pedigree integration (twins, triplets)
-ICD-10 -> MONDO/OMIM mapping
-Provenance tracking (pipeline version, analyst ID)
-Batch export utilities
-```
+- [ ] Full Phenopacket v2 assembly
+- [ ] Family/pedigree integration (twins, triplets)
+- [ ] ICD-10 → MONDO/OMIM mapping
+- [ ] Provenance tracking (pipeline version, analyst ID)
+- [ ] Batch export utilities
 
-```yaml
-Phase 5: CLI and Web API (Planned Q3 2025)
-bash# Command-line interface
+### Phase 5: CLI and Web API (Not Planned Yet)
+
+```bash
+# Command-line interface
 prenatalppkt parse --input exam_data.json --output results/ --reference intergrowth
 
 # Web API
 POST /api/v1/evaluate
 {
- "gestational_age_weeks": 22.5,
- "measurements": {"hc_mm": 196.3, "bpd_mm": 52.1}
+  "gestational_age_weeks": 22.5,
+  "measurements": {"hc_mm": 196.3, "bpd_mm": 52.1}
 }
--> Returns Phenopacket JSON
+→ Returns Phenopacket JSON
 ```
 
-```yaml
-Phase 6: Advanced Features (Planned Q4 2025)
+### Phase 6: Advanced Features (Not Planned Yet)
 
-Longitudinal growth tracking (serial ultrasounds)
-Growth velocity calculations
-Multi-parameter risk scoring
-Predictive modeling integration (machine learning)
-DICOM integration (extract measurements from ultrasound images)
-```
+- [ ] Longitudinal growth tracking (serial ultrasounds)
+- [ ] Growth velocity calculations
+- [ ] Multi-parameter risk scoring
+- [ ] Predictive modeling integration (machine learning)
+- [ ] DICOM integration (extract measurements from ultrasound images)
+
+---
 
 ## Contributing
 
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
 ### Development Workflow
 
-```shell
-# Fork the repository
-
+```bash
+# 1. Fork and clone
 git clone https://github.com/YOUR_USERNAME/prenatalppkt.git
 cd prenatalppkt
 git remote add upstream https://github.com/P2GX/prenatalppkt.git
-```
 
-```shell
-# Create a feature branch
-
+# 2. Create feature branch
 git checkout -b feature/add-efw-support
-```
 
-```shell
-# Install development dependencies
-
+# 3. Install development dependencies
 pip install -e ".[test]"
-pre-commit install  # If using pre-commit hooks
-```
 
-```shell
-# Make changes and test
-# Run tests
+# 4. Make changes and test
 pytest -vv
-```
-
-```shell
-# Check code style
 ruff format .
 ruff check . --fix
-```
 
-```shell
-# Run full validation
-ruff format . && ruff check . --fix && pytest -vv
-```
+# 5. Commit with descriptive messages
+git add .
+git commit -m "feat: Add estimated fetal weight (EFW) measurement support"
 
-```shell
-# Commit with descriptive messages
-
-git add src/prenatalppkt/measurements/efw_measurement.py
-git commit -m "feat: Add estimated fetal weight (EFW) measurement support
-
-- Implement EFWMeasurement class
-- Add NIHCD reference tables for EFW
-- Create HPO mappings for macrosomia/growth restriction
-- Add unit tests with NICHD 28-week reference data
-
-Closes #42"
-```
-
-```shell
-# Push and create pull request
+# 6. Push and create pull request
 git push origin feature/add-efw-support
-# Then create PR on GitHub
 ```
 
 ### Code Style Guidelines
 
-Python: Follow PEP 8 (enforced by Ruff)
-Docstrings: Use Sphinx format
-Type hints: Required for all public functions
-Line length: 88 characters (Black-compatible)
+- **Python**: Follow PEP 8 (enforced by Ruff)
+- **Docstrings**: Use Sphinx format
+- **Type hints**: Required for all public functions
+- **Line length**: 88 characters (Black-compatible)
 
 Example:
 
 ```python
-pythondef evaluate(self, gestational_age: GestationalAge,
-            measurement_value: float,
-            reference_range: ReferenceRange) -> MeasurementResult:
-   """
-   Evaluate a raw measurement against the provided reference range.
+def evaluate(
+    self, 
+    gestational_age: GestationalAge,
+    measurement_value: float,
+    reference_range: ReferenceRange
+) -> MeasurementResult:
+    """
+    Evaluate a raw measurement against the provided reference range.
 
-   Parameters
-   ----------
-   gestational_age : GestationalAge
-       The gestational age context for this measurement.
-   measurement_value : float
-       The observed measurement in millimeters.
-   reference_range : ReferenceRange
-       Percentile thresholds for this gestational age.
+    Parameters
+    ----------
+    gestational_age : GestationalAge
+        The gestational age context for this measurement.
+    measurement_value : float
+        The observed measurement in millimeters.
+    reference_range : ReferenceRange
+        Percentile thresholds for this gestational age.
 
-   Returns
-   -------
-   MeasurementResult
-       Percentile bin classification for the measurement.
-
-   Raises
-   ------
-   ValueError
-       If measurement_value is negative or reference_range is invalid.
-   """
-   ...
+    Returns
+    -------
+    MeasurementResult
+        Percentile bin classification for the measurement.
+    """
 ```
 
-### Adding New Measurements
-
-To add support for a new biometric measurement (e.g., crown-rump length):
-
-```python
-# Create measurement class
-src/prenatalppkt/measurements/crl_measurement.py
-from prenatalppkt.sonographic_measurement import SonographicMeasurement
-
-class CrownRumpLengthMeasurement(SonographicMeasurement):
-   def name(self) -> str:
-       return "crown_rump_length"
-```
-
-```shell
-# Add reference data
-# Parse source tables into data/parsed/
-# Update biometry_reference.py to include CRL
-```
-
-### Define HPO mappings
-
-```yaml
-# data/mappings/biometry_hpo_mappings.yaml
-crown_rump_length:
-  abnormal_term:
-    id: "HP:0001562"
-    label: "Oligohydramnios" # Example parent term
-  bins:
-    below_3p:
-      id: "HP:0001511"
-      label: "Intrauterine growth retardation"
-  normal_bins:
-    - "between_10p_50p"
-    - "between_50p_90p"
-```
-
-### Add tests
-
-```python
-# tests/test_crl_measurement.py
-def test_crl_below_3rd_percentile():
-   ga = GestationalAge.from_weeks(12.0)
-   thresholds = [...]  # Reference values
-   reference = ReferenceRange(ga, thresholds)
-
-   crl = CrownRumpLengthMeasurement()
-   result = crl.evaluate(ga, 45.0, reference)
-
-   assert result.bin_key == "below_3p"
-```
+---
 
 ## LICENSE
 
 ```shell
-MIT License
-
 ## License
 
 This project is released under a **dual-license model**:
@@ -1630,19 +1571,20 @@ For complete terms, see the [LICENSE](./LICENSE) file.
 
 Reference Standards
 
-NICHD Fetal Growth Studies: U.S. National Institute of Child Health and Human Development
-INTERGROWTH-21st Project: International consortium for fetal growth standards
+- NICHD Fetal Growth Studies: U.S. National Institute of Child Health and Human Development
+- INTERGROWTH-21st Project: International consortium for fetal growth standards
 
 Key Dependencies
 
-HPO Toolkit: Human Phenotype Ontology integration
-GA4GH Phenopackets: Standardized phenotype representation
-PyPhetools: Phenotype analysis utilities from Monarch Initiative
+- HPO Toolkit: Human Phenotype Ontology integration
+- GA4GH Phenopackets: Standardized phenotype representation
+- PyPhetools: Phenotype analysis utilities from Monarch Initiative
 
-## Contributors
+### Contributors
 
 - [Varenya Jain](https://orcid.org/0009-0000-4429-6024)
-- [Peter N. Robinson](https://orcid.org/0009-0000-4429-6024)
+- [Peter N. Robinson](https://orcid.org/0000-0002-0736-9199)
+
 
 ## Citation
 
@@ -1660,6 +1602,9 @@ If you use prenatalppkt in your research, please cite:
 
 And cite the relevant reference standards:
 
+- **NICHD Fetal Growth Studies**: Buck Louis GM, Grewal J, Albert PS, Sciscione A, Wing DA, Grobman WA, Newman RB, Wapner R, D'Alton ME, Skupski D, Nageotte MP, Ranzini AC, Owen J, Chien EK, Craigo S, Hediger ML, Kim S, Zhang C, Grantz KL. Racial/ethnic standards for fetal growth: the NICHD Fetal Growth Studies. Am J Obstet Gynecol. 2015 Oct;213(4):449.e1-449.e41. doi: 10.1016/j.ajog.2015.08.032. PMID: 26410205; PMCID: PMC4584427.
+- **INTERGROWTH-21st**: Papageorghiou AT, Kennedy SH, Salomon LJ, Altman DG, Ohuma EO, Stones W, Gravett MG, Barros FC, Victora C, Purwar M, Jaffer Y, Noble JA, Bertino E, Pang R, Cheikh Ismail L, Lambert A, Bhutta ZA, Villar J; International Fetal and Newborn Growth Consortium for the 21(st) Century (INTERGROWTH-21(st)). The INTERGROWTH-21st fetal growth standards: toward the global integration of pregnancy and pediatric care. Am J Obstet Gynecol. 2018 Feb;218(2S):S630-S640. doi: 10.1016/j.ajog.2018.01.011. PMID: 29422205.
+
 ```bibtex
 @article{intergrowth2014,
    title={International standards for fetal growth based on serial ultrasound measurements: the INTERGROWTH-21st Project},
@@ -1671,7 +1616,8 @@ And cite the relevant reference standards:
    year={2014},
    publisher={Elsevier}
 }
-
+```
+```bibtex
 @article{buck2015nichd,
  title={The NICHD Fetal Growth Studies: design, methods, and cohort description},
  author={Buck Louis, Germaine M and Grewal, Jagteshwar and others},
@@ -1692,459 +1638,543 @@ Discussions: https://github.com/P2GX/prenatalppkt/discussions
 Email: [Contact @VarenyaJ or @pnrobinson]
 ```
 
----
+## Visuals:
 
-## Internal Layout
-
-```mermaid
-sequenceDiagram
-   participant Caller as "Caller / CLI / Test"
-   participant GA as "GestationalAge"
-   participant FG as "FetalGrowthPercentiles"
-   participant RR as "ReferenceRange"
-   participant MR as "MeasurementResult"
-   participant Exporter as "PhenotypicExporter"
-   participant YAML as "biometry_hpo_mappings.yaml"
-   participant TO as "TermObservation"
-   participant Builder as "PhenopacketBuilder"
-   participant Output as "Phenopacket / JSON"
-
-   Caller->>GA: GestationalAge.from_weeks(weeks_float)
-   GA-->>Caller: GestationalAge(weeks, days)
-   Caller->>FG: FetalGrowthPercentiles.get_row(GA)
-   FG-->>Caller: thresholds (3p,5p,10p,50p,90p,95p,97p)
-   Caller->>RR: ReferenceRange(GA, thresholds)
-   Caller->>RR: RR.evaluate(value_mm)
-   RR-->>MR: MeasurementResult(bin_key)
-   Caller->>Exporter: Exporter.evaluate_and_export(measurement_type, MR, GA)
-   Exporter->>YAML: load mappings for measurement_type
-   YAML-->>Exporter: {bins, normal_bins, abnormal_term}
-   Exporter->>Exporter: decision:
-   alt child HPO exists for MR.bin_key
-       Exporter->>TO: TermObservation(child_hpo, observed=True, excluded=False, GA, note)
-       TO-->>Exporter: phenotypic_feature_dict
-   else MR.bin_key in normal_bins
-       Exporter->>TO: TermObservation(abnormal_term, observed=False, excluded=True, GA, note)
-       TO-->>Exporter: phenotypic_feature_dict
-   else unmapped / abnormal-but-no-child
-       Exporter->>TO: TermObservation(abnormal_term or None, observed=True/False per policy, GA, note)
-       TO-->>Exporter: phenotypic_feature_dict
-   end
-   Exporter->>Builder: PhenopacketBuilder.add(phenotypic_feature_dict)
-   Builder-->>Output: Phenopacket JSON
-
-```
-
-```mermaid
-sequenceDiagram
-  participant Input as Input File (JSON / ViewPoint .xlsx)
-  participant Parser as biometry.py / parse_viewpoint.py (planned)
-  participant GA as gestational_age.py
-  participant Ref as biometry_reference.py
-  participant Eval as measurements/sonographic_measurement.py
-  participant Result as measurements/measurement_result.py
-  participant Range as measurements/reference_range.py
-  participant Obs as term_observation.py
-  participant Map as data/mappings/biometry_hpo_mappings.yaml
-  participant Export as phenotypic_export.py
-  participant QC as qc/validator.py (planned)
-  participant Out as Phenopacket JSON Output
-
-  %% Input & Parsing
-  Input->>Parser: Load prenatal sonography JSON/XLSX
-  Parser->>GA: Derive GestationalAge (weeks + days)
-  Parser->>Eval: Pass raw measurements (HC, BPD, AC, FL, OFD)
-
-  %% Reference Loading
-  Eval->>Ref: Request growth reference data (NIHCD/INTERGROWTH)
-  Ref-->>Eval: Return percentile thresholds + z-score model
-
-  %% Evaluation
-  Eval->>Range: Create ReferenceRange object
-  Range-->>Eval: Provide percentile cutoffs
-  Eval->>Result: Evaluate measurement value vs range
-  Result-->>Eval: Return percentile bin (e.g., "<3rd", "50th", ">97th")
-
-  %% Ontology Mapping
-  Eval->>Obs: Create TermObservation wrapper
-  Obs->>Map: Lookup HPO term for measurement type + bin
-  Map-->>Obs: Return ontology ID + label (e.g., HP:0003097 "Short femur")
-
-  %% Export
-  Obs->>Export: Send annotated TermObservation
-  Export->>Export: Build Phenopacket v2-compliant JSON
-  Export->>QC: Validate schema, completeness, and ontology consistency
-  QC-->>Export: Return QC results and provenance
-
-  %% Output
-  Export-->>Out: Write Phenopacket JSON + QC report to output directory
-
-
-```
+### High-Level System Overview
 
 ```mermaid
 flowchart TD
+subgraph Input["Input Processing"]
+   JSON["JSON/XLSX Input"] --> Parser["Parser Layer"]
+   Parser --> GA["Gestational Age
+   Calculation"]
+   GA --> Measurements["Extract Measurements
+   o BPD
+   o HC
+   o AC
+   o FL
+   o OFD"]
+end
 
-  subgraph Input["Input Sources"]
-      JSON["data/EVMS_SAMPLE.json"]
-      XLSX["ViewPoint Excel (.xlsx)"]
-  end
+subgraph Config["Configuration Layer"]
+   YAML["YAML Mappings
+   o Percentile ranges
+   o HPO term IDs
+   o Normal flags"]
+end
 
-  subgraph Parsing["1 Parsing & Measurement Entry"]
-      PARSER["biometry.py / parse_viewpoint.py (planned)
-      o Reads JSON/XLSX
-      o Extracts GA, HC, BPD, AC, FL, OFD"]
-      GA["gestational_age.py
-      o Represents GA in weeks + days"]
-  end
+subgraph Reference["Reference Data"]
+   NIH["NIHCD Reference
+   o Percentiles by race/ethnicity
+   o Growth charts"]
+   IG21["INTERGROWTH-21st
+   o Z-scores
+   o Centiles"]
+end
 
-  subgraph Reference["2 Reference Standards"]
-      REF["biometry_reference.py
-      o Loads NIHCD & INTERGROWTH-21st tables
-      o Computes percentile/z-score"]
-  end
+subgraph Processing["Measurement Processing"]
+   Measurements --> Factory["MeasurementEvaluation
+   (Factory)"]
+   Factory --> Mapper["SonographicMeasurement
+   (Generic Mapper)"]
+   Mapper --> Percentile["Calculate Percentile"]
+   Percentile --> Direct["Direct Mapping
+   percentile -> HPO term"]
+end
 
-  subgraph Measurements["3 Measurement Evaluation"]
-      RANGE["measurements/reference_range.py
-      o Encapsulates percentile cutoffs"]
-      RESULT["measurements/measurement_result.py
-      o Determines percentile bin"]
-      EVAL["measurements/sonographic_measurement.py
-      o Abstract class for HC, FL, BPD, AC, OFD
-      o Calls evaluate() on each subclass"]
-      SUB1["measurements/bpd_measurement.py"]
-      SUB2["measurements/femur_length_measurement.py"]
-  end
+subgraph Output["Output Generation"]
+   Direct --> TermObs["TermObservation
+   o HPO ID + Label
+   o observed flag
+   o percentile"]
+   TermObs --> Phenopacket["Phenopacket Builder"]
+   Phenopacket --> QC["QC Validation"]
+   QC --> Final["Final Phenopackets"]
+end
 
-  subgraph Ontology["4 Ontology Mapping"]
-      OBS["term_observation.py
-      o Wraps MeasurementResult in ontology term"]
-      YAML["data/mappings/biometry_hpo_mappings.yaml
-      o Defines percentile->HPO mapping"]
-  end
+YAML -.-> Factory
+NIH --> Percentile
+IG21 --> Percentile
 
-  subgraph Export["5 Phenotypic Export"]
-      EXPORT["phenotypic_export.py
-      o Converts TermObservations to
-      o Phenopacket v2 JSON"]
-  end
+classDef input fill:#a8d5ff,stroke:#333,stroke-width:2px,color:#000000
+classDef config fill:#fff4e6,stroke:#333,stroke-width:2px,color:#000000
+classDef reference fill:#ffe6cc,stroke:#333,stroke-width:2px,color:#000000
+classDef process fill:#d5ffa8,stroke:#333,stroke-width:2px,color:#000000
+classDef output fill:#ffafcc,stroke:#333,stroke-width:2px,color:#000000
 
-  subgraph QC["6 Quality Control (Planned)"]
-      VALID["qc/validator.py
-      o Validates schema, ontology, completeness"]
-  end
-
-  subgraph Output["7 Outputs"]
-      PP["Phenopackets (v2 JSON)"]
-      CSV["Optional flat CSV summary"]
-      LOGS["QC reports + provenance"]
-  end
-
-  %% Connections
-  JSON --> PARSER
-  XLSX --> PARSER
-  PARSER --> GA
-  PARSER --> REF
-  REF --> EVAL
-  EVAL --> RANGE --> RESULT --> OBS
-  OBS --> YAML
-  OBS --> EXPORT
-  EXPORT --> VALID
-  VALID --> PP
-  VALID --> LOGS
-  EXPORT --> CSV
-
+class JSON,Parser,GA,Measurements input
+class YAML config
+class NIH,IG21 reference
+class Factory,Mapper,Percentile,Direct process
+class TermObs,Phenopacket,QC,Final output
 ```
 
-```mermaid
-classDiagram
-  %% -------------------------------
-  %% Core Biometry + Parsing Layer
-  %% -------------------------------
-  class BiometryMeasurement {
-      + measurement_type: BiometryType
-      + gestational_age_weeks: float
-      + value_mm: float
-      + percentile_and_hpo(reference)
-  }
+**Key Differences from Legacy Architecture:**
+- **YAML Configuration Layer**: Central source of truth for HPO mappings
+- **Factory Pattern**: `MeasurementEvaluation` creates mappers on demand
+- **Generic Mapper**: Single `SonographicMeasurement` class (no subclasses)
+- **Direct Mapping**: No intermediate `MeasurementResult` - percentile maps directly to `TermObservation`
+- **Explicit Normal Flags**: YAML defines what's normal, not hard-coded logic
 
-  class BiometryType {
-      <<Enum>>
-      + HEAD_CIRCUMFERENCE
-      + BIPARIETAL_DIAMETER
-      + ABDOMINAL_CIRCUMFERENCE
-      + FEMUR_LENGTH
-      + OCCIPITOFRONTAL_DIAMETER
-      + ESTIMATED_FETAL_WEIGHT
-  }
-
-  class FetalGrowthPercentiles {
-      + source: str
-      + load_tables()
-      + get_percentile(measurement_type, ga, value)
-      + get_zscore(measurement_type, ga, value)
-  }
-
-  class GestationalAge {
-      + weeks: int
-      + days: int
-      + from_weeks(weeks: float)
-      + to_days() float
-      + __str__()
-  }
-
-  %% -------------------------------
-  %% Measurement Evaluation Layer
-  %% -------------------------------
-  class ReferenceRange {
-      + gestational_age: GestationalAge
-      + percentiles: list[float]
-      + evaluate(value: float) -> MeasurementResult
-  }
-
-  class MeasurementResult {
-      + bin_key: str
-      + percentile_range: tuple
-      + is_normal(): bool
-      + is_abnormal(): bool
-  }
-
-  class SonographicMeasurement {
-      <<abstract>>
-      + evaluate(ga, measurement_value, reference_range) -> TermObservation
-      + measurement_type(): str
-  }
-
-  class BiparietalDiameterMeasurement {
-      + measurement_type(): "BPD"
-  }
-
-  class FemurLengthMeasurement {
-      + measurement_type(): "FL"
-  }
-
-  SonographicMeasurement <|-- BiparietalDiameterMeasurement
-  SonographicMeasurement <|-- FemurLengthMeasurement
-  SonographicMeasurement *-- ReferenceRange
-  SonographicMeasurement *-- MeasurementResult
-  SonographicMeasurement *-- GestationalAge
-
-  %% -------------------------------
-  %% Ontology & Mapping Layer
-  %% -------------------------------
-  class TermObservation {
-      + hpo_id: str
-      + hpo_label: str
-      + observed: bool
-      + gestational_age: GestationalAge
-      + to_phenotypic_feature()
-  }
-
-  class BiometryHpoMappings {
-      + load_from_yaml(file_path)
-      + get_term(measurement_type, bin_key)
-  }
-
-  TermObservation --> BiometryHpoMappings
-
-  %% -------------------------------
-  %% Phenotypic Export & QC Layer
-  %% -------------------------------
-  class PhenotypicExporter {
-      + evaluate_and_export(measurement, reference)
-      + build_phenopacket(term_observations)
-      + to_json()
-  }
-
-  class QCValidator {
-      + validate_schema(json)
-      + validate_ontology_terms()
-      + check_completeness()
-  }
-
-  PhenotypicExporter *-- TermObservation
-  PhenotypicExporter *-- BiometryHpoMappings
-  PhenotypicExporter *-- QCValidator
-
-  %% -------------------------------
-  %% Dependencies
-  %% -------------------------------
-  BiometryMeasurement *-- FetalGrowthPercentiles
-  BiometryMeasurement *-- BiometryType
-  BiometryMeasurement *-- PhenotypicExporter
-
-```
-
-### Detailed Architecture: File-by-File Interactions
-
-#### Scenario: Processing a Head Circumference Measurement
-
-**Step 1: Input Parsing**
-
-```
-Input File (JSON/XLSX)
- ?
-Parser extracts: GA=22.5 weeks, HC=196.3 mm
- ?
-gestational_age.py::GestationalAge.from_weeks(22.5)
- -> Creates: GestationalAge(weeks=22, days=3)
-```
-
-**Step 2: Reference Data Loading**
-
-```
-biometry_reference.py::FetalGrowthPercentiles.__init__(source="intergrowth")
- ?
-biometry_reference.py::_load_intergrowth()
- ?
-Reads: data/parsed/intergrowth_text/intergrowth21_hc_ct.tsv
- ?
-biometry_reference.py::_normalize_columns()
- -> Standardizes: "GA (weeks)" -> "Gestational Age (weeks)"
- ?
-Stores in: self.tables["head_circumference"]
-```
-
-**Step 3: Percentile Threshold Retrieval**
-
-```
-biometry_reference.py::get_row("head_circumference", 22.5)
- ?
-If 22.5 not in table (e.g., only 22 and 23 exist):
- ?
-biometry_reference.py::_interpolate_row(22.5, row_22, row_23)
- -> Linear interpolation between adjacent GAs
- ?
-Returns: [3rd, 5th, 10th, 50th, 90th, 95th, 97th] percentile values in mm
-```
-
-**Step 4: Percentile Bin Classification**
-
-```
-measurements/reference_range.py::ReferenceRange(ga, thresholds)
- ?
-measurements/reference_range.py::evaluate(196.3)
- ?
-Compares 196.3 to thresholds:
- if value < thresholds[0]: return MeasurementResult.below_3p()
- elif value < thresholds[1]: return MeasurementResult.between_3p_5p()
- ... [continues through all thresholds]
- else: return MeasurementResult.above_97p()
- ?
-Assuming 196.3 falls between 10th and 50th:
- ?
-measurements/measurement_result.py::MeasurementResult(lower=Tenth, upper=Fiftieth)
- -> bin_key = "between_10p_50p"
-```
-
-**Step 5: Ontology Mapping**
-
-```
-phenotypic_export.py::evaluate_and_export("head_circumference", result, ga)
- ?
-Loads: data/mappings/biometry_hpo_mappings.yaml
- ?
-Extracts for "head_circumference":
- - bins: {below_3p: HP:0000252, above_97p: HP:0000256, ...}
- - normal_bins: ["between_10p_50p", "between_50p_90p"]
- - abnormal_term: HP:0000240 (Abnormal skull morphology)
- ?
-term_observation.py::from_measurement_result(
-   measurement_result=result,
-   bin_to_term=bins,
-   gestational_age=ga,
-   normal_bins=normal_bins
-)
- ?
-Logic:
- if result.bin_key in normal_bins:
-   observed = False  # This is a normal finding
-   hpo_term = None   # No abnormality to report
- elif result.bin_key in bins:
-   observed = True
-   hpo_term = bins[result.bin_key]
- else:
-   observed = True
-   hpo_term = abnormal_term (fallback)
- ?
-Since "between_10p_50p" is in normal_bins:
- ?
-term_observation.py::TermObservation(
-   hpo_term=None,
-   observed=False,
-   excluded=True,
-   gestational_age=GestationalAge(22, 3)
-)
-```
-
-**Step 6: Phenopacket Serialization**
-
-```
-term_observation.py::to_phenotypic_feature()
- ?
-Returns:
-{
- "type": null,  # No abnormal term
- "excluded": true,  # Explicitly marked as normal
- "onset": {
-   "gestationalAge": {"weeks": 22, "days": 3}
- }
-}
-```
-
-### Module Dependency Graph
+### Detailed Module-Level Architecture
 
 ```mermaid
 flowchart TD
+subgraph Input["1 Input Sources"]
+   JSON["data/EVMS_SAMPLE.json"]
+   XLSX["ViewPoint Excel (.xlsx)"]
+end
 
-A[__init__.py] --> B[_version.py]
+subgraph Parsing["2 Parsing & Gestational Age"]
+   PARSER["biometry.py / parse_viewpoint.py
+   o Reads JSON/XLSX
+   o Extracts raw measurements"]
+   GA["gestational_age.py
+   o GestationalAge(weeks, days)
+   o from_weeks() converter"]
+end
 
-C[biometry.py] --> D[biometry_reference.py]
-C --> E[constants.py]
-C --> F[gestational_age.py]
+subgraph Config["3 Configuration Loading"]
+   YAML["data/mappings/
+   biometry_hpo_mappings.yaml
+   o Percentile ranges [min, max)
+   o HPO IDs and labels
+   o normal: true/false"]
+   LOADER["mapping_loader.py
+   BiometryMappingLoader
+   o Parses YAML
+   o Creates TermBin objects
+   o Validates coverage"]
+end
 
-D --> F
-D --> G[pandas]
+subgraph Reference["4 Reference Standards"]
+   REF["biometry_reference.py
+   FetalGrowthPercentiles
+   o Loads NIHCD/INTERGROWTH tables
+   o calculate_percentile()
+   o get_z_score()"]
+end
 
-H[sonographic_measurement.py] --> I[measurements/reference_range.py]
-H --> J[measurements/measurement_result.py]
-H --> K[term_observation.py]
-H --> F
+subgraph Factory["5 Mapper Factory"]
+   FACTORY["measurement_eval.py
+   MeasurementEvaluation
+   o Loads YAML once at init
+   o get_measurement_mapper()
+   o Returns configured mappers"]
+end
 
-I --> J
-I --> L[measurements/percentile.py]
-I --> F
+subgraph Measurement["6 Generic Measurement Mapper"]
+   MAPPER["sonographic_measurement.py
+   SonographicMeasurement
+   o measurement_type: str
+   o term_bins: List[TermBin]
+   o from_percentile() -> TermObservation"]
+   TERMBIN["measurements/term_bin.py
+   o PercentileRange
+   o TermBin
+   o category auto-detection"]
+end
 
-J --> L
+subgraph Observation["7 Ontology Observation"]
+   OBS["term_observation.py
+   TermObservation
+   o hpo_id, hpo_label
+   o observed: bool
+   o percentile: float
+   o to_phenotypic_feature()"]
+end
 
-M[measurements/bpd_measurement.py] --> H
-N[measurements/femur_length_measurement.py] --> H
+subgraph Export["8 Phenopacket Export"]
+   EXPORT["phenotypic_export.py
+   PhenotypicExporter
+   o Collects TermObservations
+   o build_phenopacket()
+   o to_json()"]
+end
 
-K --> J
-K --> F
-K --> O[hpotk::MinimalTerm]
+subgraph QC["9 Quality Control"]
+   VALID["qc/validator.py (planned)
+   o Schema validation
+   o Ontology term checks
+   o Completeness reports"]
+end
 
-P[phenotypic_export.py] --> K
-P --> D
-P --> F
-P --> Q[PyYAML]
+subgraph Output["Outputs"]
+   PP["Phenopackets v2 JSON
+   o Subject metadata
+   o phenotypicFeatures[]
+   o measurements[]
+   o metaData"]
+   LOGS["QC Reports
+   o Validation results
+   o Provenance tracking"]
+end
 
-R[scripts/parse_nichd_raw.py] --> G
-S[scripts/parse_intergrowth_txt_all.py] --> G
-T[scripts/parse_intergrowth_docling_all.py] --> G
-T --> U[docling]
+%% Connections
+JSON --> PARSER
+XLSX --> PARSER
+PARSER --> GA
+PARSER --> REF
 
-style A fill:#e1f5ff
-style C fill:#fff3e0
-style D fill:#fff3e0
-style H fill:#f3e5f5
-style I fill:#f3e5f5
-style J fill:#f3e5f5
-style K fill:#e8f5e9
-style P fill:#e8f5e9
-style R fill:#fce4ec
-style S fill:#fce4ec
-style T fill:#fce4ec
+YAML --> LOADER
+LOADER --> TERMBIN
+LOADER --> FACTORY
+
+FACTORY --> MAPPER
+TERMBIN -.-> MAPPER
+
+REF --> MAPPER
+GA --> MAPPER
+
+MAPPER --> OBS
+OBS --> EXPORT
+EXPORT --> VALID
+
+VALID --> PP
+VALID --> LOGS
+
+classDef input fill:#a8d5ff,stroke:#333,stroke-width:2px,color:#000000
+classDef config fill:#fff4e6,stroke:#333,stroke-width:2px,color:#000000
+classDef reference fill:#ffe6cc,stroke:#333,stroke-width:2px,color:#000000
+classDef process fill:#d5ffa8,stroke:#333,stroke-width:2px,color:#000000
+classDef output fill:#ffafcc,stroke:#333,stroke-width:2px,color:#000000
+
+class JSON,XLSX,PARSER,GA input
+class YAML,LOADER,FACTORY config
+class REF,TERMBIN reference
+class MAPPER,OBS,EXPORT process
+class VALID,PP,LOGS output
 ```
 
-#
+**Architecture Highlights:**
+
+| Component | Old Approach | New Approach |
+|-----------|-------------|--------------|
+| **Ontology Mapping** | Hard-coded in subclasses | Declarative YAML configuration |
+| **Measurement Classes** | One subclass per measurement (HC, BPD, FL...) | Single generic `SonographicMeasurement` |
+| **Normal Range Logic** | Hard-coded if/else chains | Explicit `normal: true/false` in YAML |
+| **Intermediate Results** | `MeasurementResult` with string bin keys | Direct percentile -> `TermObservation` |
+| **Dependencies** | `MinimalTerm` from hpo-toolkit | Simple strings (hpo_id, hpo_label) |
+| **Extensibility** | Code changes for new measurements | YAML edits only |
+
+### Core Design Principles
+
+1. **Configuration over Code**: HPO term mappings are defined declaratively in YAML, not hard-coded in Python classes
+@@ -121,7 +421,86 @@ flowchart TD
+
+### Key Architectural Change: Configuration-Driven Mapping
+
+-**OLD APPROACH** (Hard-coded):
+**TRANSFORMATION OVERVIEW:**
+
+```mermaid
+flowchart LR
+subgraph Old["Old Architecture (Hard-coded)"]
+   direction TB
+   O1["Raw Measurement
+   HC = 175mm @ 20w6d"]
+   O2["ReferenceRange.evaluate()"]
+   O3["MeasurementResult
+   bin_key = 'below_3p'"]
+   O4["Hard-coded if/elif
+   'below_3p' -> Microcephaly"]
+   O5["TermObservation
+   with MinimalTerm object"]
+   
+   O1 --> O2 --> O3 --> O4 --> O5
+end
+
+subgraph New["New Architecture (Data-driven)"]
+   direction TB
+   N1["Raw Measurement
+   HC = 175mm @ 20w6d"]
+   N2["FetalGrowthPercentiles
+   calculate_percentile()"]
+   N3["Percentile = 2.1"]
+   N4["YAML Lookup
+   [0, 3) -> HP:0000252"]
+   N5["TermObservation
+   hpo_id, hpo_label"]
+   
+   N1 --> N2 --> N3 --> N4 --> N5
+end
+
+style Old fill:#ffe6e6,stroke:#cc0000,stroke-width:2px
+style New fill:#e6ffe6,stroke:#00cc00,stroke-width:2px
+```
+
+**OLD APPROACH** (Hard-coded):
+```python
+# Each measurement had its own class with hard-coded logic
+class HeadCircumferenceMeasurement(SonographicMeasurement):
+def get_bin_to_term_mapping(self):
+   return {
+       "below_3p": MinimalTerm("HP:0000252", "Microcephaly"),
+       "between_3p_5p": MinimalTerm("HP:0040195", "Decreased HC"),
+       # ... 6 more hard-coded bins
+   }
+```
+
+**NEW APPROACH** (Data-driven):
+```yaml
+# data/mappings/biometry_hpo_mappings.yaml
+head_circumference:
+ - min: 0
+max: 3
+id: "HP:0000252"
+label: "Microcephaly"
+normal: false
+ 
+ - min: 3
+max: 5
+id: "HP:0040195"
+label: "Decreased head circumference"
+normal: false
+ # ... all 8 ranges covering 0-100 percentile
+```
+
+```python
+# Python code loads configuration, no hard-coding needed
+factory = MeasurementEvaluation()  # Loads YAML once
+mapper = factory.get_measurement_mapper("head_circumference")
+observation = mapper.from_percentile(2.1, gestational_age)
+# Returns: TermObservation(hpo_id="HP:0000252", hpo_label="Microcephaly", ...)
+```
+
+### Component Interaction Comparison
+
+```mermaid
+flowchart TD
+subgraph Legacy["Legacy Architecture"]
+   direction TB
+   L1["HeadCircumferenceMeasurement
+   (Subclass)"]
+   L2["BipariatalDiameterMeasurement
+   (Subclass)"]
+   L3["FemurLengthMeasurement
+   (Subclass)"]
+   L4["Hard-coded mappings
+   in each class"]
+   L5["MeasurementResult
+   (bin_key strings)"]
+   L6["MinimalTerm objects
+   from hpo-toolkit"]
+   
+   L1 --> L4
+   L2 --> L4
+   L3 --> L4
+   L4 --> L5
+   L5 --> L6
+   
+   style L1 fill:#ffcccc
+   style L2 fill:#ffcccc
+   style L3 fill:#ffcccc
+   style L4 fill:#ffcccc
+   style L5 fill:#ffcccc
+   style L6 fill:#ffcccc
+end
+
+subgraph Modern["Modern Architecture"]
+   direction TB
+   M1["biometry_hpo_mappings.yaml
+   (Single source of truth)"]
+   M2["BiometryMappingLoader
+   (Parses YAML)"]
+   M3["MeasurementEvaluation
+   (Factory)"]
+   M4["SonographicMeasurement
+   (Generic - works for ALL)"]
+   M5["TermBin objects
+   (Percentile ranges)"]
+   M6["TermObservation
+   (Simple data holder)"]
+   
+   M1 --> M2
+   M2 --> M3
+   M3 --> M4
+   M4 --> M5
+   M5 --> M6
+   
+   style M1 fill:#ccffcc
+   style M2 fill:#ccffcc
+   style M3 fill:#ccffcc
+   style M4 fill:#ccffcc
+   style M5 fill:#ccffcc
+   style M6 fill:#ccffcc
+end
+
+Legacy -.->|Refactored to| Modern
+```
+
+**Benefits of New Architecture:**
+
+| Aspect | Legacy | Modern | Improvement |
+|--------|--------|--------|-------------|
+| **Lines of Code** | ~500 LOC across subclasses | ~200 LOC + YAML | 60% reduction |
+| **Adding Measurements** | Write new Python class | Add YAML entry | No code changes |
+| **Changing Thresholds** | Edit hard-coded values | Edit YAML values | Non-technical edits |
+| **Testing** | Mock entire class hierarchy | Inject test config | Easier unit tests |
+| **Dependencies** | Tight coupling to hpo-toolkit | Simple strings | Looser coupling |
+| **Maintainability** | Changes require code review | Config can be validated | Faster iteration |
+
+### Decision Flow: Processing a Single Measurement
+
+```mermaid
+flowchart TD
+Start([Ultrasound Measurement]) --> Parse{Parse Input}
+Parse -->|Success| ExtractGA[Extract Gestational Age]
+Parse -->|Fail| Error1[Error: Invalid Input]
+
+ExtractGA --> ExtractMeas[Extract Measurement Value]
+ExtractMeas --> ValidateRange{Value in
+Valid Range?}
+
+ValidateRange -->|No| Error2[Error: Out of Range]
+ValidateRange -->|Yes| InitFactory[Initialize Factory]
+
+InitFactory --> LoadYAML{YAML Already
+Loaded?}
+LoadYAML -->|Yes| GetMapper
+LoadYAML -->|No| LoadConfig[Load biometry_hpo_mappings.yaml]
+LoadConfig --> ValidateYAML{YAML Valid?}
+ValidateYAML -->|No| Error3[Error: Invalid Config]
+ValidateYAML -->|Yes| GetMapper[Get Measurement Mapper]
+
+GetMapper --> MapperExists{Mapper Exists
+for Type?}
+MapperExists -->|No| Error4[Error: Unknown Measurement]
+MapperExists -->|Yes| CalcPercentile[Calculate Percentile
+from Reference Data]
+
+CalcPercentile --> InterpolateGA{GA in
+Table?}
+InterpolateGA -->|No| Interpolate[Interpolate Between Rows]
+InterpolateGA -->|Yes| LookupThresholds
+Interpolate --> LookupThresholds[Lookup Percentile Thresholds]
+
+LookupThresholds --> CompareValue[Compare Value to Thresholds]
+CompareValue --> FindPercentile[Determine Percentile Value]
+
+FindPercentile --> IterateBins[Iterate Through TermBins]
+IterateBins --> CheckFit{Percentile Fits
+in Bin?}
+
+CheckFit -->|No| NextBin[Try Next Bin]
+NextBin --> MoreBins{More Bins
+to Check?}
+MoreBins -->|Yes| CheckFit
+MoreBins -->|No| Error5[Error: No Matching Bin]
+
+CheckFit -->|Yes| CreateObs[Create TermObservation]
+CreateObs --> SetHPO[Set HPO ID & Label]
+SetHPO --> SetObserved{normal
+flag?}
+
+SetObserved -->|true| SetNormal[observed = False
+excluded = True]
+SetObserved -->|false| SetAbnormal[observed = True
+excluded = False]
+
+SetNormal --> AddMetadata[Add Gestational Age
+& Percentile]
+SetAbnormal --> AddMetadata
+
+AddMetadata --> ToFeature[Convert to
+Phenotypic Feature]
+ToFeature --> Success([TermObservation Ready])
+
+style Start fill:#a8d5ff
+style Success fill:#ccffcc
+style Error1 fill:#ffcccc
+style Error2 fill:#ffcccc
+style Error3 fill:#ffcccc
+style Error4 fill:#ffcccc
+style Error5 fill:#ffcccc
+style LoadYAML fill:#fff4e6
+style GetMapper fill:#d5ffa8
+style CalcPercentile fill:#ffe6cc
+style CreateObs fill:#e3f2fd
+```
+
+**Key Decision Points:**
+
+1. **Input Validation**: Ensures data format is correct
+2. **Range Validation**: Checks biological plausibility (e.g., HC not negative)
+3. **Configuration Loading**: One-time YAML load, then cached
+4. **Mapper Resolution**: Factory pattern creates appropriate mapper
+5. **Percentile Calculation**: Reference data lookup with interpolation
+6. **Bin Matching**: Data-driven iteration through TermBins
+7. **Observation Creation**: Sets HPO term and observed/excluded flags
+8. **Feature Export**: Converts to Phenopacket-compliant format
+
+### Initialization vs. Runtime Phases
+
+Understanding when things happen is crucial for performance and debugging:
+
+```mermaid
+flowchart LR
+subgraph Init["Initialization Phase (Once)"]
+   direction TB
+   I1["Load YAML Configuration"]
+   I2["Parse into PercentileRange
+   & TermBin objects"]
+   I3["Create mapping dictionary
+   {measurement_type: [TermBins]}"]
+   I4["Store in Factory"]
+   
+   I1 --> I2 --> I3 --> I4
+   
+   style I1 fill:#fff4e6
+   style I2 fill:#fff4e6
+   style I3 fill:#fff4e6
+   style I4 fill:#fff4e6
+end
+
+subgraph Runtime["Runtime Phase (Per Measurement)"]
+   direction TB
+   R1["Get mapper from Factory
+   O(1) dictionary lookup"]
+   R2["Calculate percentile
+   from reference data"]
+   R3["Iterate through TermBins
+   (typically 8 bins)"]
+   R4["Create TermObservation
+   when bin matches"]
+   R5["Convert to Phenopacket
+   feature"]
+   
+   R1 --> R2 --> R3 --> R4 --> R5
+   
+   style R1 fill:#d5ffa8
+   style R2 fill:#d5ffa8
+   style R3 fill:#d5ffa8
+   style R4 fill:#d5ffa8
+   style R5 fill:#d5ffa8
+end
+
+Init ==>|One-time cost| Runtime
+
+Note1["YAML parsing happens ONCE
+at application startup, not per measurement"]
+Note2["Runtime is pure in-memory
+operations - very fast"]
+
+Init -.-> Note1
+Runtime -.-> Note2
+```
+
+**Performance Characteristics:**
+
+| Phase | Operation | Complexity | Frequency |
+|-------|-----------|------------|-----------|
+| **Init** | Load & parse YAML | O(n) where n = total mappings | Once per application start |
+| **Init** | Create TermBin objects | O(n) | Once per application start |
+| **Runtime** | Get mapper | O(1) dictionary lookup | Per measurement |
+| **Runtime** | Calculate percentile | O(log n) with interpolation | Per measurement |
+| **Runtime** | Find matching bin | O(k) where k 8 bins | Per measurement |
+| **Runtime** | Create observation | O(1) | Per measurement |
+
+**Memory Footprint:**
+- **YAML File**: ~11 KB on disk
+- **Loaded Mappings**: ~50 KB in memory (all 5 measurements)
+- **Per Observation**: ~1 KB (TermObservation object)
