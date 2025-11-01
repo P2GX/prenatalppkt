@@ -30,3 +30,6 @@ class SimpleTerm:
         :rtype: str
         """
         return self._hpo_label
+
+    def __repr__ (self) -> str:
+        return f"{self._hpo_label}({self._hpo_id})"

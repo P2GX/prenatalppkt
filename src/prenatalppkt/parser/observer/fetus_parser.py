@@ -1,4 +1,6 @@
-from pyphetools.creation import HpoParser, HpoConceptRecognizer
+import typing
+from prenatalppkt.hpo import HpoConceptRecognizer
+from prenatalppkt.dto import FetusData
 
 class FetusParser:
     def __init__ (self, hcr: HpoConceptRecognizer):
@@ -8,10 +10,11 @@ class FetusParser:
         if not isinstance(json_data, dict):
             raise ValueError(f"malformed arguement, expecting `dict` but got {type(json_data)}")
     
-        if "patient" not in json_data:
-            raise ValueError(f"did not find 'patient' in exam")
+        if "anatomy_text" not in json_data:
+            raise ValueError(f"did not find 'anatomy_text' in fetus")
 
-        patient = json_data.get("patient")
+        anatomy_text = json_data.get("anatomy_text")
 
-        first_name = patient.get('first_name', "NA")
-        last_name = patient.get('last_name', "NA")
+        #first_name = patient.get('first_name', "NA")
+        for hpo_hit in self._hcr.parse(anatomy_text):
+            print(hpo_hit)

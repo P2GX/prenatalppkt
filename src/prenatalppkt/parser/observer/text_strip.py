@@ -1,18 +1,26 @@
-from fasthpocr import FastHPOCR
+from prenatalppkt.hpo import HpoParser
 
 class PhenotypeMiner:
-    def __init__(self):
-        self.recogniser = FastHPOCR()
+    """
+    Use the local HPO ontology to recognize phenotype terms in free text.
+    """
+
+    def __init__(self, hpo_json: str | None = None, release: str | None = None):
+        self._hpo = HpoParser(hpo_json_file=hpo_json, release=release)
+        self._hcr = self._hpo.get_hpo_concept_recognizer()
 
     def extract_phenotypes(self, text: str) -> list[dict]:
-        # For each text, get recognised phenotypes
-        matches = self.recogniser.recognise(text)
-        # Maybe convert matches to a simpler form
-        return [{"term": m["term"], "hpo_id": m["hpo_id"], "span": m["span"]} for m in matches]
+        if not isinstance(text, str) or not text.strip():
+            return []
+        matches = self._hcr.parse(text)
+        return [
+            {"term": m.hpo_label, "hpo_id": m.hpo_id}
+            for m in matches
+        ]
 
-    def analyse_texts(self, texts: list[str]) -> list:
+    def analyse_texts(self, texts: list[str]) -> list[dict]:
         result = []
         for t in texts:
-            pheno = self.extract_phenotypes(t)
-            result.append({"text": t, "phenotypes": pheno})
+            phenos = self.extract_phenotypes(t)
+            result.append({"text": t, "phenotypes": phenos})
         return result
