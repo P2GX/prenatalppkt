@@ -1,0 +1,1699 @@
+{
+  "exam": {
+    "site_name": "51 W51st Street",
+    "patient": {
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "b_date": "1969-06-07"
+    },
+    "ob_gyn_history": {
+      "gravida": 0,
+      "f_term": 0,
+      "p_term": 0,
+      "para": 0,
+      "s_abort": 0,
+      "t_abort": 0,
+      "liv_children": 0,
+      "stl_born": 0,
+      "ect_preg_num_left": 0,
+      "ect_preg_num_right": 0,
+      "ect_preg_num_other": 0
+    },
+    "scope_name": "Limited OB Exam",
+    "accession_id": "",
+    "exm_locator": "BC01417-Q-2-3",
+    "exm_date": "2025-10-01",
+    "fetus_count": 1,
+    "exm_signed": 1,
+    "pt_age_at_exam": 56,
+    "lmp": "0001-01-01",
+    "pt_age_at_edd": 56,
+    "disc_perc": 0,
+    "ga_by_dates": 0,
+    "ga_by_working_edd": 23.5,
+    "age_at_menopause": 0,
+    "examIcd10Indication": [
+      {
+        "code": "Z36.1",
+        "description": "Encounter for antenatal screening for raised alphafetoprotein level"
+      }
+    ],
+    "examReferring": [
+      {
+        "assgnd_id": 19,
+        "name": "Dr. X"
+      }
+    ],
+    "examTypes": null,
+    "examHL7Orders": null
+  },
+  "adnexa": {
+    "left": {
+      "done": 0,
+      "ovry_seen": "Unspecified",
+      "ovry_loc": "Unspecified",
+      "ovry_surg_abs": 0,
+      "ovry_size_a": 0,
+      "ovry_size_b": 0,
+      "ovry_size_c": 0,
+      "ovry_vol": 0,
+      "tube_seen": "Unspecified",
+      "tube_nrml": "Unspecified",
+      "tube_surg_abs": 0,
+      "tube_hydrosalpinx": 0,
+      "tube_hydrosalpinx_size_a": 0,
+      "tube_hydrosalpinx_size_b": 0,
+      "tube_hydrosalpinx_size_c": 0,
+      "tube_hydrosalpinx_volume": 0
+    },
+    "right": {
+      "done": 0,
+      "ovry_seen": "Unspecified",
+      "ovry_loc": "Unspecified",
+      "ovry_surg_abs": 0,
+      "ovry_size_a": 0,
+      "ovry_size_b": 0,
+      "ovry_size_c": 0,
+      "ovry_vol": 0,
+      "tube_seen": "Unspecified",
+      "tube_nrml": "Unspecified",
+      "tube_surg_abs": 0,
+      "tube_hydrosalpinx": 0,
+      "tube_hydrosalpinx_size_a": 0,
+      "tube_hydrosalpinx_size_b": 0,
+      "tube_hydrosalpinx_size_c": 0,
+      "tube_hydrosalpinx_volume": 0
+    },
+    "masses": null
+  },
+  "cervix": {
+    "cervix": {
+      "done": 1,
+      "length": 0,
+      "normal": "Normal",
+      "surg_abs": 0,
+      "dilation": 0,
+      "cervicx_length_supine": 0,
+      "cervicx_length_post_tfp": 0,
+      "cervicx_length_standing": 0,
+      "funneling_width_supine": 0,
+      "funneling_width_post_tfp": 0,
+      "funneling_width_standing": 0,
+      "funneling_lngth_supine": 0,
+      "funneling_lngth_post_tfp": 0,
+      "funneling_lngth_standing": 0,
+      "funneling_percent_supine": 0,
+      "funneling_percent_post_tfp": 0,
+      "funneling_percent_standing": 0,
+      "int_os_to_ext_os_supine": 0,
+      "int_os_to_ext_os_post_tfp": 0,
+      "int_os_to_ext_os_standing": 0,
+      "cecrlage_lower_cx_supine": 0,
+      "cecrlage_lower_cx_post_tfp": 0,
+      "cecrlage_lower_cx_standing": 0,
+      "cecrlage_upper_cx_supine": 0,
+      "cecrlage_upper_cx_post_tfp": 0,
+      "cecrlage_upper_cx_standing": 0,
+      "cecrlage_ga_placement": 0,
+      "cecrlage_elective": 0,
+      "cecrlage_emergency": 0,
+      "cecrlage_shirodkar": 0,
+      "cecrlage_mcdonald": 0,
+      "funneling": "Unspecified",
+      "response_to_tfp": "Unspecified",
+      "response_to_valsalva": "Unspecified",
+      "response_to_standing": "Unspecified",
+      "dynamic_chngs": "Unspecified",
+      "exam_performed_manually": 0,
+      "exam_performed_by_us": 0,
+      "response_to_tfp_debris": "Unspecified"
+    },
+    "cervix_anomalies": null
+  },
+  "endomyocds": {
+    "gyn_data": {
+      "done": 0,
+      "myo_homo_hetro": 0,
+      "cds_fld_seen": 0,
+      "cds_fld_descr": 0,
+      "cds_fld_amt": 0,
+      "cds_fld_other_txt": "",
+      "cds_fld_size_a": 0,
+      "cds_fld_size_b": 0,
+      "cds_fld_size_c": 0,
+      "cds_fld_volume": 0,
+      "gen_comment": "",
+      "endo_shape": 0,
+      "endo_thickness_layers": 0,
+      "endo_thickness_cm": 0,
+      "endo_lining": 0,
+      "endo_colr_dop": 0,
+      "endo_dop_ri": 0,
+      "endo_dop_ri_value": 0,
+      "endo_cont_other_txt": "",
+      "endo_cont_fld_pres": 0,
+      "endo_cont_fld_type": 0
+    },
+    "endo_contents": null,
+    "gyn_anomalies": null
+  },
+  "finalize": {
+    "generalComment": {
+      "plain_text": "The patient was referred for a fetal anatomical survey.  \r\rSonographic measurements were consistent with the expected gestational age. The amniotic fluid volume was normal. A detailed fetal anatomic survey was performed. \r\rThe sonogram was significant for splaying of the cerebellar hemispheres. There was evidence of a cyst measuring __ connecting with the fourth ventricle. This is consistent with a Dandy-Walker malformation. \r\rThe remainder of the fetal anatomy seen appeared normal within the resolution of the ultrasound. There was no evidence of macrocephaly, ventriculomegaly or agenesis of the corpus callosum.\r\rDue to the limited visualization of the cervix by the transabdominal approach, it was necessary to perform a transvaginal ultrasound. Transvaginal sonogram revealed a long, closed cervix. There were no changes noted with the Valsalva maneuver. A chaperone was present for the transvaginal ultrasound.\r\rThe patient should be informed of the findings and counseled about the limitations of the exam. Although the absence of any sonographic markers reduces the likelihood of fetal aneuploidy, a normal ultrasound exam cannot exclude abnormal fetal genetics; definitive determination requires diagnostic genetic testing. \r\rThank you for involving us in the care of the patient.\r\r",
+      "formatted_text": ""
+    },
+    "recommendations": [],
+    "probes": [],
+    "examinerTwo": {
+      "examiner_no": 2,
+      "assgnd_id": 30,
+      "name": "Technician Y"
+    },
+    "attendingMD": {
+      "examiner_no": 3,
+      "assgnd_id": 30,
+      "name": "Technician Y"
+    },
+    "examIcd10Diagnosis": null
+  },
+  "gyn_procedure": {
+    "gyn_procedure": {
+      "done": 0,
+      "hysteroscopy_done": 0,
+      "hysteroscopy_fld_type": "",
+      "hysteroscopy_amt": 0,
+      "sonohystgrpy_done": 0,
+      "sonohystgrpy_cath_type": "Unspecified",
+      "sonohystgrpy_cath_type_txt": "",
+      "sonohystgrpy_fld_type": "Unspecified",
+      "sonohystgrpy_fld_type_txt": "",
+      "sonohystgrpy_amt": 0,
+      "sonohystsalgrpy_lft_tube": "Unspecified",
+      "sonohystsalgrpy_lft_tube_blk": "Unspecified",
+      "sonohystsalgrpy_rht_tube": "Unspecified",
+      "sonohystsalgrpy_rht_tube_blk": "Unspecified",
+      "sonohystgrpy_nrml": 0,
+      "sonohystsalgrpy_lft_tube_fld": 0,
+      "sonohystsalgrpy_l_tube_fld_oth": "",
+      "sonohystsalgrpy_rht_tube_fld": 0,
+      "sonohystsalgrpy_r_tube_fld_oth": ""
+    },
+    "hormone_replacement_therapy": null
+  },
+  "hist_phys_vitals": {
+    "surgeries": null,
+    "vital_signs": {
+      "initial_blood_pressure_sys": 0,
+      "initial_blood_pressure_dia": 0,
+      "initial_plood_uressurelse": 0,
+      "height_feet": 0,
+      "height_inches": 0,
+      "later_bp_sys": 0,
+      "later_bp_dia": 0,
+      "later_pulse": 0,
+      "weight_lb": 0,
+      "time_vitals_rec_init": "",
+      "bmi": 0
+    }
+  },
+  "uterine_artery": {
+    "left": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "a_over_i": 0,
+      "psv": 0,
+      "at": 0,
+      "notch": "Unspecified",
+      "notch_depth": 0,
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified",
+      "sd_pc": 0,
+      "pi_pc": 0,
+      "ri_pc": 0,
+      "psv_pc": 0,
+      "a_over_i_pc": 0,
+      "at_pc": 0
+    },
+    "right": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "a_over_i": 0,
+      "psv": 0,
+      "at": 0,
+      "notch": "Unspecified",
+      "notch_depth": 0,
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified",
+      "sd_pc": 0,
+      "pi_pc": 0,
+      "ri_pc": 0,
+      "psv_pc": 0,
+      "a_over_i_pc": 0,
+      "at_pc": 0
+    },
+    "postpartum_left": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "a_over_i": 0,
+      "psv": 0,
+      "at": 0,
+      "notch": "Unspecified",
+      "notch_depth": 0,
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified",
+      "sd_pc": 0,
+      "pi_pc": 0,
+      "ri_pc": 0,
+      "psv_pc": 0,
+      "a_over_i_pc": 0,
+      "at_pc": 0
+    },
+    "postpartum_right": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "a_over_i": 0,
+      "psv": 0,
+      "at": 0,
+      "notch": "Unspecified",
+      "notch_depth": 0,
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified",
+      "sd_pc": 0,
+      "pi_pc": 0,
+      "ri_pc": 0,
+      "psv_pc": 0,
+      "a_over_i_pc": 0,
+      "at_pc": 0
+    },
+    "subplacental": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "a_over_i": 0,
+      "psv": 0,
+      "at": 0,
+      "notch": "Unspecified",
+      "notch_depth": 0,
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified",
+      "sd_pc": 0,
+      "pi_pc": 0,
+      "ri_pc": 0,
+      "psv_pc": 0,
+      "a_over_i_pc": 0,
+      "at_pc": 0
+    }
+  },
+  "uterus": {
+    "uterus": {
+      "done": 1,
+      "seen": "Visualized",
+      "size_a": 0,
+      "size_b": 0,
+      "size_c": 0,
+      "shape": "Unspecified",
+      "midplane": 0,
+      "anteflexed": 0,
+      "retroflexed": 0,
+      "anteverted": 0,
+      "retroverted": 0,
+      "dextroverted": 0,
+      "levoverted": 0,
+      "qual_size": "Unspecified",
+      "surgically_absent": 0
+    },
+    "uterus_anomalies": null,
+    "bladder": {
+      "done": 0,
+      "description": "Unspecified",
+      "contours": "Unspecified"
+    }
+  },
+  "fetuses": [
+    {
+      "fetus": {
+        "fetus_number": 1,
+        "fetus_reduced": 0,
+        "fetus_death": 0,
+        "fetus_seen": 1,
+        "fetus_growth": "Unspecified",
+        "fetus_presentation": "Vertex",
+        "multi_fetus_position_supine": "Unspecified",
+        "multi_fetus_position_left_right": "Unspecified",
+        "multi_fetus_position_anterior_posterior": "Unspecified",
+        "use_early_anatomy_text": 0,
+        "estimated_fetal_weight": 0,
+        "gender": "Unspecified",
+        "ga_by_sonography": 27,
+        "heart_movement_seen": "Seen",
+        "heart_bpm": 150,
+        "heart_rate_is": "Regular",
+        "fetal_echo_performed": 0,
+        "impression_text": "Singleton IUP\rRegular fetal heart rate of 150 bpm\rAnterior placenta\r27 weeks and 0 days by this ultrasound. (EDD = OCT 1 2025)\r26 weeks and 4 days by 1st Trimester Sono. (EDD = OCT 4 2025)\rEstimated Fetal Weight = 1015 grams Hadlock 85 (AC, FL, HC)\rEstimated Fetal Weight = 2 lbs 4 oz Hadlock 85 (AC, FL, HC)\rDandy Walker\r",
+        "anatomy_text": "The cerebellum appeared abnormal. Please see anatomy comments for further details. The fetal face appears normal. Anatomy of the fetal thorax appeared within normal limits. The cardiac size and structures appeared sonographically normal at the four chamber view, and cardiac rhythm was regular. The abdominal cavity appears normal. The fetal stomach appears normal. The right kidney appears within normal limits with respect to size, collection systems, and parenchyma. The left kidney appears within normal limits with respect to size, collection systems, and parenchyma. The fetal bladder appears normal. The abdominal wall appears intact. The spine was visualized from cervical to sacral region, within the resolution of the ultrasound equipment, without evidence of a neural tube defect. Active movement of the extremities was seen and fetal body motion was also observed during this examination. Normal genitalia. The placenta appears within normal limits. There is a 3 vessel cord with normal insertion site.",
+        "echo_text": "",
+        "fetal_echo_cardiac_axis_degrees": 0
+      },
+      "amioticfluid": {
+        "amniotic_fluid": {
+          "done": 1,
+          "afi_done": 0,
+          "amniotic_fluid_volume": "Normal"
+        }
+      },
+      "amniocentesis": {
+        "amniocentesis": {
+          "done": 0,
+          "us_guidance": 0,
+          "attempts": 0,
+          "needle_gauge": 0,
+          "cc_fluid_wd": 0,
+          "fluid_char": "Unspecified",
+          "trans_plac": "Unspecified",
+          "comps": "Unspecified",
+          "post_procedure_fetal_heart_motion": "Unspecified",
+          "post_procedure_rh_factor": "Unspecified",
+          "post_procedure_rhogam_admin": "Unspecified"
+        },
+        "amnio_types": [],
+        "amnio_tests": []
+      },
+      "anatomy": [
+        {
+          "main": {
+            "label": "Head",
+            "anat_state": "Abnormal",
+            "print_in_report": 1,
+            "main_txt": "Abnormalities in the head were noted during this scan; please see the anatomy comments.",
+            "required": "Yes",
+            "required_condition_met": "Yes"
+          },
+          "detail": [
+            {
+              "label": "Calvarium",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No",
+              "required_condition_met": "No"
+            },
+            {
+              "label": "BPD Level",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No",
+              "required_condition_met": "No"
+            },
+            {
+              "label": "Lateral Ventricles",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No",
+              "required_condition_met": "No"
+            },
+            {
+              "label": "Choroid Plexus",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No",
+              "required_condition_met": "No"
+            },
+            {
+              "label": "Cerebellum",
+              "anat_det_state": "Abnormal",
+              "print_in_report": 1,
+              "required": "No",
+              "required_condition_met": "No"
+            },
+            {
+              "label": "Cisterna Magna",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No",
+              "required_condition_met": "No"
+            }
+          ],
+          "anomalies": [
+            {
+              "abnormal_or_normal_variant": "Abnormal",
+              "description": "Dandy Walker"
+            }
+          ]
+        },
+        {
+          "main": {
+            "label": "Face/Neck",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The fetal face appears normal.",
+            "required": "No"
+          },
+          "detail": [
+            {
+              "label": "Neck",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Nuchal Fold",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Profile",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Orbits",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Nose/Lips",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Palate",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Face",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            }
+          ],
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Th. Cav.",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "Anatomy of the fetal thorax appeared within normal limits.",
+            "required": "No"
+          },
+          "detail": [
+            {
+              "label": "Lungs",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Diaphragm",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            }
+          ],
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Heart",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The cardiac size and structures appeared sonographically normal at the four chamber view, and cardiac rhythm was regular.",
+            "required": "No"
+          },
+          "detail": [
+            {
+              "label": "Four Chamber View",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Proximal Left Outflow",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Proximal Right Outflow",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Distal Left Outflow",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Distal Right Outflow",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Short Axis of Greater Vessels",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Cardiac Axis",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Interventricular Septum",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Interatrial Septum",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "IVC",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "SVC",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Cardiac Position",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            }
+          ],
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Abd. Cav.",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The abdominal cavity appears normal.",
+            "required": "No"
+          },
+          "detail": [
+            {
+              "label": "Spleen",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Liver",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Gall Bladder",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Bowel",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            }
+          ],
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Stomach",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The fetal stomach appears normal.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Right Kidney",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The right kidney appears within normal limits with respect to size, collection systems, and parenchyma.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Left Kidney",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The left kidney appears within normal limits with respect to size, collection systems, and parenchyma.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Bladder",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The fetal bladder appears normal.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Abd. Wall",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The abdominal wall appears intact.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Spine",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The spine was visualized from cervical to sacral region, within the resolution of the ultrasound equipment, without evidence of a neural tube defect.",
+            "required": "No"
+          },
+          "detail": [
+            {
+              "label": "Cervical Spine",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Thoracic Spine",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lumbar Spine",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Sacrum",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            }
+          ],
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Extrems",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "Active movement of the extremities was seen and fetal body motion was also observed during this examination.",
+            "required": "No"
+          },
+          "detail": [
+            {
+              "label": "Lt Humerus",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Rt Humerus",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lt Forearm",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Rt Forearm",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lt Hand",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Rt Hand",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lt Fingers",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Rt Fingers",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Lt Femur",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Rt Femur",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lt Low Leg",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Rt Low Leg",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lt Foot",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Rt Foot",
+              "anat_det_state": "Normal",
+              "print_in_report": 1,
+              "required": "No"
+            },
+            {
+              "label": "Lt Toes",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            },
+            {
+              "label": "Rt Toes",
+              "anat_det_state": "Unseen",
+              "print_in_report": 0,
+              "required": "No"
+            }
+          ],
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Genitalia",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "Normal <gender> genitalia.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Placenta",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "The placenta appears within normal limits.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Umbl. Cord",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "There is a 3 vessel cord with normal insertion site.",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "PCI",
+            "anat_state": "Normal",
+            "print_in_report": 1,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        }
+      ],
+      "bpp": {
+        "breathing": 0,
+        "mvmnt": 0,
+        "tone": 0,
+        "afv": 0,
+        "nst": 0,
+        "total": 0
+      },
+      "dm_echo": {
+        "left_ventricle": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "right_ventricle": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "left_ventricular": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "right_ventricular": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "biventricular_dimensions": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "interventricular_septum": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "aortic_root_diameter": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        },
+        "pulmonary_root_diameter": {
+          "done": 0,
+          "internal_dimension_diastole": 0,
+          "internal_dimension_systole": 0,
+          "wall_thickness_diastole": 0,
+          "wall_thickness_systole": 0,
+          "inner_dimension_diastole": 0,
+          "inner_dimension_systole": 0,
+          "outer_dimension_diastole": 0,
+          "outer_dimension_systole": 0,
+          "biventricular_inner_fractional_shortening": 0,
+          "biventricular_outer_fractional_shortening": 0,
+          "root_diameter": 0,
+          "comment": {
+            "plain_text": "",
+            "formatted_text": ""
+          }
+        }
+      },
+      "efws": [
+        {
+          "fetus_number": 1,
+          "label": "EFW (AC, FL, HC)",
+          "value": 1014.828,
+          "decimal_paces": 0,
+          "calculated_percentile": 55.6,
+          "percentile_for_display": "56%",
+          "print_in_report": 1,
+          "range": ""
+        },
+        {
+          "fetus_number": 1,
+          "label": "EFW (AC, FL)",
+          "value": 1042.214,
+          "decimal_paces": 0,
+          "calculated_percentile": 63.7,
+          "percentile_for_display": "64%",
+          "print_in_report": 0,
+          "range": ""
+        },
+        {
+          "fetus_number": 1,
+          "label": "EFW (AC, BPD)",
+          "value": 1000.887,
+          "decimal_paces": 0,
+          "calculated_percentile": 51.2,
+          "percentile_for_display": "51%",
+          "print_in_report": 0,
+          "range": ""
+        }
+      ],
+      "ectopic_preg": {
+        "done": 0,
+        "ect_loc": "Unspecified",
+        "ect_size_a": 0,
+        "ect_size_b": 0,
+        "ect_size_c": 0
+      },
+      "fbscvs": {
+        "fetal_blood_sampling": {
+          "done": 0,
+          "us_guidance": 0,
+          "attempts": 0,
+          "needle_gauge": 0,
+          "cc_blood_wd": 0,
+          "trans_plac": "Unspecified",
+          "comps": "Unspecified",
+          "samp_site": "Unspecified",
+          "samp_site_txt": ""
+        },
+        "fetal_blood_sampling_tests": [],
+        "cvs": {
+          "done": 0,
+          "trans_cx_cvs": 0,
+          "trans_abd_cvs": 0,
+          "us_guidance": 0,
+          "villi_ob": 0,
+          "attempts": 0,
+          "needle_gauge": 0,
+          "mg_of_villi": 0,
+          "trans_plac": "Unspecified",
+          "comps": "Unspecified"
+        },
+        "cvs_tests": []
+      },
+      "fetal_echo_anatomy": [
+        {
+          "main": {
+            "label": "Visceral/abdominal situs",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "4 chamber view apical",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "4 chamber view subcostal",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Atrial septum",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Ventricular septum",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "LVOT",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "RVOT",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "3 Vessel-trachea view",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "3 Vessel view",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Short Axis ventricles",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Short axis outflows",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Aortic Arch",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Ductal Arch",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Superior vena cava",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Inferior vena cava",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Pulmonary veins",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Foramen ovale",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Mitral valve",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Tricuspid valve",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Aortic valve",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Pulmonary valve",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "M-mode/rhythm",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Umbilical artery",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Ductus venosus",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        },
+        {
+          "main": {
+            "label": "Umbilical vein",
+            "anat_state": "Unseen",
+            "print_in_report": 0,
+            "main_txt": "",
+            "required": "No"
+          },
+          "detail": null,
+          "anomalies": null
+        }
+      ],
+      "fetal_echo_measurements": null,
+      "fetalvessels": {
+        "umbilical_artery": {
+          "done": 0,
+          "systolic_diastolic_ratio": 0,
+          "systolic_diastolic_ratio_percentile": 0,
+          "systolic_diastolic_ratio_z_score": 0,
+          "systolic_diastolic_ratio_mom": 0,
+          "pulsatility_index": 0,
+          "pulsatility_index_percentile": 0,
+          "pulsatility_index_z_score": 0,
+          "pulsatility_index_mom": 0,
+          "resistance_index": 0,
+          "resistance_index_percentile": 0,
+          "resistance_index_z_score": 0,
+          "resistance_index_mom": 0,
+          "absent_end_diastolic_velocity": "?",
+          "reverse_flow": "?"
+        },
+        "middle_cerebral_artery": {
+          "done": 0,
+          "systolic_diastolic_ratio": 0,
+          "systolic_diastolic_ratio_percentile": 0,
+          "systolic_diastolic_ratio_z_score": 0,
+          "systolic_diastolic_ratio_mom": 0,
+          "pulsatility_index": 0,
+          "pulsatility_index_percentile": 0,
+          "pulsatility_index_z_score": 0,
+          "pulsatility_index_mom": 0,
+          "resistance_index": 0,
+          "resistance_index_percentile": 0,
+          "resistance_index_z_score": 0,
+          "resistance_index_mom": 0,
+          "peak_systolic_velocity": 0,
+          "peak_systolic_velocity_percentile": 0,
+          "peak_systolic_velocity_z_score": 0,
+          "peak_systolic_velocity_mom": 0,
+          "absent_end_diastolic_velocity": "?"
+        },
+        "thoracic_aorta": {
+          "done": 0,
+          "systolic_diastolic_ratio": 0,
+          "systolic_diastolic_ratio_percentile": 0,
+          "systolic_diastolic_ratio_z_score": 0,
+          "systolic_diastolic_ratio_mom": 0,
+          "pulsatility_index": 0,
+          "pulsatility_index_percentile": 0,
+          "pulsatility_index_z_score": 0,
+          "pulsatility_index_mom": 0,
+          "resistance_index": 0,
+          "resistance_index_percentile": 0,
+          "resistance_index_z_score": 0,
+          "resistance_index_mom": 0,
+          "peak_systolic_velocity": 0,
+          "peak_systolic_velocity_percentile": 0,
+          "peak_systolic_velocity_z_score": 0,
+          "peak_systolic_velocity_mom": 0,
+          "absent_end_diastolic_velocity": "?",
+          "reverse_flow": "?"
+        },
+        "renal_artery": {
+          "done": 0,
+          "systolic_diastolic_ratio": 0,
+          "systolic_diastolic_ratio_percentile": 0,
+          "systolic_diastolic_ratio_z_score": 0,
+          "systolic_diastolic_ratio_mom": 0,
+          "pulsatility_index": 0,
+          "pulsatility_index_percentile": 0,
+          "pulsatility_index_z_score": 0,
+          "pulsatility_index_mom": 0,
+          "resistance_index": 0,
+          "resistance_index_percentile": 0,
+          "resistance_index_z_score": 0,
+          "resistance_index_mom": 0
+        },
+        "vena_cava_superior": {
+          "done": 0,
+          "pulsatility_index_forward": 0,
+          "pulsatility_index_reverse": 0,
+          "pi_reverse_over_pi_forward_ratio": 0,
+          "systolic_velocity_max": 0,
+          "systolic_velocity_min": 0,
+          "velocity_time_integral_systolic_wave": 0,
+          "atrial_filling_index": 0,
+          "peak_diastolic_flow": 0,
+          "peak_reverse_flow": 0
+        },
+        "vena_cava_inferior": {
+          "done": 0,
+          "pulsatility_index_forward": 0,
+          "pulsatility_index_reverse": 0,
+          "pi_reverse_over_pi_forward_ratio": 0,
+          "systolic_velocity_max": 0,
+          "systolic_velocity_min": 0,
+          "velocity_time_integral_systolic_wave": 0,
+          "atrial_filling_index": 0,
+          "peak_diastolic_flow": 0,
+          "peak_reverse_flow": 0
+        },
+        "ductus_venosus": {
+          "done": 0,
+          "reverse_flow": "Unspecified",
+          "peak_ventricular_systolic": 0,
+          "peak_ventricular_diastolic": 0,
+          "peak_atrial_systolic": 0,
+          "systolic_diastolic_ratio": 0,
+          "systolic_atrial_ratio": 0,
+          "ductus_venosus_index": 0
+        },
+        "intrahep_vein": {
+          "done": 0,
+          "pulsations": "Unspecified"
+        },
+        "umbilical_vein": {
+          "done": 0,
+          "pulsations": "Unspecified"
+        }
+      },
+      "firsttrimester": {
+        "done": 0,
+        "yolk_sac_pres": "Unspecified",
+        "yolk_sac_size_a": 0,
+        "yolk_sac_size_b": 0,
+        "yolk_sac_size_c": 0,
+        "yolk_sac_vol": 0,
+        "fetal_pole": "Unspecified",
+        "fetal_pole_size": 0,
+        "gest_sac_shape": "Unspecified",
+        "fet_pole_anom_txt": "",
+        "fetal_pole_anomalies": null
+      },
+      "impression": {
+        "fetus_anomalies": [
+          {
+            "fh_rec_no": 451676,
+            "descr": "Dandy Walker",
+            "abnom_or_nrml_var": 2
+          }
+        ]
+      },
+      "measurements": [
+        {
+          "label": "AC",
+          "value": 22.62,
+          "decimal_places": 2,
+          "unit_of_measure": "cm",
+          "calculated_ega": 26.9,
+          "calculated_percentile": 55.6,
+          "percentile_for_display": "56%",
+          "include_in_avg_ga_calc": 1,
+          "print_in_report": 1,
+          "calculated_z_score": 0,
+          "fetus_number": 1
+        },
+        {
+          "label": "BPD",
+          "value": 6.68,
+          "decimal_places": 2,
+          "unit_of_measure": "cm",
+          "calculated_ega": 26.9,
+          "calculated_percentile": 51.2,
+          "percentile_for_display": "51%",
+          "include_in_avg_ga_calc": 1,
+          "print_in_report": 1,
+          "calculated_z_score": 0,
+          "fetus_number": 1
+        },
+        {
+          "label": "HC",
+          "value": 25,
+          "decimal_places": 2,
+          "unit_of_measure": "cm",
+          "calculated_ega": 26.9,
+          "calculated_percentile": 42.5,
+          "percentile_for_display": "43%",
+          "include_in_avg_ga_calc": 1,
+          "print_in_report": 1,
+          "calculated_z_score": 0,
+          "fetus_number": 1
+        },
+        {
+          "label": "Femur",
+          "value": 5.01,
+          "decimal_places": 2,
+          "unit_of_measure": "cm",
+          "calculated_ega": 27.1,
+          "calculated_percentile": 46.8,
+          "percentile_for_display": "47%",
+          "include_in_avg_ga_calc": 1,
+          "print_in_report": 1,
+          "calculated_z_score": 0,
+          "fetus_number": 1
+        },
+        {
+          "label": "Nuchal Fold",
+          "value": 1,
+          "decimal_places": 1,
+          "unit_of_measure": "cm",
+          "calculated_ega": 0,
+          "calculated_percentile": 0,
+          "percentile_for_display": "",
+          "include_in_avg_ga_calc": 0,
+          "print_in_report": 1,
+          "calculated_z_score": 0,
+          "fetus_number": 1
+        },
+        {
+          "label": "Cerebellum",
+          "value": 3,
+          "decimal_places": 1,
+          "unit_of_measure": "cm",
+          "calculated_ega": 27.4,
+          "calculated_percentile": 0,
+          "percentile_for_display": "",
+          "include_in_avg_ga_calc": 0,
+          "print_in_report": 1,
+          "calculated_z_score": 0,
+          "fetus_number": 1
+        }
+      ],
+      "nst": {
+        "reactive": 0,
+        "decels_late": 0,
+        "decels_var": 0,
+        "decels_pro": 0,
+        "spont_hyperstim": 0,
+        "time_start": "",
+        "time_end": ""
+      },
+      "otherprocs": {
+        "fetal_transfusion": {
+          "done": 0,
+          "success": "Unspecified",
+          "type": "Unspecified"
+        },
+        "fetal_reduction": {
+          "done": 0,
+          "outcome": "Unspecified",
+          "type": "Unspecified"
+        }
+      },
+      "placenta": {
+        "done": 1,
+        "anterior_pos": 1,
+        "posterior_pos": 0,
+        "rht_lat_pos": 0,
+        "lft_lat_pos": 0,
+        "fundal_pos": 0,
+        "low_lyng_pos": 0,
+        "grade": "Unspecified",
+        "previa": "Unspecified",
+        "chor_amniotic": "Unspecified",
+        "chor_chorionic": "Unspecified",
+        "subchor_sonoluc": "Unspecified",
+        "echoluc": "Unspecified",
+        "thickness": 0,
+        "thickness_user_spec": 0,
+        "amnion_seen": "Unspecified"
+      },
+      "ratios": [
+        {
+          "label": "HC/AC",
+          "value": 1.105,
+          "decimal_paces": 2,
+          "calculated_percentile": 0,
+          "percentile_for_display": "",
+          "print_in_report": 1,
+          "range": "1.04 - 1.22",
+          "fetus_number": 1
+        },
+        {
+          "label": "FL/AC",
+          "value": 22.149,
+          "decimal_paces": 0,
+          "calculated_percentile": 0,
+          "percentile_for_display": "",
+          "print_in_report": 1,
+          "range": "20 - 24",
+          "fetus_number": 1
+        },
+        {
+          "label": "FL/BPD",
+          "value": 75,
+          "decimal_paces": 0,
+          "calculated_percentile": 0,
+          "percentile_for_display": "",
+          "print_in_report": 1,
+          "range": "71 - 87",
+          "fetus_number": 1
+        }
+      ],
+      "uards": {
+        "uards": {
+          "a_priori_risk_lookup": "Unspecified",
+          "risk_adjustment_lookup": "Unspecified",
+          "risk_adjustment": 0,
+          "maternal_age_risk": 22,
+          "a_priori_risk": 0,
+          "ultrasound_adjusted_risk": 0
+        },
+        "uards_markers": []
+      }
+    }
+  ]
+}
