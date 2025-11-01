@@ -2,6 +2,13 @@ import typing
 from prenatalppkt.hpo import HpoConceptRecognizer
 from prenatalppkt.dto import FetusData
 
+"""
+Initial parser for the the "fetus" superfield within the Observer JSON
+
+Will be extended/adapted to be a container for all parsers which handle sub-"fetus" fields
+
+Currently handles the "anatomy_text" subfield
+"""
 
 class FetusParser:
     def __init__(self, hcr: HpoConceptRecognizer):
@@ -21,3 +28,7 @@ class FetusParser:
         # first_name = patient.get('first_name', "NA")
         for hpo_hit in self._hcr.parse(anatomy_text):
             print(hpo_hit)
+
+        hpo_hits = self._hcr.parse(anatomy_text)
+        
+        return FetusData(hpo_term_list=hpo_hits)
