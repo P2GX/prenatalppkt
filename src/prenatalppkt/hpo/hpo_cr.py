@@ -21,7 +21,6 @@ class HpoConceptRecognizer(metaclass=abc.ABCMeta):
         """
         pass
 
-
     @abc.abstractmethod
     def parse_cell_for_exact_matches(self, cell_contents, custom_d) -> List[HpTerm]:
         """

@@ -1,17 +1,12 @@
-
-
-
-
 class SimpleTerm:
     _hpo_id: str
     _hpo_label: str
-
 
     def __init__(self, hpo_id: str, hpo_label: str) -> None:
         if len(hpo_id) != 10:
             raise ValueError(f"Malformed HPO id:{hpo_id}")
         if len(hpo_label) == 0:
-            raise ValueError(f"Malformed HPO label (empty)")
+            raise ValueError("Malformed HPO label (empty)")
         self._hpo_id = hpo_id
         self._hpo_label = hpo_label
 
@@ -22,7 +17,7 @@ class SimpleTerm:
         :rtype: str
         """
         return self._hpo_id
-    
+
     @property
     def hpo_label(self) -> str:
         """
@@ -31,5 +26,5 @@ class SimpleTerm:
         """
         return self._hpo_label
 
-    def __repr__ (self) -> str:
+    def __repr__(self) -> str:
         return f"{self._hpo_label}({self._hpo_id})"

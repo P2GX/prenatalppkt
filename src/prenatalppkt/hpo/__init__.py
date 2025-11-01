@@ -3,8 +3,4 @@ from .simple_term import SimpleTerm
 from .hpo_cr import HpoConceptRecognizer
 
 
-__all__ = [
-    "HpoParser",
-    "HpoConceptRecognizer",
-    "SimpleTerm"
-]
+__all__ = ["HpoParser", "HpoConceptRecognizer", "SimpleTerm"]

@@ -46,7 +46,6 @@ class ConceptMatch:
 
 
 class HpoBaseConceptRecognizer(HpoConceptRecognizer):
-
     def __init__(self, label_to_id, id_to_primary_label):
         if not isinstance(label_to_id, dict):
             raise ValueError("label_to_id_d argument must be dictionary")
@@ -64,7 +63,8 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         """
         if not isinstance(cell_contents, str):
             print(
-                f"Error: cell_contents argument ({cell_contents}) must be string but was {type(cell_contents)} -- coerced to string")
+                f"Error: cell_contents argument ({cell_contents}) must be string but was {type(cell_contents)} -- coerced to string"
+            )
             cell_contents = str(cell_contents)
 
         # lines = self._split_into_lines(cell_contents)
@@ -133,18 +133,24 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
             custom_d (dict): key - text in original table value-corresponding HPO label
         """
         if cell_text in custom_d:
-            return self._get_exact_match_in_custom_d(cell_text=cell_text, custom_d=custom_d)
+            return self._get_exact_match_in_custom_d(
+                cell_text=cell_text, custom_d=custom_d
+            )
         chunks = self._split_line_into_chunks(cell_text)
         results = []
         for chunk in chunks:
             lc_chunk = chunk.lower()
-            hits_1 = self._find_text_within_custom_items(lc_chunk=lc_chunk, custom_d=custom_d)
+            hits_1 = self._find_text_within_custom_items(
+                lc_chunk=lc_chunk, custom_d=custom_d
+            )
             hits_2 = self._find_hpo_term_in_lc_chunk(lc_chunk=lc_chunk)
             hits_1.extend(hits_2)
             results.extend(hits_1)
-        return  list(set(results))
+        return list(set(results))
 
-    def parse_cell_for_exact_matches(self, cell_contents, custom_d) -> typing.List[HpTerm]:
+    def parse_cell_for_exact_matches(
+        self, cell_contents, custom_d
+    ) -> typing.List[HpTerm]:
         """
         Identify HPO Terms from the contents of a cell whose label exactly matches a string in the custom dictionary
 
@@ -154,16 +160,22 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         :type custom_d: Dict[str,str]
         """
         if cell_contents in custom_d:
-            return self._get_exact_match_in_custom_d(cell_text=cell_contents, custom_d=custom_d)
+            return self._get_exact_match_in_custom_d(
+                cell_text=cell_contents, custom_d=custom_d
+            )
         chunks = self._split_line_into_chunks(cell_contents)
         results = []
         for chunk in chunks:
             lc_chunk = chunk.lower()
-            hits = self._find_text_within_custom_items(lc_chunk=lc_chunk, custom_d=custom_d)
+            hits = self._find_text_within_custom_items(
+                lc_chunk=lc_chunk, custom_d=custom_d
+            )
             results.extend(hits)
         return list(set(results))
 
-    def _get_non_overlapping_matches(self, hits: typing.List[ConceptMatch]) -> typing.List[HpTerm]:
+    def _get_non_overlapping_matches(
+        self, hits: typing.List[ConceptMatch]
+    ) -> typing.List[HpTerm]:
         """The prupose of this method is to choose a list of non-overlapping matches
 
         Sometimes, we get multiple matches that partially overlap. We will greedily take the longest matches and discard overlaps.
@@ -195,8 +207,8 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         Args:
             line (str): one line of a potentially multi-line Table cell.
         """
-        delimiters = ',;|/'
-        regex_pattern = '|'.join(map(re.escape, delimiters))
+        delimiters = ",;|/"
+        regex_pattern = "|".join(map(re.escape, delimiters))
         chunks = re.split(regex_pattern, line)
         return [chunk.strip().lower() for chunk in chunks]
 
@@ -219,7 +231,5 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         return hpo_id in self._id_to_primary_label
 
     def contains_term_label(self, hpo_label) -> bool:
-        """return True iff the argument is the primary label of an HPO term
-        """
+        """return True iff the argument is the primary label of an HPO term"""
         return hpo_label.lower() in self._label_to_id
-

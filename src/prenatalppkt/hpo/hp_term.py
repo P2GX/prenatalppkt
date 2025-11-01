@@ -1,6 +1,5 @@
 import typing
 import pandas as pd
-import phenopackets as PPKt
 from pyphetools.pp.v202 import TimeElement as TimeElement202
 import hpotk
 
@@ -23,13 +22,15 @@ class HpTerm:
     :type resolution: str
     """
 
-    def __init__(self,
-                 hpo_id: str,
-                 label: str,
-                 observed: bool = True,
-                 measured: bool = True,
-                 onset: typing.Optional[TimeElement202] = None,
-                 resolution: typing.Optional[TimeElement202] = None):
+    def __init__(
+        self,
+        hpo_id: str,
+        label: str,
+        observed: bool = True,
+        measured: bool = True,
+        onset: typing.Optional[TimeElement202] = None,
+        resolution: typing.Optional[TimeElement202] = None,
+    ):
         if hpo_id is None or len(hpo_id) == 0 or not hpo_id.startswith("HP"):
             raise ValueError(f"invalid id argument: '{hpo_id}'")
         if label is None or len(label) == 0:
@@ -38,19 +39,34 @@ class HpTerm:
         self._label = label
         self._observed = observed
         self._measured = measured
-        #if not onset is None or str(type(onset)) != "<class 'pyphetools.pp.v202._base.TimeElement'>":
+        # if not onset is None or str(type(onset)) != "<class 'pyphetools.pp.v202._base.TimeElement'>":
         #    raise ValueError(f"onset argument must be TimeElement202 or None but was {type(onset)}")
         self._onset = onset
         self._resolution = resolution
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self._id == other._id and self._label == other._label and self._measured == other._measured and self._onset == other._onset and self._resolution == other._resolution
+            return (
+                self._id == other._id
+                and self._label == other._label
+                and self._measured == other._measured
+                and self._onset == other._onset
+                and self._resolution == other._resolution
+            )
         else:
             return NotImplemented
 
     def __hash__(self):
-        return hash((self._id, self._label, self._observed, self._measured, self._onset, self._resolution))
+        return hash(
+            (
+                self._id,
+                self._label,
+                self._observed,
+                self._measured,
+                self._onset,
+                self._resolution,
+            )
+        )
 
     @property
     def id(self) -> str:
@@ -94,7 +110,9 @@ class HpTerm:
 
     def set_onset(self, onset: TimeElement202) -> None:
         if not isinstance(onset, TimeElement202):
-            raise ValueError(f"argument of set_onset but be TimeElement202 but was {type(onset)}")
+            raise ValueError(
+                f"argument of set_onset but be TimeElement202 but was {type(onset)}"
+            )
         self._onset = onset
 
     @property
@@ -149,21 +167,28 @@ class HpTerm:
         """
         self._observed = False
 
-   
-
     @staticmethod
     def term_list_to_dataframe(hpo_list) -> pd.DataFrame:
         if not isinstance(hpo_list, list):
-            raise ValueError(f"hpo_list argument must be a list but was {type(hpo_list)}")
+            raise ValueError(
+                f"hpo_list argument must be a list but was {type(hpo_list)}"
+            )
         if len(hpo_list) > 0:
             hpo1 = hpo_list[0]
             if not isinstance(hpo1, HpTerm):
-                raise ValueError(f"hpo_list argument must consist of HpTerm objects but had {type(hpo1)}")
+                raise ValueError(
+                    f"hpo_list argument must consist of HpTerm objects but had {type(hpo1)}"
+                )
         if len(hpo_list) == 0:
-            return pd.DataFrame(columns=['Col1', 'Col2', 'Col3'])
+            return pd.DataFrame(columns=["Col1", "Col2", "Col3"])
         items = []
         for hp in hpo_list:
-            d = {"id": hp.id, "label": hp.label, "observed": hp.observed, "measured": hp.measured}
+            d = {
+                "id": hp.id,
+                "label": hp.label,
+                "observed": hp.observed,
+                "measured": hp.measured,
+            }
             items.append(d)
         return pd.DataFrame(items)
 
@@ -182,17 +207,14 @@ class HpTerm:
 
 
 class HpTermBuilder:
-
-    def __init__(self,
-                 hpo_id: str,
-                 hpo_label: str):
+    def __init__(self, hpo_id: str, hpo_label: str):
         if not hpo_id.startswith("HP:"):
             raise ValueError(f"Malformed HPO id {hpo_id}")
         if len(hpo_id) != 10:
             raise ValueError(f"Malformed HPO id with length {len(hpo_id)}: {hpo_id}")
         self._hpo_id = hpo_id
         if hpo_label is None or len(hpo_label) < 3:
-            raise ValueError(f"Malformed HPO label \"{hpo_label}\"")
+            raise ValueError(f'Malformed HPO label "{hpo_label}"')
         self._hpo_label = hpo_label
         self._observed = True
         self._measured = True
@@ -206,5 +228,3 @@ class HpTermBuilder:
     def not_measured(self):
         self._measured = False
         return self
-
-   

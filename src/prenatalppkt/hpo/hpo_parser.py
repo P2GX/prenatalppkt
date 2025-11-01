@@ -23,16 +23,20 @@ class HpoParser:
     """
 
     def __init__(
-            self,
-            hpo_json_file: typing.Optional[str] = None,
-            release: typing.Optional[str] = None,
+        self,
+        hpo_json_file: typing.Optional[str] = None,
+        release: typing.Optional[str] = None,
     ):
         if release is not None:
             store = hpotk.configure_ontology_store()
             self._ontology = store.load_hpo(release=release)
         elif hpo_json_file is not None:
-            if not hpo_json_file.startswith('http') and not os.path.isfile(hpo_json_file):
-                raise FileNotFoundError(f"Could not find hp.json file at {hpo_json_file}")
+            if not hpo_json_file.startswith("http") and not os.path.isfile(
+                hpo_json_file
+            ):
+                raise FileNotFoundError(
+                    f"Could not find hp.json file at {hpo_json_file}"
+                )
             self._ontology = hpotk.load_ontology(hpo_json_file)
         else:
             store = hpotk.configure_ontology_store()
@@ -55,7 +59,7 @@ class HpoParser:
 
         for term in self._ontology.terms:
             hpo_id = term.identifier
-            if not self._ontology.graph.is_ancestor_of(PHENOTYPIC_ABNORMALITY, hpo_id): # type: ignore
+            if not self._ontology.graph.is_ancestor_of(PHENOTYPIC_ABNORMALITY, hpo_id):  # type: ignore
                 continue
             label_to_id_d[term.name.lower()] = hpo_id.value
             # Add the labels of the synonyms

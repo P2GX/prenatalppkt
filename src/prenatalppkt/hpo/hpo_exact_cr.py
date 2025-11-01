@@ -7,7 +7,7 @@ from hpotk.constants.hpo.base import PHENOTYPIC_ABNORMALITY
 from prenatalppkt.hpo.hp_term import HpTerm
 
 from .simple_term import SimpleTerm
-from .hpo_base_cr import HpoBaseConceptRecognizer, ConceptMatch
+from .hpo_base_cr import HpoBaseConceptRecognizer
 
 
 def get_label_to_id_map(hpo: hpotk.Ontology) -> typing.Mapping[str, str]:
@@ -48,15 +48,13 @@ def get_id_to_label_map(hpo: hpotk.MinimalOntology) -> typing.Mapping[str, str]:
 
 
 class HpoExactConceptRecognizer(HpoBaseConceptRecognizer):
-
     @staticmethod
     def from_hpo(hpo: hpotk.Ontology):
         label_to_id = get_label_to_id_map(hpo)
         id_to_primary_label = get_id_to_label_map(hpo)
 
         return HpoExactConceptRecognizer(
-            label_to_id=label_to_id,
-            id_to_primary_label=id_to_primary_label,
+            label_to_id=label_to_id, id_to_primary_label=id_to_primary_label
         )
 
     def __init__(self, **kwargs):
@@ -73,19 +71,20 @@ class HpoExactConceptRecognizer(HpoBaseConceptRecognizer):
             # If we get here, we demand that the match is a complete word
             # This is because otherwise we get some spurious matches such as Pica HP:0011856 matching to typical
             # Create a regex to enforce the match is at word boundary
-            BOUNDARY_REGEX = re.compile(r'\b%s\b' % key, re.I)
+            BOUNDARY_REGEX = re.compile(r"\b%s\b" % key, re.I)
             if BOUNDARY_REGEX.search(lc_chunk):
                 annot = super(HpoExactConceptRecognizer, self).get_term_from_id(
-                    hpo_id=hpo_tid)  # Get properly capitalized label
+                    hpo_id=hpo_tid
+                )  # Get properly capitalized label
                 hp_term = HpTerm(hpo_id=annot.id, label=annot.label)
                 hits.append(hp_term)
         return list(set(hits))
-    
-    def parse(self, input_text:str) -> typing.List[SimpleTerm]:
+
+    def parse(self, input_text: str) -> typing.List[SimpleTerm]:
         input = input_text.lower()
         sterms = list()
-        
+
         for hp_term in self._find_hpo_term_in_lc_chunk(lc_chunk=input):
-            st = SimpleTerm( hpo_id=hp_term.id, hpo_label=hp_term.label)
+            st = SimpleTerm(hpo_id=hp_term.id, hpo_label=hp_term.label)
             sterms.append(st)
         return sterms

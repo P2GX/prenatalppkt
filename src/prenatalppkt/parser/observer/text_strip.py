@@ -1,5 +1,6 @@
 from prenatalppkt.hpo import HpoParser
 
+
 class PhenotypeMiner:
     """
     Use the local HPO ontology to recognize phenotype terms in free text.
@@ -13,10 +14,7 @@ class PhenotypeMiner:
         if not isinstance(text, str) or not text.strip():
             return []
         matches = self._hcr.parse(text)
-        return [
-            {"term": m.hpo_label, "hpo_id": m.hpo_id}
-            for m in matches
-        ]
+        return [{"term": m.hpo_label, "hpo_id": m.hpo_id} for m in matches]
 
     def analyse_texts(self, texts: list[str]) -> list[dict]:
         result = []
