@@ -221,3 +221,4 @@ src/*/_version.py
 # HPO file
 data/hp.jsonout.txt
 prenatalppkt-about.txt
+prenatalppkt-about.sh

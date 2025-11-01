@@ -1,153 +1,68 @@
 """
-sonographic_measurement.py
-
-Defines `SonographicMeasurement`, the abstract superclass for fetal biometric
-measurements such as biparietal diameter (BPD), head circumference (HC),
-femur length (FL), abdominal circumference (AC), etc.
-
-Purpose
--------
-This class provides a unified interface for evaluating a raw measurement value
-against gestational-age-specific percentile thresholds (`ReferenceRange.evaluate()`),
-returning a `MeasurementResult` that encodes the percentile bin, and optionally
-converting that result into a `TermObservation`.
-
-Key improvements (OOP refactor)
--------------------------------
-- Added automatic subclass registration via `__init_subclass__` for clean
-polymorphism (no dynamic lookups or fragile imports).
-- Enforced consistent evaluation interface (must return `MeasurementResult`).
-- Clarified docstrings to highlight strict separation between numeric and
-ontology evaluation.
+sonographic_measurement.py - Generic measurement mapper
 """
 
-from __future__ import annotations
-from abc import ABC, abstractmethod
-from typing import Optional, Dict, ClassVar
-from hpotk import MinimalTerm
-from prenatalppkt.biometry_type import BiometryType
+from typing import List, Dict, Type, ClassVar
+from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.measurement_result import MeasurementResult
 from prenatalppkt.term_observation import TermObservation
 
 
-class SonographicMeasurement(ABC):
+class SonographicMeasurement:
     """
-    Abstract base class for a fetal sonographic measurement.
+    Generic measurement mapper using configured TermBins.
 
-    Responsibilities
-    ----------------
-    1. **Percentile evaluation** -
-        Implements `evaluate()` to determine which percentile bin a raw
-        measurement falls into. Always returns a `MeasurementResult`.
-
-    2. **Subclass registry** -
-        Subclasses register automatically under a canonical name (e.g.
-        "head_circumference"), allowing lookup by exporters or other tools
-        without fragile import-time maps.
-
-    3. **Optional ontology mapping** -
-        The `to_term_observation()` convenience method can convert a
-        MeasurementResult into a TermObservation, but the canonical
-        ontology mapping happens downstream.
+    This class replaces all measurement-specific subclasses.
+    Configuration is injected via TermBins.
     """
 
-    # ------------------------------------------------------------------ #
-    # Automatic registry for subclasses
-    # ------------------------------------------------------------------ #
-    registry: ClassVar[dict[str, type["SonographicMeasurement"]]] = {}
+    registry: ClassVar[Dict[str, Type["SonographicMeasurement"]]] = {}
 
-    def __init_subclass__(cls, measurement_type: BiometryType, **kwargs):
+    def __init__(self, measurement_type: str, term_bins: List[TermBin]) -> None:
         """
-        Automatically register subclasses in the measurement registry.
+        Initialize with measurement type and HPO mappings.
 
-        Parameters
-        ----------
-        measurement_type : BiometryType
-            The BiometryType enum member for this measurement class.
+        Args:
+            measurement_type: e.g., "head_circumference"
+            term_bins: Pre-configured list of TermBins from YAML
         """
-        super().__init_subclass__(**kwargs)
+        self.measurement_type = measurement_type
+        self.term_bins = term_bins
 
-        # key = measurement_type or cls.__name__.replace("Measurement", "").lower()
-        # cls.registry[key] = cls
-
-        if not isinstance(measurement_type, BiometryType):
-            raise TypeError(
-                f"measurement_type must be a BiometryType enum member, got {type(measurement_type)}"
-            )
-
-        key = measurement_type.value
-        cls.registry[key] = cls
-        cls._measurement_type = measurement_type.value
-
-    # ------------------------------------------------------------------ #
-    # Abstract metadata
-    # ------------------------------------------------------------------ #
-    @abstractmethod
-    def name(self) -> str:
-        """Return the canonical name for this measurement (e.g., 'biparietal diameter')."""
-        raise NotImplementedError
-
-    # ------------------------------------------------------------------ #
-    # Core evaluation
-    # ------------------------------------------------------------------ #
-    def evaluate(
-        self, gestational_age: GestationalAge, measurement_value: float, reference_range
-    ) -> MeasurementResult:
-        """
-        Evaluate a raw measurement against the provided reference range.
-
-        Returns
-        -------
-        MeasurementResult
-            Encodes which percentile interval the value falls into.
-
-        Notes
-        -----
-        Subclasses should not override this unless they need special handling.
-        Ontology mapping happens in TermObservation or the exporter layer.
-        """
-        return reference_range.evaluate(measurement_value)
-
-    # ------------------------------------------------------------------ #
-    # Convenience ontology conversion
-    # ------------------------------------------------------------------ #
-    def to_term_observation(
-        self,
-        measurement_result: MeasurementResult,
-        gestational_age: GestationalAge,
-        parent_term: Optional[MinimalTerm] = None,
+    def from_percentile(
+        self, percentile: float, gestational_age: GestationalAge
     ) -> TermObservation:
         """
-        Convert a MeasurementResult into a minimal TermObservation
-        (mainly for debugging or basic interoperability).
+        Map a percentile value to an HPO term observation.
 
-        Parameters
-        ----------
-        measurement_result : MeasurementResult
-            The evaluated percentile bin.
-        gestational_age : GestationalAge
-            Gestational context.
-        parent_term : Optional[MinimalTerm]
-            The anatomical/measurement-level ontology term (e.g. "Abnormality of skull size").
+        This is DATA-DRIVEN - no hardcoded if/elif chains!
+
+        Args:
+            percentile: Percentile value (0-100)
+            gestational_age: Gestational age context
+
+        Returns:
+            TermObservation with appropriate HPO term
+
+        Raises:
+            ValueError: If no bin matches the percentile
         """
-        observed = measurement_result.bin_key not in {
-            "between_10p_50p",
-            "between_50p_90p",
-        }
-        return TermObservation(
-            hpo_term=parent_term, observed=observed, gestational_age=gestational_age
+        for term_bin in self.term_bins:
+            if term_bin.fits(percentile):
+                return TermObservation(
+                    hpo_id=term_bin.hpo_id,
+                    hpo_label=term_bin.hpo_label,
+                    category=term_bin.category,
+                    observed=not term_bin.normal,
+                    gestational_age=gestational_age,
+                    percentile=percentile,
+                )
+
+        raise ValueError(
+            f"No HPO mapping found for {self.measurement_type} "
+            f"percentile {percentile:.1f}"
         )
 
-    def get_bin_to_term_mapping(self) -> Dict[str, Optional[MinimalTerm]]:
-        """
-        Optional default bin->term mapping (usually overridden or configured externally).
-        """
-        return TermObservation.build_standard_bin_mapping(
-            lower_extreme_term=None,
-            lower_term=None,
-            abnormal_term=None,
-            normal_term=None,
-            upper_term=None,
-            upper_extreme_term=None,
-        )
+    def name(self) -> str:
+        """Return the measurement type name."""
+        return self.measurement_type
