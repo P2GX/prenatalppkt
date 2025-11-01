@@ -1,3 +1,4 @@
+import typing
 class FetusData:
     _mother_id: str
     _maternal_age_at_exam: str
