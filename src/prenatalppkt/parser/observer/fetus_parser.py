@@ -10,6 +10,7 @@ Will be extended/adapted to be a container for all parsers which handle sub-"fet
 Currently handles the "anatomy_text" subfield
 """
 
+
 class FetusParser:
     def __init__(self, hcr: HpoConceptRecognizer):
         self._hcr = hcr
@@ -30,5 +31,5 @@ class FetusParser:
             print(hpo_hit)
 
         hpo_hits = self._hcr.parse(anatomy_text)
-        
+
         return FetusData(hpo_term_list=hpo_hits)
