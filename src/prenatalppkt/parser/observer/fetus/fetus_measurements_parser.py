@@ -1,5 +1,5 @@
 """
-src/prenatalppkt/parser/observer/measurements_parser.py
+src/prenatalppkt/parser/observer/fetus/fetus_measurements_parser.py
 Parser for extracting biometric measurements from Observer JSON
 """
 
@@ -7,7 +7,7 @@ import typing
 from prenatalppkt.dto.measurements_data import MeasurementsData, Measurement
 
 
-class MeasurementsParser:
+class FetusMeasurementsParser:
     """Simple parser for fetal biometric measurements."""
 
     def parse(self, json_data: typing.Dict) -> MeasurementsData:

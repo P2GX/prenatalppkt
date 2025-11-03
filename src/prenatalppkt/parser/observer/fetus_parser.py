@@ -2,6 +2,7 @@ import logging
 import typing
 from prenatalppkt.hpo import HpoConceptRecognizer
 from prenatalppkt.dto import FetusData
+from prenatalppkt.parser.observer.fetus.fetus_measurements_parser import FetusMeasurementsParser
 
 logger = logging.getLogger(__name__)
 

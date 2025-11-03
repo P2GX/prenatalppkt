@@ -1,15 +1,15 @@
 """
-tests/test_measurements_parser.py
+tests/observer/fetus/test_fetus_measurements_parser.py
 
-Unit tests for MeasurementsParser and MeasurementsData
+Unit tests for FetusMeasurementsParser and MeasurementsData
 """
 
 import pytest
-from prenatalppkt.parser.observer.measurements_parser import MeasurementsParser
 from prenatalppkt.dto.measurements_data import MeasurementsData, Measurement
+from prenatalppkt.parser.fetus.fetus_measurements_parser import FetusMeasurementsParser
 
 
-class TestMeasurement:
+class TestFetusMeasurement:
     """Tests for the Measurement dataclass."""
 
     def test_measurement_creation(self):
@@ -110,13 +110,13 @@ class TestMeasurementsData:
             assert m.value > 0, f"Invalid value for {label}: {m.value}"
 
 
-class TestMeasurementsParser:
-    """Tests for the MeasurementsParser class."""
+class TestFetusMeasurementsParser:
+    """Tests for the FetusMeasurementsParser class."""
 
     @pytest.fixture
     def parser(self):
         """Create a parser instance."""
-        return MeasurementsParser()
+        return FetusMeasurementsParser()
 
     @pytest.fixture
     def sample_fetus_data(self):
@@ -287,7 +287,7 @@ class TestRealWorldData:
             with open("Apple_Sally_pretty.json", "r") as f:
                 data = json.load(f)
 
-            parser = MeasurementsParser()
+            parser = FetusMeasurementsParser()
             fetus_1 = data["fetuses"][0]
             result = parser.parse(fetus_1)
 
