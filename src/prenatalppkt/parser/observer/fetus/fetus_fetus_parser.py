@@ -7,10 +7,17 @@ for the "fetus" subfield in the "fetus" superfield within the Observer JSON
 
 
 class FetusFetusParser:
+    """
+    Parser for nested fetus data elements within observer JSON
+    """
+
     def __init__(self, hcr: HpoConceptRecognizer):
         self._hcr = hcr
 
     def parse(self, json_data: typing.Dict[str, object]) -> typing.Dict[str, object]:
+        """
+        Extract and normalize fetus-level JSON content
+        """
         if not isinstance(json_data, dict):
             raise ValueError(
                 f"malformed arguement, expecting `dict` but got {type(json_data)}"

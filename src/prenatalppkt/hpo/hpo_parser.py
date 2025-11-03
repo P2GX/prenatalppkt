@@ -1,10 +1,11 @@
+import hpotk
+import logging
 import os
 import typing
-
-import hpotk
 from hpotk.constants.hpo.base import PHENOTYPIC_ABNORMALITY
-
 from prenatalppkt.hpo.hpo_exact_cr import HpoExactConceptRecognizer
+
+logger = logging.getLogger(__name__)
 
 
 class HpoParser:
@@ -85,8 +86,15 @@ class HpoParser:
         return id_to_label_d
 
     def get_hpo_concept_recognizer(self) -> HpoExactConceptRecognizer:
-        print("getting get_hpo_concept_recognizer")
+        """
+        Return initialized HPO concept recognizer
+        """
+        # print("getting get_hpo_concept_recognizer")
+        logger.debug("Instantiating HPO concept recognizer.")
         return HpoExactConceptRecognizer.from_hpo(self._ontology)
 
     def get_version(self) -> typing.Optional[str]:
+        """
+        Return ontology version string, if available
+        """
         return self._ontology.version

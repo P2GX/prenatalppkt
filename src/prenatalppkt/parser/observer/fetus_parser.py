@@ -1,6 +1,9 @@
+import logging
 import typing
 from prenatalppkt.hpo import HpoConceptRecognizer
 from prenatalppkt.dto import FetusData
+
+logger = logging.getLogger(__name__)
 
 """
 Initial parser for the the "fetus" superfield within the Observer JSON
@@ -12,10 +15,17 @@ Currently handles the "anatomy_text" subfield
 
 
 class FetusParser:
+    """
+    Parser for high-level fetus JSON block
+    """
+
     def __init__(self, hcr: HpoConceptRecognizer):
         self._hcr = hcr
 
     def parse(self, json_data: typing.Dict[str, object]) -> FetusData:
+        """
+        Convert JSON to FetusData instance with parsed HPO terms
+        """
         if not isinstance(json_data, dict):
             raise ValueError(
                 f"malformed arguement, expecting `dict` but got {type(json_data)}"
@@ -28,7 +38,7 @@ class FetusParser:
 
         # first_name = patient.get('first_name', "NA")
         for hpo_hit in self._hcr.parse(anatomy_text):
-            print(hpo_hit)
+            logger.debug("HPO hit: %s", hpo_hit)
 
         hpo_hits = self._hcr.parse(anatomy_text)
 

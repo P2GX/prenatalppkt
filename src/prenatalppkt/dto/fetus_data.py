@@ -3,6 +3,10 @@ from ..hpo.simple_term import SimpleTerm
 
 
 class FetusData:
+    """
+    Data transfer object for fetal phenotype and attributes
+    """
+
     # _mother_id: str
     # _maternal_age_at_exam: str
     _hpo_term_list: typing.List[SimpleTerm]
@@ -14,6 +18,9 @@ class FetusData:
 
     @property
     def hpo_term_list(self):
+        """
+        Return list of HPO terms linked to fetal phenotype
+        """
         return self._hpo_term_list
 
     # @property

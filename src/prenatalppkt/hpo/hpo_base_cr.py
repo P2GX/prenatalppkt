@@ -1,42 +1,70 @@
+import abc
+import logging
 import re
 import typing
-import abc
-from collections import defaultdict
 
-from .hp_term import HpTerm
+from collections import defaultdict
 from .hpo_cr import HpoConceptRecognizer
+from .hp_term import HpTerm
+
+logger = logging.getLogger(__name__)
 
 
 class ConceptMatch:
+    """
+    Represents a matched concept span within input text
+    """
+
     def __init__(self, term, start: int, end: int) -> None:
         self._hp_term = term
         self._start = start
         self._end = end
 
     def length(self):
+        """
+        Return the character span length of the match
+        """
         return 1 + (self._end - self._start)
 
     @property
     def label(self):
+        """
+        Return HPO label for this match
+        """
         return self._hp_term.label
 
     @property
     def tid(self):
+        """
+        Return HPO term ID for this match
+        """
         return self._hp_term.id
 
     @property
     def term(self):
+        """
+        Return HpTerm object represented by this match
+        """
         return self._hp_term
 
     @property
     def start(self):
+        """
+        Return starting index of matched substring
+        """
         return self._start
 
     @property
     def end(self):
+        """
+        Return ending index of matched substring
+        """
         return self._end
 
     def overlaps(self, other):
+        """
+        Return True if this match overlaps with another
+        """
         if self.end >= other.start >= self.start:
             return True
         elif self.end >= other.end >= self.start:
@@ -46,6 +74,10 @@ class ConceptMatch:
 
 
 class HpoBaseConceptRecognizer(HpoConceptRecognizer):
+    """
+    Base class for recognizing HPO concepts from text
+    """
+
     def __init__(self, label_to_id, id_to_primary_label):
         if not isinstance(label_to_id, dict):
             raise ValueError("label_to_id_d argument must be dictionary")
@@ -62,8 +94,9 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
             custom_d (dict, optional): User-provided dictionary with mappings to HPO terms. Defaults to None.
         """
         if not isinstance(cell_contents, str):
-            print(
-                f"Error: cell_contents argument ({cell_contents}) must be string but was {type(cell_contents)} -- coerced to string"
+            # print(f"Error: cell_contents argument ({cell_contents}) must be string but was {type(cell_contents)} -- coerced to string")
+            logger.warning(
+                "Coerced non-string cell_contents (%s) to string", type(cell_contents)
             )
             cell_contents = str(cell_contents)
 
@@ -213,6 +246,9 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         return [chunk.strip().lower() for chunk in chunks]
 
     def get_term_from_id(self, hpo_id) -> HpTerm:
+        """
+        Return HpTerm from its identifier string
+        """
         if not hpo_id.startswith("HP:"):
             raise ValueError(f"Malformed HP id '{hpo_id}' - must start with HP:")
         if hpo_id not in self._id_to_primary_label:
@@ -221,6 +257,9 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         return HpTerm(hpo_id=hpo_id, label=label)
 
     def get_term_from_label(self, label) -> HpTerm:
+        """
+        Return HpTerm from label text
+        """
         label_lc = label.lower()  # the dictionary was constructed in lower case!
         if label_lc not in self._label_to_id:
             raise ValueError(f"Could not find HPO id for {label}")
@@ -228,6 +267,9 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         return HpTerm(hpo_id=hpo_id, label=label)
 
     def contains_term(self, hpo_id) -> bool:
+        """
+        Check if an HPO term ID exists in current ontology
+        """
         return hpo_id in self._id_to_primary_label
 
     def contains_term_label(self, hpo_label) -> bool:

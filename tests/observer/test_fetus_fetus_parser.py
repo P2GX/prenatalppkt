@@ -50,6 +50,4 @@ class TestFetusFetusParser:
         hpo_hit = hpo_hits[0]
         assert hpo_hit.hpo_label == "Neural tube defect"
 
-        # TODO: when FetusData supports phenotype capture,
-        # assert that expected HPO concepts are found, e.g.:
-        # assert any("neural tube defect" in hit["term"].lower() for hit in data.phenotypes)
+        # TODO(@VarenyaJ): When FetusData supports phenotype capture, assert that expected HPO concepts are found, e.g.: assert any("neural tube defect" in hit["term"].lower() for hit in data.phenotypes)

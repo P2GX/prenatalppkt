@@ -48,8 +48,15 @@ def get_id_to_label_map(hpo: hpotk.MinimalOntology) -> typing.Mapping[str, str]:
 
 
 class HpoExactConceptRecognizer(HpoBaseConceptRecognizer):
+    """
+    Concept recognizer using exact string matching for HPO terms
+    """
+
     @staticmethod
     def from_hpo(hpo: hpotk.Ontology):
+        """
+        Instantiate recognizer from HPO ontology
+        """
         label_to_id = get_label_to_id_map(hpo)
         id_to_primary_label = get_id_to_label_map(hpo)
 
@@ -65,7 +72,8 @@ class HpoExactConceptRecognizer(HpoBaseConceptRecognizer):
         for lower_case_hp_label, hpo_tid in self._label_to_id.items():
             key = lower_case_hp_label.lower()
             startpos = lc_chunk.find(key)
-            endpos = startpos + len(key) - 1
+            # endpos = startpos + len(key) - 1
+            # end position not needed; removing unused variable
             if startpos < 0:
                 continue
             # If we get here, we demand that the match is a complete word
@@ -81,6 +89,9 @@ class HpoExactConceptRecognizer(HpoBaseConceptRecognizer):
         return list(set(hits))
 
     def parse(self, input_text: str) -> typing.List[SimpleTerm]:
+        """
+        Parse text and extract matching HPO terms
+        """
         input = input_text.lower()
         sterms = list()
 

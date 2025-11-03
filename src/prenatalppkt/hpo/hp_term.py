@@ -1,7 +1,7 @@
-import typing
-import pandas as pd
-from pyphetools.pp.v202 import TimeElement as TimeElement202
 import hpotk
+import pandas as pd
+import typing
+from pyphetools.pp.v202 import TimeElement as TimeElement202
 
 
 class HpTerm:
@@ -109,6 +109,9 @@ class HpTerm:
         return self._onset
 
     def set_onset(self, onset: TimeElement202) -> None:
+        """
+        Assign onset information to the HPO term
+        """
         if not isinstance(onset, TimeElement202):
             raise ValueError(
                 f"argument of set_onset but be TimeElement202 but was {type(onset)}"
@@ -159,6 +162,9 @@ class HpTerm:
             return self._term_and_id_with_onset()
 
     def to_string(self) -> str:
+        """
+        Return string representation of HPO term
+        """
         return self.__str__()
 
     def excluded(self) -> None:
@@ -169,6 +175,9 @@ class HpTerm:
 
     @staticmethod
     def term_list_to_dataframe(hpo_list) -> pd.DataFrame:
+        """
+        Convert list of HpTerm objects into a pandas DataFrame
+        """
         if not isinstance(hpo_list, list):
             raise ValueError(
                 f"hpo_list argument must be a list but was {type(hpo_list)}"
@@ -207,6 +216,10 @@ class HpTerm:
 
 
 class HpTermBuilder:
+    """
+    Builder for constructing HpTerm objects with chained methods
+    """
+
     def __init__(self, hpo_id: str, hpo_label: str):
         if not hpo_id.startswith("HP:"):
             raise ValueError(f"Malformed HPO id {hpo_id}")
@@ -222,9 +235,15 @@ class HpTermBuilder:
         self._resolution = None
 
     def excluded(self):
+        """
+        Mark the term as excluded (i.e., not observed)
+        """
         self._observed = False
         return self
 
     def not_measured(self):
+        """
+        Mark the term as not measured
+        """
         self._measured = False
         return self

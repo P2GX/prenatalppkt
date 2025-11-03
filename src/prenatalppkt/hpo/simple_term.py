@@ -3,6 +3,10 @@ from prenatalppkt.gestational_age import GestationalAge
 
 
 class SimpleTerm:
+    """
+    Simple representation of an HPO term with ID and label
+    """
+
     _hpo_id: str
     _hpo_label: str
 
