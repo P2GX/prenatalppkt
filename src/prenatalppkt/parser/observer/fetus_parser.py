@@ -40,12 +40,19 @@ class FetusParser:
             )
 
         # --- Parse anatomy_text ---
+        fetus_section = json_data.get("fetus")
         fetus_data_anatomy = None
-        try:
-            fetus_data_anatomy = self._anatomy_parser.parse(json_data)
-            logger.debug("Parsed anatomy_text successfully")
-        except ValueError:
-            logger.info("No 'anatomy_text' found in fetus JSON")
+        fetus_data_dict = None
+        if fetus_section:
+            # Parse general fetal metadata (number, growth, GA, gender, etc.)
+            fetus_data_dict = self._fetus_parser.parse(fetus_section)
+
+            # Parse the anatomy_text (for HPO concept extraction)
+            try:
+                fetus_data_anatomy = self._anatomy_parser.parse(fetus_section)
+                logger.debug("Parsed anatomy_text successfully")
+            except ValueError:
+                logger.info("No 'anatomy_text' found in 'fetus' key in JSON")
 
         # --- Parse 'fetus' section ---
         fetus_section = json_data.get("fetus")
@@ -66,14 +73,19 @@ class FetusParser:
             except Exception as e:
                 logger.warning("Failed to parse measurements: %s", e)
 
-        # --- Combine results ---
-        # The FetusData DTO can be extended to include measurements.
+        # --- Combine results into a single FetusData DTO ---
+        # Merge results from anatomy_text, fetus section, and measurements
         fetus_data = FetusData(
             hpo_term_list=(
                 fetus_data_anatomy.hpo_term_list if fetus_data_anatomy else []
             ),
             measurements=measurements_data,
+            **(fetus_data_dict or {}),  # include parsed fetal attributes
         )
 
-        logger.debug("FetusParser completed successfully")
+        logger.debug(
+            "FetusParser complete: fetus_number=%s, measurements=%s",
+            getattr(fetus_data, "fetus_number", None),
+            getattr(measurements_data, "measurement_count", 0),
+        )
         return fetus_data
