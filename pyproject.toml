@@ -15,7 +15,6 @@ readme = "README.md"
 # inherited from requirements/requirements.txt and requirements/requirements_test.txt
 dependencies = [
  "click==8.2.1",
- "docling==2.53.0", # lxml version that already has prebuilt binary wheels
  #"hpo-toolkit==0.7.0",
  "hpo-toolkit==0.5.5",
  "ijson==3.4.0",
@@ -38,6 +37,7 @@ dependencies = [
 test = [
  "pytest==8.4.0",
  "ruff==0.12.4",
+ "docling==2.53.0", # lxml version that already has prebuilt binary wheels
 ]
 docs = [
     'mkdocs-material[imaging]>=9.5.10,<10',
