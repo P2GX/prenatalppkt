@@ -1,3 +1,4 @@
+import pytest
 from prenatalppkt.parser.observer.fetus.fetus_ratios_parser import FetusRatiosParser
 
 sample_ratios_json = {
@@ -34,6 +35,6 @@ def test_parse_ratios_basic():
    assert data.fetus_number == 1
    assert data.ratio_count == 2
 
-   hc_ac = data.get_ratio_by_label("HC/AC")
-   assert hc_ac is not None
-   assert abs(hc_ac.value - 1.105) < 1e-5
+    hc_ac = data.get_ratio_by_label("HC/AC")
+    assert hc_ac is not None
+    assert hc_ac.value == pytest.approx(1.105)
