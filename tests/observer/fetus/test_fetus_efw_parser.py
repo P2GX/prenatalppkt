@@ -1,3 +1,4 @@
+import pytest
 from prenatalppkt.parser.observer.fetus.fetus_efw_parser import FetusEfwParser
 
 sample_efw_json = {
@@ -36,5 +37,5 @@ def test_parse_efw_basic():
 
    efw = data.get_efw_by_label("EFW (AC, FL, HC)")
    assert efw is not None
-   assert abs(efw.value - 1014.828) < 1e-5
+   assert efw.value == pytest.approx(1014.828)
    assert efw.percentile_for_display == "56%"
