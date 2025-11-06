@@ -11,7 +11,7 @@ sample_efw_json = {
            "calculated_percentile": 55.6,
            "percentile_for_display": "56%",
            "print_in_report": 1,
-           "range": ""
+           "range": "",
        },
        {
            "fetus_number": 1,
@@ -21,8 +21,8 @@ sample_efw_json = {
            "calculated_percentile": 63.7,
            "percentile_for_display": "64%",
            "print_in_report": 0,
-           "range": ""
-       }
+           "range": "",
+       },
    ]
 }
 
