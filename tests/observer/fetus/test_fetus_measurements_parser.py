@@ -6,10 +6,13 @@ Unit tests for FetusMeasurementsParser and MeasurementsData
 
 import pytest
 from prenatalppkt.dto.fetuses.measurements_data import Measurement, MeasurementsData
-from prenatalppkt.parser.observer.fetus.fetus_measurements_parser import FetusMeasurementsParser
+from prenatalppkt.parser.observer.fetus.fetus_measurements_parser import (
+    FetusMeasurementsParser,
+)
+
 
 class TestFetusMeasurement:
-   """Tests for the Measurement dataclass."""
+    """Tests for the Measurement dataclass."""
 
     def test_measurement_creation(self):
         """Test creating a basic Measurement object."""
@@ -274,27 +277,27 @@ class TestFetusMeasurementsParser:
 
 
 class TestRealWorldData:
-   """Test with actual data structure from Apple_Sally_pretty.json."""
+    """Test with actual data structure from Apple_Sally_pretty.json."""
 
-   def test_parse_sally_apple_data(self):
-       """Test parsing the actual JSON structure."""
-       import json
+    def test_parse_sally_apple_data(self):
+        """Test parsing the actual JSON structure."""
+        import json
 
-       # This test requires the actual file
-       # In a real test suite, you might use a fixture file
-       try:
-           with open("Apple_Sally_pretty.json", "r") as f:
-               data = json.load(f)
+        # This test requires the actual file
+        # In a real test suite, you might use a fixture file
+        try:
+            with open("Apple_Sally_pretty.json", "r") as f:
+                data = json.load(f)
 
-           parser = FetusMeasurementsParser()
-           fetus_1 = data["fetuses"][0]
-           result = parser.parse(fetus_1)
+            parser = FetusMeasurementsParser()
+            fetus_1 = data["fetuses"][0]
+            result = parser.parse(fetus_1)
 
-           # Verify basic structure
-           assert result.fetus_number == 1
-           assert result.measurement_count == 6
+            # Verify basic structure
+            assert result.fetus_number == 1
+            assert result.measurement_count == 6
 
-           # Verify specific measurements
+            # Verify specific measurements
             ac = result.get_measurement_by_label("AC")
             assert ac.value == pytest.approx(22.62)
             assert ac.calculated_percentile == pytest.approx(55.6)
@@ -303,9 +306,9 @@ class TestRealWorldData:
             assert femur is not None
             assert femur.value == pytest.approx(5.01)
 
-       except FileNotFoundError:
-           pytest.skip("Apple_Sally_pretty.json not found")
+        except FileNotFoundError:
+            pytest.skip("Apple_Sally_pretty.json not found")
 
 
 if __name__ == "__main__":
-   pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v"])

@@ -6,11 +6,12 @@ from .fetuses.efw_data import EfwEntry, FetusEfwData
 
 
 __all__ = [
-   "ExamData",
-   "FetusData",
-   "MeasurementsData",
-   "Measurement",
-   "Ratio",
-   "FetusRatiosData",
-   "FetusEfwData",
+    "ExamData",
+    "FetusData",
+    "MeasurementsData",
+    "Measurement",
+    "Ratio",
+    "FetusRatiosData",
+    "EfwEntry",
+    "FetusEfwData",
 ]

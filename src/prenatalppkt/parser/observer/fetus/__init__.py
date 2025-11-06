@@ -5,9 +5,9 @@ from .fetus_ratios_parser import FetusRatiosParser
 from .fetus_efw_parser import FetusEfwParser
 
 __all__ = [
-   "FetusAnatomyTextParser",
-   "FetusFetusParser",
-   "FetusMeasurementsParser",
-   "FetusRatiosParser",
-   "FetusEfwParser",
+    "FetusAnatomyTextParser",
+    "FetusFetusParser",
+    "FetusMeasurementsParser",
+    "FetusRatiosParser",
+    "FetusEfwParser",
 ]
