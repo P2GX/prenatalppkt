@@ -3,6 +3,8 @@ import pandas as pd
 import typing
 from pyphetools.pp.v202 import TimeElement as TimeElement202
 
+from prenatalppkt.hpo.simple_term import SimpleTerm
+
 
 class HpTerm:
     """
@@ -67,6 +69,10 @@ class HpTerm:
                 self._resolution,
             )
         )
+    
+    def to_simple_term(self) -> SimpleTerm:
+        return SimpleTerm(hpo_id=self._id, hpo_label=self._label, excluded=not self._observed, gestational_age=None)
+                          
 
     @property
     def id(self) -> str:

@@ -15,7 +15,7 @@ class SimpleTerm:
         hpo_id: str,
         hpo_label: str,
         excluded=False,
-        observed: typing.Optional[GestationalAge] = None,
+        gestational_age: typing.Optional[GestationalAge] = None,
     ) -> None:
         if len(hpo_id) != 10:
             raise ValueError(f"Malformed HPO id:{hpo_id}")
@@ -24,7 +24,7 @@ class SimpleTerm:
         self._hpo_id = hpo_id
         self._hpo_label = hpo_label
         self._excluded = excluded
-        self._observed = observed
+        self._gestational_age = gestational_age
 
     @property
     def hpo_id(self) -> str:
@@ -51,12 +51,12 @@ class SimpleTerm:
         return self._excluded
 
     @property
-    def observed(self) -> typing.Optional[GestationalAge]:
+    def gestational_age(self) -> typing.Optional[GestationalAge]:
         """
         :returns: the gestational age when a phenotypic feature was observed
         :rtype: Optional
         """
-        return self._observed
+        return self._gestational_age
 
     def __repr__(self) -> str:
         if self._excluded:

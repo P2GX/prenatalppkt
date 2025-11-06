@@ -6,6 +6,7 @@ import typing
 from collections import defaultdict
 from .hpo_cr import HpoConceptRecognizer
 from .hp_term import HpTerm
+from .simple_term import SimpleTerm
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ class HpoBaseConceptRecognizer(HpoConceptRecognizer):
         self._id_to_primary_label = id_to_primary_label
         self._label_to_id = label_to_id
 
-    def parse_cell(self, cell_contents, custom_d=None) -> typing.List[HpTerm]:
+    def parse(self, cell_contents, custom_d=None) -> typing.List[SimpleTerm]:
         """parse the contents of one table cell
 
         Args:

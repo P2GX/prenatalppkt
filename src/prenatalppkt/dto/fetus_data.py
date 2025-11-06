@@ -23,10 +23,9 @@ class FetusData:
         heart_rate_is: typing.Optional[str] = None,
         fetus_growth: typing.Optional[str] = None,
         fetus_presentation: typing.Optional[str] = None,
-        **kwargs,
     ) -> None:
         """Encapsulates phenotype and biometric data for one fetus."""
-        self._hpo_term_list = hpo_term_list
+        self._hpo_term_list = hpo_term_list ## todo, add the Gestational Age from the exam to each SimpleTerm
         self.measurements = measurements
         self.fetus_number = fetus_number
         self.gender = gender
@@ -35,8 +34,6 @@ class FetusData:
         self.heart_rate_is = heart_rate_is
         self.fetus_growth = fetus_growth
         self.fetus_presentation = fetus_presentation
-        # store any remaining fields in a dict for debugging/extensibility
-        self._extra = kwargs
 
     @property
     def hpo_term_list(self):

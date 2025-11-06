@@ -88,7 +88,7 @@ class HpoExactConceptRecognizer(HpoBaseConceptRecognizer):
                 hits.append(hp_term)
         return list(set(hits))
 
-    def parse(self, input_text: str) -> typing.List[SimpleTerm]:
+    def parse(self, input_text: str, custom_d=None) -> typing.List[SimpleTerm]:
         """
         Parse text and extract matching HPO terms
         """

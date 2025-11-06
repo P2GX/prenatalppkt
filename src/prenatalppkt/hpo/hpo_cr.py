@@ -2,6 +2,7 @@ import abc
 from typing import List
 
 from .hp_term import HpTerm
+from .simple_term import SimpleTerm
 
 
 class HpoConceptRecognizer(metaclass=abc.ABCMeta):
@@ -10,7 +11,7 @@ class HpoConceptRecognizer(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def parse_cell(self, cell_contents, custom_d=None) -> List[HpTerm]:
+    def parse(self, cell_contents, custom_d=None) -> List[SimpleTerm]:
         """
         parse HPO Terms from the contents of a cell of the original table
 
