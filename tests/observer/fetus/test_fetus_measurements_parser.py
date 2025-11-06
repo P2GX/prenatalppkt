@@ -27,11 +27,11 @@ class TestFetusMeasurement:
         )
 
         assert m.label == "AC"
-        assert m.value == 22.62
+        assert m.value == pytest.approx(22.62)
         assert m.unit_of_measure == "cm"
-        assert m.calculated_percentile == 55.6
-        assert m.calculated_z_score == 0.14
-        assert m.calculated_ega == 26.9
+        assert m.calculated_percentile == pytest.approx(55.6)
+        assert m.calculated_z_score == pytest.approx(0.14)
+        assert m.calculated_ega == pytest.approx(26.9)
         assert m.fetus_number == 1
 
 
@@ -66,19 +66,19 @@ class TestMeasurementsData:
         ac = data.get_measurement_by_label("AC")
         assert ac is not None
         assert ac.label == "AC"
-        assert ac.value == 22.62
+        assert ac.value == pytest.approx(22.62)
 
         # Test case-insensitive
         bpd = data.get_measurement_by_label("bpd")
         assert bpd is not None
         assert bpd.label == "BPD"
-        assert bpd.value == 6.68
+        assert bpd.value == pytest.approx(6.68)
 
         # Test with spaces
         nuchal = data.get_measurement_by_label("nuchal fold")
         assert nuchal is not None
         assert nuchal.label == "Nuchal Fold"
-        assert nuchal.value == 1.0
+        assert nuchal.value == pytest.approx(1.0)
 
         # Test non-existent
         missing = data.get_measurement_by_label("OFD")
@@ -208,8 +208,8 @@ class TestFetusMeasurementsParser:
         for label, value, percentile in expected:
             m = result.get_measurement_by_label(label)
             assert m is not None, f"Measurement {label} not found"
-            assert m.value == value, f"Wrong value for {label}"
-            assert m.calculated_percentile == percentile, (
+            assert m.value == pytest.approx(value), f"Wrong value for {label}"
+            assert m.calculated_percentile == pytest.approx(percentile), (
                 f"Wrong percentile for {label}"
             )
 
@@ -220,9 +220,9 @@ class TestFetusMeasurementsParser:
         femur = result.get_measurement_by_label("Femur")
         assert femur is not None, "Femur measurement not found!"
         assert femur.label == "Femur"
-        assert femur.value == 5.01
-        assert femur.calculated_percentile == 46.8
-        assert femur.calculated_ega == 27.1
+        assert femur.value == pytest.approx(5.01)
+        assert femur.calculated_percentile == pytest.approx(46.8)
+        assert femur.calculated_ega == pytest.approx(27.1)
 
     def test_parse_nuchal_and_cerebellum(self, parser, sample_fetus_data):
         """Test that Nuchal Fold and Cerebellum are parsed (addressing user's concern)."""
@@ -232,14 +232,14 @@ class TestFetusMeasurementsParser:
         nuchal = result.get_measurement_by_label("Nuchal Fold")
         assert nuchal is not None, "Nuchal Fold not found!"
         assert nuchal.label == "Nuchal Fold"
-        assert nuchal.value == 1.0
+        assert nuchal.value == pytest.approx(1.0)
 
         # Cerebellum
         cerebellum = result.get_measurement_by_label("Cerebellum")
         assert cerebellum is not None, "Cerebellum not found!"
         assert cerebellum.label == "Cerebellum"
-        assert cerebellum.value == 3.0
-        assert cerebellum.calculated_ega == 27.4
+        assert cerebellum.value == pytest.approx(3.0)
+        assert cerebellum.calculated_ega == pytest.approx(27.4)
 
     def test_parse_missing_measurements_key(self, parser):
         """Test error handling when 'measurements' key is missing."""
@@ -299,12 +299,12 @@ class TestRealWorldData:
 
             # Verify specific measurements
             ac = result.get_measurement_by_label("AC")
-            assert ac.value == 22.62
-            assert ac.calculated_percentile == 55.6
+            assert ac.value == pytest.approx(22.62)
+            assert ac.calculated_percentile == pytest.approx(55.6)
 
             femur = result.get_measurement_by_label("Femur")
             assert femur is not None
-            assert femur.value == 5.01
+            assert femur.value == pytest.approx(5.01)
 
         except FileNotFoundError:
             pytest.skip("Apple_Sally_pretty.json not found")

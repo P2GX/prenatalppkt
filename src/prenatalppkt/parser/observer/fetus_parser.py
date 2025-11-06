@@ -9,14 +9,18 @@ from prenatalppkt.parser.observer.fetus.fetus_fetus_parser import FetusFetusPars
 from prenatalppkt.parser.observer.fetus.fetus_measurements_parser import (
     FetusMeasurementsParser,
 )
-
+from prenatalppkt.parser.observer.fetus.fetus_ratios_parser import FetusRatiosParser
 
 logger = logging.getLogger(__name__)
 
 """
-Initial parser for the the "fetus" superfield within the Observer JSON
+Initial parser for the "fetus" superfield within the Observer JSON.
 
-Will be extended/adapted to be a container for all parsers which handle sub-"fetus" fields
+This serves as a coordinator, delegating to sub-parsers that handle:
+- anatomy_text (qualitative findings)
+- fetus (basic attributes)
+- measurements (quantitative biometry)
+- ratios (computed biometric ratios)
 """
 
 
@@ -28,38 +32,38 @@ class FetusParser:
         self._anatomy_parser = FetusAnatomyTextParser(hcr)
         self._fetus_parser = FetusFetusParser(hcr)
         self._measurements_parser = FetusMeasurementsParser()
+        self._ratios_parser = FetusRatiosParser()
 
     def parse(self, json_data: typing.Dict[str, object]) -> FetusData:
         """
-        Parse the fetus JSON block into a FetusData object that combines
-        anatomy (HPO terms), fetal attributes, and quantitative measurements.
+        Parse the fetus JSON block into a FetusData object combining
+        anatomy (HPO terms), fetal attributes, measurements, and ratios.
         """
         if not isinstance(json_data, dict):
             raise ValueError(
-                f"malformed argument: expecting dict but got {type(json_data)}"
+                f"Malformed argument: expecting dict but got {type(json_data)}"
             )
 
-        # --- Parse anatomy_text ---
         fetus_section = json_data.get("fetus")
-        fetus_data_anatomy = None
         fetus_data_dict = None
-        if fetus_section:
-            # Parse general fetal metadata (number, growth, GA, gender, etc.)
-            fetus_data_dict = self._fetus_parser.parse(fetus_section)
+        fetus_data_anatomy = None
 
-            # Parse the anatomy_text (for HPO concept extraction)
+        # --- Parse 'fetus' metadata section ---
+        if fetus_section:
+            try:
+                fetus_data_dict = self._fetus_parser.parse(fetus_section)
+                logger.debug("Parsed fetus section")
+            except Exception as e:
+                logger.warning("Failed to parse fetus section: %s", e)
+
+            # --- Parse anatomy_text ---
             try:
                 fetus_data_anatomy = self._anatomy_parser.parse(fetus_section)
                 logger.debug("Parsed anatomy_text successfully")
             except ValueError:
                 logger.info("No 'anatomy_text' found in 'fetus' key in JSON")
-
-        # --- Parse 'fetus' section ---
-        fetus_section = json_data.get("fetus")
-        fetus_data_dict = None
-        if fetus_section:
-            fetus_data_dict = self._fetus_parser.parse(fetus_section)
-            logger.debug("Parsed fetus section")
+            except Exception as e:
+                logger.warning("Error parsing anatomy_text: %s", e)
 
         # --- Parse 'measurements' section ---
         measurements_data = None
@@ -73,19 +77,34 @@ class FetusParser:
             except Exception as e:
                 logger.warning("Failed to parse measurements: %s", e)
 
-        # --- Combine results into a single FetusData DTO ---
-        # Merge results from anatomy_text, fetus section, and measurements
+        # --- Parse 'ratios' section ---
+        ratios_data = None
+        if "ratios" in json_data:
+            try:
+                ratios_data = self._ratios_parser.parse(json_data)
+                logger.debug(
+                    "Parsed ratios (%d items)", getattr(ratios_data, "ratio_count", 0)
+                )
+            except Exception as e:
+                logger.warning("Failed to parse ratios: %s", e)
+
+        # --- Combine all results into a single FetusData DTO ---
         fetus_data = FetusData(
             hpo_term_list=(
                 fetus_data_anatomy.hpo_term_list if fetus_data_anatomy else []
             ),
             measurements=measurements_data,
-            **(fetus_data_dict or {}),  # include parsed fetal attributes
+            ratios=ratios_data,
+            **(fetus_data_dict or {}),
         )
 
         logger.debug(
-            "FetusParser complete: fetus_number=%s, measurements=%s",
+            "FetusParser complete: fetus_number=%s, measurements=%s, ratios=%s",
             getattr(fetus_data, "fetus_number", None),
-            getattr(measurements_data, "measurement_count", 0),
+            getattr(measurements_data, "measurement_count", 0)
+            if measurements_data
+            else None,
+            getattr(ratios_data, "ratio_count", 0) if ratios_data else None,
         )
+
         return fetus_data
