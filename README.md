@@ -470,9 +470,9 @@ sequenceDiagram
     BPDObs --> Collect
     FLObs --> Collect
 
-    Collect --> PP["Build Phenopacket"]
+    Collect --> PP["Assemble Phenopacket components"]
     PP --> QC["Quality Control"]
-    QC --> Output["JSON Output"]
+    QC --> Output["Build Phenopacket: JSON Output"]
 
 
 ```
