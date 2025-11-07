@@ -86,88 +86,88 @@ The system implements a **data-driven, configuration-based architecture** with c
 ### System Layers
 
 ```mermaid
-flowchart TD
-   subgraph L1["Layer 1: Configuration (YAML)"]
-       YAML["data/mappings/biometry_hpo_mappings.yaml
-       o Percentile ranges (min/max)
-       o HPO term IDs and labels
-       o Normal/abnormal flags"]
-   end
+flowchart LR
+    subgraph L1["Layer 1: Configuration (YAML)"]
+        YAML["data/mappings/biometry_hpo_mappings.yaml
+        • Percentile ranges (min/max)
+        • HPO term IDs and labels
+        • Normal/abnormal flags"]
+    end
 
-   subgraph L2["Layer 2: Data Models"]
-       PR["PercentileRange
-       o min_percentile
-       o max_percentile
-       o contains(percentile)"]
-       
-       TB["TermBin
-       o range: PercentileRange
-       o hpo_id, hpo_label
-       o normal: bool
-       o category (auto-detected)"]
-       
-       TO["TermObservation
-       o hpo_id, hpo_label
-       o observed: bool
-       o gestational_age
-       o percentile"]
-   end
+    subgraph L2["Layer 2: Data Models"]
+        PR["PercentileRange
+        • min_percentile
+        • max_percentile
+        • contains(percentile)"]
+        
+        TB["TermBin
+        • range: PercentileRange
+        • hpo_id, hpo_label
+        • normal: bool
+        • category (auto-detected)"]
+        
+        TO["TermObservation
+        • hpo_id, hpo_label
+        • observed: bool
+        • gestational_age
+        • percentile"]
+    end
 
-   subgraph L3["Layer 3: Loading & Validation"]
-       Loader["BiometryMappingLoader
-       o load(yaml_path)
-       o Parses YAML -> TermBin objects
-       o Validates ranges
-       o Sorts by min_percentile"]
-   end
+    subgraph L3["Layer 3: Loading & Validation"]
+        Loader["BiometryMappingLoader
+        • load(yaml_path)
+        • Parses YAML → TermBin objects
+        • Validates ranges
+        • Sorts by min_percentile"]
+    end
 
-   subgraph L4["Layer 4: Business Logic"]
-       SM["SonographicMeasurement
-       o measurement_type: str
-       o term_bins: List[TermBin]
-       o from_percentile() -> TermObservation"]
-       
-       Factory["MeasurementEvaluation
-       o Factory pattern
-       o Loads all mappings once
-       o get_measurement_mapper()"]
-   end
+    subgraph L4["Layer 4: Business Logic"]
+        SM["SonographicMeasurement
+        • measurement_type: str
+        • term_bins: List[TermBin]
+        • from_percentile() → TermObservation"]
+        
+        Factory["MeasurementEvaluation
+        • Factory pattern
+        • Loads all mappings once
+        • get_measurement_mapper()"]
+    end
 
-   subgraph L5["Layer 5: Reference Data"]
-       Ref["FetalGrowthPercentiles
-       o NIHCD / INTERGROWTH-21st tables
-       o Percentile calculation
-       o Z-score calculation"]
-   end
+    subgraph L5["Layer 5: Reference Data"]
+        Ref["FetalGrowthPercentiles
+        • NIHCD / INTERGROWTH-21st tables
+        • Percentile calculation
+        • Z-score calculation"]
+    end
 
-   subgraph L6["Layer 6: Export"]
-       Export["PhenotypicExporter
-       o Phenopacket v2 assembly
-       o QC validation
-       o JSON serialization"]
-   end
+    subgraph L6["Layer 6: Export"]
+        Export["PhenotypicExporter
+        • Phenopacket v2 assembly
+        • QC validation
+        • JSON serialization"]
+    end
 
-   YAML --> Loader
-   Loader --> PR
-   Loader --> TB
-   
-   Loader --> Factory
-   Factory --> SM
-   SM --> TO
-   
-   Ref --> SM
-   TO --> Export
+    YAML --> Loader
+    Loader --> PR
+    Loader --> TB
+    
+    Loader --> Factory
+    Factory --> SM
+    SM --> TO
+    
+    Ref --> SM
+    TO --> Export
 
-   classDef config fill:#fff4e6,stroke:#333,stroke-width:2px
-   classDef model fill:#e3f2fd,stroke:#333,stroke-width:2px
-   classDef logic fill:#f3e5f5,stroke:#333,stroke-width:2px
-   classDef export fill:#e8f5e9,stroke:#333,stroke-width:2px
-   
-   class YAML config
-   class PR,TB,TO model
-   class Loader,SM,Factory logic
-   class Ref logic
-   class Export export
+    classDef config fill:#fff4e6,stroke:#333,stroke-width:2px
+    classDef model fill:#e3f2fd,stroke:#333,stroke-width:2px
+    classDef logic fill:#f3e5f5,stroke:#333,stroke-width:2px
+    classDef export fill:#e8f5e9,stroke:#333,stroke-width:2px
+    
+    class YAML config
+    class PR,TB,TO model
+    class Loader,SM,Factory logic
+    class Ref logic
+    class Export export
 ```
 
 ### Key Architectural Choice: Configuration-Driven Mapping
@@ -243,7 +243,7 @@ C5 --> D5[FetusEfwData / EfwEntry]
 
 Each `fetus_*_parser.py` is responsible for interpreting a single JSON section and producing its corresponding DTO in `prenatalppkt/dto/fetuses/`. The `FetusData` class then aggregates all of them into a cohesive representation for one fetus.
 
-### ? Fetus Parsing Flow
+### Fetus Parsing Flow
 
 ```mermaid
 graph TD
@@ -426,88 +426,55 @@ sequenceDiagram
 
 #### 1. Configuration Loading (Happens Once)
 
-```
-Application Startup
- ?
-MeasurementEvaluation.__init__()
- ?
-BiometryMappingLoader.load("biometry_hpo_mappings.yaml")
- ?
-Parse YAML -> Create PercentileRange objects
- ?
-Create TermBin objects linking ranges to HPO terms
- ?
-Store in dictionary: {
-   "head_circumference": [TermBin(...), TermBin(...), ...],
-   "biparietal_diameter": [...],
-   ...
-}
+```mermaid
+  flowchart LR
+    A["Application Startup"] --> B["MeasurementEvaluation.__init__()"]
+    B --> C["BiometryMappingLoader.load('biometry_hpo_mappings.yaml')"]
+    C --> D["Parse YAML<br/>→ Create PercentileRange objects"]
+    D --> E["Create TermBin objects linking ranges to HPO terms"]
+    E --> F["Store in dictionary:<br/>{ 'head_circumference': [TermBin(...), ...],<br/>'biparietal_diameter': [...], ... }"]
+
 ```
 
 #### 2. Measurement Processing (Per Observation)
 
-```
-Raw Input: HC = 175mm at 20 weeks 6 days
- ?
-GestationalAge.from_weeks(20.86)
- -> GestationalAge(weeks=20, days=6)
- ?
-FetalGrowthPercentiles.calculate_percentile("head_circumference", 20.86, 175.0)
- -> Lookup INTERGROWTH table
- -> Interpolate between 20w and 21w rows
- -> Return percentile: 2.1
- ?
-factory.get_measurement_mapper("head_circumference")
- -> Returns SonographicMeasurement with 8 pre-configured TermBins
- ?
-mapper.from_percentile(2.1, gestational_age)
- -> Loop through term_bins:
-    - TermBin[0]: range=[0,3), hpo_id="HP:0000252" -> MATCH!
- -> Create TermObservation(
-       hpo_id="HP:0000252",
-       hpo_label="Microcephaly",
-       category="lower_extreme_term",
-       observed=True,  # normal=false in YAML
-       gestational_age=GestationalAge(20, 6),
-       percentile=2.1
-   )
- ?
-TermObservation.to_phenotypic_feature()
- -> {
-     "type": {"id": "HP:0000252", "label": "Microcephaly"},
-     "excluded": false,
-     "onset": {"gestationalAge": {"weeks": 20, "days": 6}},
-     "description": "Measurement at 20w6d"
-   }
+```mermaid
+  flowchart LR
+    A["Raw Input:<br/>HC = 175mm at 20w6d"] --> B["GestationalAge.from_weeks(20.86)<br/>→ GestationalAge(weeks=20, days=6)"]
+    B --> C["FetalGrowthPercentiles.calculate_percentile('head_circumference', 20.86, 175.0)<br/>→ Lookup INTERGROWTH table<br/>→ Interpolate between 20w and 21w<br/>→ Return percentile: 2.1"]
+    C --> D["factory.get_measurement_mapper('head_circumference')<br/>→ Returns SonographicMeasurement with 8 TermBins"]
+    D --> E["mapper.from_percentile(2.1, gestational_age)<br/>→ Finds TermBin [0,3): HP:0000252 'Microcephaly'"]
+    E --> F["Creates TermObservation:<br/>• hpo_id=HP:0000252<br/>• observed=True<br/>• category='lower_extreme_term'"]
+    F --> G["TermObservation.to_phenotypic_feature()<br/>→ Phenopacket JSON output"]
+
 ```
 
 #### 3. Multi-Measurement Workflow
 
 ```mermaid
-flowchart LR
-   Input[Ultrasound Report] --> Parse[Parse Measurements]
-   
-   Parse --> HC[HC: 175mm]
-   Parse --> BPD[BPD: 45mm]
-   Parse --> FL[FL: 30mm]
-   
-   subgraph Processing["Parallel Processing"]
-       HC --> HCMap[HC Mapper]
-       BPD --> BPDMap[BPD Mapper]
-       FL --> FLMap[FL Mapper]
-       
-       HCMap --> HCObs[TermObservation]
-       BPDMap --> BPDObs[TermObservation]
-       FLMap --> FLObs[TermObservation]
-   end
-   
-   HCObs --> Collect[Collect All Observations]
-   BPDObs --> Collect
-   FLObs --> Collect
-   
-   Collect --> PP[Build Phenopacket]
-   PP --> QC[Quality Control]
-   QC --> Output[JSON Output]
+  flowchart LR
+    Input["Raw Ultrasound Report<br/>(JSON or Excel)"] --> Parse["Parse Measurements"]
+
+    Parse --> HC["HC<br/>175 mm"]
+    Parse --> BPD["BPD<br/>45 mm"]
+    Parse --> FL["FL<br/>30 mm"]
+
+    subgraph Processing["Parallel Processing"]
+        direction LR
+        HC --> HCMap["HC Mapper"] --> HCObs["TermObservation"]
+        BPD --> BPDMap["BPD Mapper"] --> BPDObs["TermObservation"]
+        FL --> FLMap["FL Mapper"] --> FLObs["TermObservation"]
+    end
+
+    HCObs --> Collect["Collect All Observations"]
+    BPDObs --> Collect
+    FLObs --> Collect
+
+    Collect --> PP["Build Phenopacket"]
+    PP --> QC["Quality Control"]
+    QC --> Output["JSON Output"]
+
+
 ```
 
 ---
@@ -1474,7 +1441,7 @@ INTERGROWTH_HC_22_WEEKS_ZSCORES = {
 
 ## Future Roadmap
 
-### Phase 1: Core Functionality ? (Current Release)
+### Phase 1: Core Functionality (Current Release)
 
 - [x] Reference data loading (NIHCD, INTERGROWTH-21st)
 - [x] Percentile-based evaluation
@@ -1637,7 +1604,7 @@ Key Dependencies
 
 If you use prenatalppkt in your research, please cite:
 
-```bibtex
+```tex
 @article{prenatalppkt
   author = {Jain, Varenya and Robinson, Peter N.},
   title = {prenatalppkt: Standardized Prenatal Phenotype Representation},
@@ -1652,7 +1619,7 @@ And cite the relevant reference standards:
 - **NICHD Fetal Growth Studies**: Buck Louis GM, Grewal J, Albert PS, Sciscione A, Wing DA, Grobman WA, Newman RB, Wapner R, D'Alton ME, Skupski D, Nageotte MP, Ranzini AC, Owen J, Chien EK, Craigo S, Hediger ML, Kim S, Zhang C, Grantz KL. Racial/ethnic standards for fetal growth: the NICHD Fetal Growth Studies. Am J Obstet Gynecol. 2015 Oct;213(4):449.e1-449.e41. doi: 10.1016/j.ajog.2015.08.032. PMID: 26410205; PMCID: PMC4584427.
 - **INTERGROWTH-21st**: Papageorghiou AT, Kennedy SH, Salomon LJ, Altman DG, Ohuma EO, Stones W, Gravett MG, Barros FC, Victora C, Purwar M, Jaffer Y, Noble JA, Bertino E, Pang R, Cheikh Ismail L, Lambert A, Bhutta ZA, Villar J; International Fetal and Newborn Growth Consortium for the 21(st) Century (INTERGROWTH-21(st)). The INTERGROWTH-21st fetal growth standards: toward the global integration of pregnancy and pediatric care. Am J Obstet Gynecol. 2018 Feb;218(2S):S630-S640. doi: 10.1016/j.ajog.2018.01.011. PMID: 29422205.
 
-```bibtex
+```tex
 @article{intergrowth2014,
   title={International standards for fetal growth based on serial ultrasound measurements: the INTERGROWTH-21st Project},
   author={Papageorghiou, Aris T and Ohuma, Eric O and others},
@@ -1664,15 +1631,15 @@ And cite the relevant reference standards:
   publisher={Elsevier}
 }
 ```
-```bibtex
+```tex
 @article{buck2015nichd,
-title={The NICHD Fetal Growth Studies: design, methods, and cohort description},
-author={Buck Louis, Germaine M and Grewal, Jagteshwar and others},
-journal={American Journal of Obstetrics and Gynecology},
-volume={213},
-number={4},
-pages={459--e1},
-year={2015}
+  title={The NICHD Fetal Growth Studies: design, methods, and cohort description},
+  author={Buck Louis, Germaine M and Grewal, Jagteshwar and others},
+  journal={American Journal of Obstetrics and Gynecology},
+  volume={213},
+  number={4},
+  pages={459--e1},
+  year={2015}
 }
 ```
 
@@ -1690,7 +1657,7 @@ Email: [Contact @VarenyaJ or @pnrobinson]
 ### High-Level System Overview
 
 ```mermaid
-flowchart TD
+flowchart LR
 subgraph Input["Input Processing"]
   JSON["JSON/XLSX Input"] --> Parser["Parser Layer"]
   Parser --> GA["Gestational Age
@@ -1766,7 +1733,7 @@ class TermObs,Phenopacket,QC,Final output
 ### Detailed Module-Level Architecture
 
 ```mermaid
-flowchart TD
+flowchart LR
 subgraph Input["1 Input Sources"]
   JSON["data/EVMS_SAMPLE.json"]
   XLSX["ViewPoint Excel (.xlsx)"]
@@ -1907,7 +1874,6 @@ class VALID,PP,LOGS output
 ### Core Design Principles
 
 1. **Configuration over Code**: HPO term mappings are defined declaratively in YAML, not hard-coded in Python classes
-@@ -121,7 +421,86 @@ flowchart TD
 
 ### Key Architectural Change: Configuration-Driven Mapping
 
@@ -1932,7 +1898,7 @@ subgraph Old["Old Architecture (Hard-coded)"]
 end
 
 subgraph New["New Architecture (Data-driven)"]
-  direction TB
+  direction LR
   N1["Raw Measurement
   HC = 175mm @ 20w6d"]
   N2["FetalGrowthPercentiles
@@ -1991,7 +1957,7 @@ observation = mapper.from_percentile(2.1, gestational_age)
 ### Component Interaction Comparison
 
 ```mermaid
-flowchart TD
+flowchart LR
 subgraph Legacy["Legacy Architecture"]
   direction TB
   L1["HeadCircumferenceMeasurement
@@ -2067,7 +2033,7 @@ Legacy -.->|Refactored to| Modern
 ### Decision Flow: Processing a Single Measurement
 
 ```mermaid
-flowchart TD
+flowchart LR
 Start([Ultrasound Measurement]) --> Parse{Parse Input}
 Parse -->|Success| ExtractGA[Extract Gestational Age]
 Parse -->|Fail| Error1[Error: Invalid Input]
