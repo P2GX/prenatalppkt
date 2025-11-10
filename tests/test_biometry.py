@@ -3,11 +3,14 @@ test_biometry.py
 
 Unit tests for BiometryMeasurement and mapping to ontology terms.
 Covers both INTERGROWTH-21st and NICHD reference tables.
+
+NOTE: This tests the legacy biometry.py module which has been simplified.
+For full HPO mapping, see test_integration.py which tests the new
+MeasurementEvaluation architecture.
 """
 
 import pytest
 from prenatalppkt.biometry import BiometryMeasurement, BiometryType
-from prenatalppkt import constants
 from prenatalppkt.biometry_reference import FetalGrowthPercentiles
 
 
@@ -29,7 +32,7 @@ def reference(request):
 
 def test_head_circumference_normal_case(reference):
     """
-    A typical head circumference should map to ~50th percentile with no HPO term.
+    A typical head circumference should map to ~50th percentile with no abnormal flag.
     Tested for both Intergrowth and NICHD sources.
     """
     measure = BiometryMeasurement(
@@ -39,19 +42,19 @@ def test_head_circumference_normal_case(reference):
     )
     pct, hpo = measure.percentile_and_hpo(reference=reference)
     assert 0 <= pct <= 100
-    assert hpo is None
+    assert hpo is None  # Normal range
 
 
 @pytest.mark.parametrize(
-    "value_mm, expected_hpo",
+    "value_mm",
     [
-        (130, constants.HPO_MICROCEPHALY),  # <=3rd percentile
-        (210, constants.HPO_MACROCEPHALY),  # >=97th percentile
+        130,  # <=3rd percentile
+        210,  # >=97th percentile
     ],
 )
-def test_head_circumference_abnormal_cases(reference, value_mm, expected_hpo):
+def test_head_circumference_abnormal_cases(reference, value_mm):
     """
-    Extremely small or large head circumference should map to the correct HPO term.
+    Extremely small or large head circumference should be flagged as abnormal.
     Only tested with Intergrowth, since NICHD HC parsing is not yet standardized.
     """
     if reference.source != "intergrowth":
@@ -62,8 +65,16 @@ def test_head_circumference_abnormal_cases(reference, value_mm, expected_hpo):
         gestational_age_weeks=20,
         value_mm=value_mm,
     )
-    _, hpo = measure.percentile_and_hpo(reference=reference)
-    assert hpo == expected_hpo
+    pct, hpo = measure.percentile_and_hpo(reference=reference)
+
+    # Should be flagged as abnormal (simplified behavior)
+    assert hpo == "ABNORMAL"
+
+    # Check percentile is in expected range
+    if value_mm == 130:
+        assert pct <= 3  # Microcephaly range
+    else:
+        assert pct >= 97  # Macrocephaly range
 
 
 # -----------------------
@@ -72,15 +83,15 @@ def test_head_circumference_abnormal_cases(reference, value_mm, expected_hpo):
 
 
 @pytest.mark.parametrize(
-    "value_mm, expected_hpo",
+    "value_mm",
     [
-        (10, constants.HPO_SHORT_FEMUR),  # <=3rd percentile
-        (50, constants.HPO_LONG_FEMUR),  # >=97th percentile (placeholder constant)
+        10,  # <=3rd percentile
+        50,  # >=97th percentile
     ],
 )
-def test_femur_length_abnormal_cases(reference, value_mm, expected_hpo):
+def test_femur_length_abnormal_cases(reference, value_mm):
     """
-    Extremely small or large femur length should map to the correct HPO term.
+    Extremely small or large femur length should be flagged as abnormal.
     Only tested with NICHD, since Intergrowth does not flag femur length in the same way.
     """
     if reference.source != "nichd":
@@ -91,8 +102,13 @@ def test_femur_length_abnormal_cases(reference, value_mm, expected_hpo):
         gestational_age_weeks=20,
         value_mm=value_mm,
     )
-    _, hpo = measure.percentile_and_hpo(reference=reference)
-    assert hpo == expected_hpo
+    pct, hpo = measure.percentile_and_hpo(reference=reference)
+
+    # Should be flagged as abnormal
+    assert hpo == "ABNORMAL"
+
+    # Check percentile is in expected range
+    assert pct <= 3 or pct >= 97
 
 
 # -----------------------
@@ -113,7 +129,7 @@ def test_interpolation_for_non_tabled_ga(reference):
     try:
         pct, hpo = measure.percentile_and_hpo(reference=reference)
         assert 0 <= pct <= 100
-        assert hpo in (None, constants.HPO_MICROCEPHALY, constants.HPO_MACROCEPHALY)
+        assert hpo in (None, "ABNORMAL")
     except ValueError as e:
         pytest.skip(f"Interpolation not available for {reference.source}: {e}")
 

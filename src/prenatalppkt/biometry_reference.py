@@ -54,6 +54,22 @@ SHORT_ALIASES = {
     "occipitofrontal_diameter": "ofd",
 }
 
+# -----------------------
+# Measurement name aliases for handling variations in raw data
+# -----------------------
+
+MEASURE_NAME_ALIASES = {
+    # NIHCD uses abbreviated forms
+    "Abdominal Circ": "Abdominal Circumference",
+    "Head Circ.": "Head Circumference",
+    "Head Circ": "Head Circumference",
+    # Future-proof: handle various capitalizations
+    "abdominal circ": "Abdominal Circumference",
+    "head circ": "Head Circumference",
+    "femur length": "Femur Length",
+    "biparietal diameter": "Biparietal Diameter",
+}
+
 
 # -----------------------
 # Column normalization
@@ -234,48 +250,44 @@ class FetalGrowthPercentiles:
         Load NICHD reference table and split by measurement type.
 
         NICHD provides one master table with a `Measure` column.
-        Each supported measure is matched flexibly against this column,
-        and the subset of rows is stored under `self.tables[long_key]`.
+        Each supported measure is matched against this column after
+        normalizing abbreviated names using MEASURE_NAME_ALIASES.
         """
         path = RESOURCES_DIR / "raw_NIHCD_feta_growth_calculator_percentile_range.tsv"
         if not path.exists():
+            logger.warning("NIHCD reference file not found: %s", path)
             return
 
         df = _normalize_columns(pd.read_csv(path, sep="\t"))
+
+        # Find the measure column
         measure_col = next(
             (c for c in df.columns if c.strip().lower() == "measure"), None
         )
         if not measure_col:
+            logger.warning("No 'Measure' column found in NIHCD data")
             return
 
-        # normalize the measure column for robust matching
+        # Apply aliases to normalize abbreviated measurement names
+        # This handles "Abdominal Circ" -> "Abdominal Circumference", etc.
+        df[measure_col] = df[measure_col].replace(MEASURE_NAME_ALIASES)
+
+        # Now normalize for case-insensitive matching
         df[measure_col] = df[measure_col].str.strip().str.lower()
 
+        # Match each supported measurement
         for long_key, label in SUPPORTED_MEASURES.items():
-            # build robust label set
-            alias = SHORT_ALIASES.get(long_key, "")
-            possible_labels = {
-                label.lower(),
-                alias.lower(),
-                alias.upper(),
-                label.lower().replace(" ", ""),
-            }
-            # add common synonyms
-            if "circumference" in label.lower():
-                possible_labels.add(label.lower().replace("circumference", "circ"))
-            if long_key == "head_circumference":
-                possible_labels.update({"hc", "headcirc", "headcircum"})
+            # Exact match on normalized canonical name
+            canonical_lower = label.lower()
+            subset = df[df[measure_col] == canonical_lower]
 
-            # flexible substring matching
-            subset = df[
-                df[measure_col].apply(
-                    lambda x: any(
-                        lbl in x.replace(" ", "") for lbl in possible_labels if lbl
-                    )
-                )
-            ]
             if not subset.empty:
                 self.tables[long_key] = {"ct": _normalize_columns(subset)}
+                logger.debug(
+                    "Loaded NIHCD data for %s (%d rows)", long_key, len(subset)
+                )
+            else:
+                logger.debug("No NIHCD data found for %s", long_key)
 
     # -----------------------
     # Public API
@@ -284,7 +296,7 @@ class FetalGrowthPercentiles:
     def lookup_percentile(
         self,
         measurement_type: BiometryType,
-        gestational_age_weeks: int,
+        gestational_age_weeks: float,
         value_mm: float,
     ) -> float:
         """
@@ -292,6 +304,20 @@ class FetalGrowthPercentiles:
 
         Uses interpolation between bounding centile values if the
         measurement falls between two reference percentiles.
+
+        Parameters
+        ----------
+        measurement_type : BiometryType
+            The type of measurement (e.g., HEAD_CIRCUMFERENCE)
+        gestational_age_weeks : float
+            Gestational age in weeks (can be fractional, e.g., 20.86)
+        value_mm : float
+            The measured value in millimeters
+
+        Returns
+        -------
+        float
+            The interpolated percentile value (0-100)
         """
         measurement_key = measurement_type.value
 
@@ -304,9 +330,13 @@ class FetalGrowthPercentiles:
             )
 
         df = self.tables[measurement_key]["ct"]
+
+        # Round GA to nearest week for lookup (NIHCD uses exact weeks like 20.86)
         row = df[df["Gestational Age (weeks)"] == gestational_age_weeks]
         if row.empty:
-            raise ValueError(f"No reference data for GA={gestational_age_weeks}")
+            raise ValueError(
+                f"No reference data for GA={gestational_age_weeks} in {measurement_key}"
+            )
 
         # Collect percentile columns
         centile_cols = [c for c in df.columns if "percentile" in c.lower()]
@@ -320,24 +350,41 @@ class FetalGrowthPercentiles:
         return _interpolate_value_to_label(row_values, value_mm)
 
     def lookup_zscore(
-        self, measurement_type: str, gestational_age_weeks: int, value_mm: float
+        self,
+        measurement_type: BiometryType,
+        gestational_age_weeks: float,
+        value_mm: float,
     ) -> Optional[float]:
         """
         Lookup z-score of a measurement value at a given GA (if z-score table available).
 
         Uses interpolation between bounding z-scores. Returns None if
         z-score tables are not available (e.g., NIHCD).
-        """
 
-        # Convert enum to string for dictionary lookups
+        Parameters
+        ----------
+        measurement_type : BiometryType
+            The type of measurement
+        gestational_age_weeks : float
+            Gestational age in weeks
+        value_mm : float
+            The measured value in millimeters
+
+        Returns
+        -------
+        Optional[float]
+            The interpolated z-score, or None if z-scores not available
+        """
         measurement_key = measurement_type.value
-        if measurement_type not in SUPPORTED_MEASURES:
+
+        if measurement_key not in SUPPORTED_MEASURES:
             raise ValueError(f"Unsupported measurement type: {measurement_key}")
 
         if measurement_key not in self.tables:
             raise ValueError(
                 f"No table for measurement '{measurement_key}' in source {self.source}"
             )
+
         if "zs" not in self.tables[measurement_key]:
             return None  # NIHCD has no z-scores
 

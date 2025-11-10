@@ -1,244 +1,251 @@
-"""
-phenotypic_export.py
+"""High-level orchestrator for phenotypic exports."""
 
-Unified API for converting fetal biometric measurements into
-ontology-aware `TermObservation` objects suitable for Phenopacket export.
-
-Refactor summary (Issue #27)
-----------------------------
-- Replaced fragile subclass lookup (`measurement_type_map`) with a
-robust registry pattern via `SonographicMeasurement`.
-- Enforced a consistent return type: `TermObservation` only.
-- Split `evaluate_and_export` into:
-  * `evaluate_to_observation()` - evaluation + mapping
-  * `export_feature()` - serialization to dict
-- Improved docstrings, error handling, and separation of concerns.
-"""
-
-from __future__ import annotations
-import logging
 from pathlib import Path
-from typing import Dict, Optional, Set, List
-import yaml
+from typing import Optional, Dict, Set, List, Any, Tuple, ClassVar
+import logging
 import json
 
-from prenatalppkt.biometry_type import BiometryType
+import yaml
+
 from prenatalppkt.biometry_reference import FetalGrowthPercentiles
+from prenatalppkt.biometry_type import BiometryType
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.reference_range import ReferenceRange
+from prenatalppkt.measurement_eval import MeasurementEvaluation
 from prenatalppkt.measurements.measurement_result import MeasurementResult
 from prenatalppkt.term_observation import TermObservation
-from prenatalppkt.sonographic_measurement import SonographicMeasurement
-from hpotk import MinimalTerm
 
 logger = logging.getLogger(__name__)
 
-MAPPINGS_DIR = Path(__file__).resolve().parent.parents[1] / "data" / "mappings"
-DEFAULT_MAPPINGS_FILE = MAPPINGS_DIR / "biometry_hpo_mappings.yaml"
-
 
 class PhenotypicExporter:
-    """
-    High-level interface for phenotype export.
+    """High-level orchestrator for phenotypic exports."""
 
-    Responsibilities
-    ----------------
-    - Evaluate biometric values against gestational-age reference data.
-    - Map percentile bins to ontology terms.
-    - Return clean, ontology-aware `TermObservation` objects.
-
-    Attributes
-    ----------
-    source : str
-        Reference dataset name ("intergrowth" or "nichd").
-    reference : FetalGrowthPercentiles
-        Percentile lookup tables.
-    mappings : dict
-        Measurement-specific ontology configuration.
-    """
+    # Lookup table for range to bin_key conversion
+    _RANGE_TO_BIN: ClassVar[Dict[Tuple[int, int], str]] = {
+        (0, 3): "below_3p",
+        (3, 5): "between_3p_5p",
+        (5, 10): "between_5p_10p",
+        (10, 50): "between_10p_50p",
+        (50, 90): "between_50p_90p",
+        (90, 95): "between_90p_95p",
+        (95, 97): "between_95p_97p",
+        (97, 100): "above_97p",
+    }
 
     def __init__(
-        self,
-        source: str = "intergrowth",
-        mappings_file: Optional[Path] = None,
-        normal_bins: Optional[Set[str]] = None,
-    ):
-        if source not in {"intergrowth", "nichd"}:
-            raise ValueError(f"Unsupported source: {source}")
+        self, source: str = "intergrowth", mappings_path: Optional[Path] = None
+    ) -> None:
+        """
+        Initialize exporter.
 
+        Args:
+            source: Reference source ("intergrowth" or "nichd")
+            mappings_path: Path to YAML mappings (optional)
+        """
         self.source = source
         self.reference = FetalGrowthPercentiles(source=source)
-        mappings_path = mappings_file or DEFAULT_MAPPINGS_FILE
-        self.mappings = self._load_mappings(mappings_path)
-        self.normal_bins = normal_bins or {"between_10p_50p", "between_50p_90p"}
+        self.evaluator = MeasurementEvaluation(mappings_path=mappings_path)
 
-        logger.info(f"PhenotypicExporter initialized with source={source}")
+        self._mappings_path = mappings_path or (
+            Path(__file__).resolve().parent.parents[1]
+            / "data"
+            / "mappings"
+            / "biometry_hpo_mappings.yaml"
+        )
 
-    # ------------------------------------------------------------------ #
-    # Mapping loader
-    # ------------------------------------------------------------------ #
-    def _load_mappings(self, path: Path) -> dict:
-        """Load and parse HPO term mappings from YAML."""
-        if not path.exists():
-            logger.warning(f"Mappings file not found: {path}. Using empty mappings.")
-            return {}
+        logger.info("Initialized PhenotypicExporter with %s reference", source)
 
-        with open(path, "r") as f:
-            raw_mappings = yaml.safe_load(f)
+    @property
+    def mappings(self) -> Dict[str, Any]:
+        """
+        Compatibility property for tests.
 
-        processed = {}
-        for meas_type, cfg in raw_mappings.items():
-            bins_cfg = cfg["bins"]
-            abnormal_cfg = cfg["abnormal_term"]
-            normal_bins = set(cfg.get("normal_bins", []))
+        Returns dict of measurement types mapped to their available bins.
+        """
+        with open(self._mappings_path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f)
 
-            # Convert bins -> MinimalTerm
-            bins = {}
-            for k, v in bins_cfg.items():
-                if v is None:
-                    bins[k] = None
-                else:
-                    bins[k] = MinimalTerm.create_minimal_term(
-                        term_id=v["id"],
-                        name=v["label"],
-                        alt_term_ids=(),
-                        is_obsolete=False,
-                    )
+        return self._convert_mappings_format(raw)
 
-            abnormal_term = MinimalTerm.create_minimal_term(
-                term_id=abnormal_cfg["id"],
-                name=abnormal_cfg["label"],
-                alt_term_ids=(),
-                is_obsolete=False,
-            )
+    def _convert_mappings_format(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert new YAML format to old format for backward compatibility."""
+        result: Dict[str, Any] = {}
 
-            processed[meas_type] = {
-                "bins": bins,
-                "normal_bins": normal_bins,
-                "abnormal_term": abnormal_term,
+        for meas_type, range_list in raw.items():
+            result[meas_type] = {
+                "bins": {},
+                "normal_bins": [],
+                "abnormal_term": {"id": "HP:0000240", "label": "Abnormality"},
             }
-        return processed
 
-    # ------------------------------------------------------------------ #
-    # Evaluation and export (refactored)
-    # ------------------------------------------------------------------ #
+            for range_dict in range_list:
+                min_p = int(range_dict["min"])
+                max_p = int(range_dict["max"])
+                range_key = (min_p, max_p)
+
+                bin_key = self._RANGE_TO_BIN.get(range_key)
+                if bin_key:
+                    result[meas_type]["bins"][bin_key] = {
+                        "id": range_dict["id"],
+                        "label": range_dict["label"],
+                    }
+
+                    if range_dict["normal"]:
+                        result[meas_type]["normal_bins"].append(bin_key)
+
+        return result
+
     def evaluate_to_observation(
         self,
         measurement_type: BiometryType,
         value_mm: float,
         gestational_age_weeks: float,
-        population: Optional[str] = None,
         normal_bins: Optional[Set[str]] = None,
     ) -> TermObservation:
         """
-        Evaluate a fetal biometric measurement and return a TermObservation.
+        Evaluate measurement and return TermObservation.
 
-        Steps:
-        1. Retrieve gestational-age-specific thresholds.
-        2. Instantiate the registered measurement subclass.
-        3. Evaluate the measurement into a `MeasurementResult`.
-        4. Map percentile bin to ontology terms using YAML configuration.
+        Args:
+            measurement_type: Type of measurement
+            value_mm: Measurement value in millimeters
+            gestational_age_weeks: GA as float (e.g., 20.3)
+            normal_bins: Optional override for normal ranges (legacy support)
 
-
-        Parameters
-        ----------
-        measurement_type : BiometryType
-            The type of measurement (enum).
-        value_mm : float
-            The measured value in millimeters.
-        gestational_age_weeks : float
-            Gestational age in weeks.
-        normal_bins : Set[str], optional
-            Override default normal bins.
-
-        Returns
-        -------
-        TermObservation
-            The evaluation result with HPO term mapping.
+        Returns:
+            TermObservation with HPO term
         """
-        # Convert enum to string for internal lookups
+        ga = GestationalAge.from_weeks(gestational_age_weeks)
         measurement_key = measurement_type.value
 
-        ga = GestationalAge.from_weeks(gestational_age_weeks)
-
-        # Step 1: Lookup reference thresholds
-        try:
-            df = self.reference.tables[measurement_key]["ct"]
-            row = df.loc[df["Gestational Age (weeks)"].round(1) == round(ga.weeks, 1)]
-            if row.empty:
-                raise ValueError(
-                    f"No reference data for {measurement_key} at GA={ga.weeks}w"
-                )
-
-            percentile_cols = [
-                c
-                for c in df.columns
-                if "percentile" in c.lower() and c != "Gestational Age (weeks)"
-            ]
-            thresholds = row[percentile_cols].iloc[0].astype(float).tolist()
-        except KeyError:
-            raise ValueError(
-                f"Measurement type '{measurement_key}' not available in {self.source} reference"
-            )
-
-        # Step 2: Get subclass (strict registry-based polymorphism)
-        if measurement_key not in SonographicMeasurement.registry:
-            raise KeyError(
-                f"Measurement type '{measurement_key}' is not registered. "
-                "Ensure a SonographicMeasurement subclass defines it."
-            )
-
-        measurement_cls = SonographicMeasurement.registry[measurement_key]
-        instance = measurement_cls()
-
-        # Step 3: Evaluate numeric result
-        ref_range = ReferenceRange(gestational_age=ga, percentiles=thresholds)
-        measurement_result = instance.evaluate(ga, value_mm, ref_range)
-        if not isinstance(measurement_result, MeasurementResult):
-            raise TypeError(
-                f"{measurement_cls.__name__}.evaluate() must return a MeasurementResult"
-            )
-
-        # Step 4: Map to ontology
-        cfg = self.mappings[measurement_key]
-        term_obs = TermObservation.from_measurement_result(
-            measurement_result=measurement_result,
-            bin_to_term=cfg["bins"],
-            gestational_age=ga,
-            normal_bins=normal_bins or cfg["normal_bins"],
-            abnormal_term=cfg["abnormal_term"],
+        percentile = self.reference.lookup_percentile(
+            measurement_type=measurement_type,
+            gestational_age_weeks=gestational_age_weeks,
+            value_mm=value_mm,
         )
+
+        mapper = self.evaluator.get_measurement_mapper(measurement_key)
+        if mapper is None:
+            raise ValueError(f"No mapper found for {measurement_key}")
+
+        term_obs = mapper.from_percentile(percentile, ga)
         return term_obs
 
-    # ------------------------------------------------------------------ #
-    # Wrapper for serialization
-    # ------------------------------------------------------------------ #
+    def evaluate_and_export(
+        self,
+        measurement_type: BiometryType,
+        measurement_result: MeasurementResult,
+        gestational_age: GestationalAge,
+        normal_bins: Optional[Set[str]] = None,
+    ) -> Dict[str, object]:
+        """
+        Legacy method for backward compatibility.
+
+        Converts MeasurementResult -> percentile -> TermObservation.
+
+        Args:
+            measurement_type: Type of measurement
+            measurement_result: Result from ReferenceRange.evaluate()
+            gestational_age: Gestational age
+            normal_bins: Optional override for normal ranges
+
+        Returns:
+            Phenotypic feature dict
+        """
+        bin_to_percentile: Dict[str, float] = {
+            "below_3p": 1.5,
+            "between_3p_5p": 4.0,
+            "between_5p_10p": 7.5,
+            "between_10p_50p": 30.0,
+            "between_50p_90p": 70.0,
+            "between_90p_95p": 92.5,
+            "between_95p_97p": 96.0,
+            "above_97p": 98.5,
+        }
+
+        percentile = bin_to_percentile.get(measurement_result.bin_key, 50.0)
+        measurement_key = measurement_type.value
+        mapper = self.evaluator.get_measurement_mapper(measurement_key)
+
+        if mapper is None:
+            raise ValueError(f"No mapper found for {measurement_key}")
+
+        term_obs = mapper.from_percentile(percentile, gestational_age)
+        return term_obs.to_phenotypic_feature()
+
     def export_feature(
         self,
         measurement_type: BiometryType,
-        value_mm: float,
-        gestational_age_weeks: float,
-        **kwargs,
-    ) -> dict:
-        """Serialize a TermObservation as a Phenopacket-style dictionary."""
-        obs = self.evaluate_to_observation(
-            measurement_type, value_mm, gestational_age_weeks, **kwargs
+        measurement_result: MeasurementResult,
+        gestational_age: GestationalAge,
+        normal_bins: Optional[Set[str]] = None,
+    ) -> Dict[str, object]:
+        """Alias for evaluate_and_export for compatibility."""
+        return self.evaluate_and_export(
+            measurement_type, measurement_result, gestational_age, normal_bins
         )
-        return obs.to_phenotypic_feature()
 
-    def batch_export(self, measurements: List[Dict[str, float]]) -> List[dict]:
-        """Export multiple measurements to Phenopacket-style features."""
-        results = []
-        for meas in measurements:
+    def batch_export(
+        self, measurements: List[Tuple[BiometryType, float, float]]
+    ) -> List[TermObservation]:
+        """
+        Export multiple measurements.
+
+        Args:
+            measurements: List of (measurement_type, value_mm, ga_weeks) tuples
+
+        Returns:
+            List of TermObservations
+        """
+        results: List[TermObservation] = []
+        errors: List[Tuple[BiometryType, str]] = []
+
+        for meas_type, value, ga_weeks in measurements:
             try:
-                results.append(self.export_feature(**meas))
-            except Exception as e:  # noqa: PERF203 - intentional isolation for per-measurement robustness
-                logger.error(f"Failed to export measurement {meas}: {e}")
-                results.append({"error": str(e), "measurement": meas})
+                term_obs = self.evaluate_to_observation(
+                    measurement_type=meas_type,
+                    value_mm=value,
+                    gestational_age_weeks=ga_weeks,
+                )
+                results.append(term_obs)
+            except (ValueError, KeyError) as e:  # noqa: PERF203  # Batch processing requires per-item error handling
+                logger.error("Error processing %s: %s", meas_type, e)
+                errors.append((meas_type, str(e)))
+
+        if errors:
+            logger.warning("Encountered %d errors during batch export", len(errors))
+
         return results
 
-    def to_json(self, measurements: List[Dict[str, float]], pretty: bool = True) -> str:
-        """Export batch measurements to JSON string."""
-        results = self.batch_export(measurements)
-        indent = 2 if pretty else None
-        return json.dumps(results, indent=indent)
+    def to_json(
+        self, term_observations: List[TermObservation], pretty: bool = False
+    ) -> str:
+        """
+        Convert TermObservations to Phenopacket JSON string.
+
+        Args:
+            term_observations: List of TermObservation objects
+            pretty: Whether to pretty-print the JSON
+
+        Returns:
+            JSON string
+        """
+        features = [obs.to_phenotypic_feature() for obs in term_observations]
+
+        phenopacket = {
+            "phenotypicFeatures": features,
+            "metaData": {
+                "created": "2025-01-01T00:00:00Z",
+                "createdBy": "prenatalppkt",
+                "resources": [
+                    {
+                        "id": "hp",
+                        "name": "Human Phenotype Ontology",
+                        "version": "2024-08-13",
+                    }
+                ],
+            },
+        }
+
+        if pretty:
+            return json.dumps(phenopacket, indent=2)
+        return json.dumps(phenopacket)
