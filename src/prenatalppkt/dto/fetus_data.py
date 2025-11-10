@@ -2,126 +2,135 @@
 src/prenatalppkt/dto/fetus_data.py
 
 Top-level Data Transfer Object for a single fetus entry in the Observer JSON.
-This class acts as a container for all sub-components parsed from the
-'fetuses' array, including core metadata, quantitative measurements,
-ratios, and estimated fetal weights (EFWs).
+This class acts as a container for semantically-grouped sub-components parsed
+from the 'fetuses' array.
 """
 
-import typing
-from ..hpo.simple_term import SimpleTerm
-from .fetuses.fetus_core_data import FetusCoreData
-from .fetuses.measurements_data import MeasurementsData
-from .fetuses.ratios_data import FetusRatiosData
-from .fetuses.efw_data import FetusEfwData
+from typing import Optional
+from .observer.fetuses.fetus_core_data import FetusCoreData
+from .observer.builders.fetus_anatomy_data import FetusAnatomyData
+from .observer.builders.fetus_biometry_data import FetusBiometryData
+from .observer.builders.fetus_echo_data import FetusEchoData
+from .observer.builders.fetus_procedures_data import FetusProceduresData
+from .observer.builders.fetus_environment_data import FetusEnvironmentData
+from .observer.builders.fetus_gestational_data import FetusGestationalData
 
 
 class FetusData:
     """
     Data transfer object for fetal phenotype and attributes.
 
-    Attributes:
-        fetus: Core fetal metadata (see FetusCoreData)
-        amioticfluid: Meaning undetermined
-        amniocentesis: Meaning undetermined
-        anatomy: Unknown (likely qualitative findings)
-        bpp: Meaning undetermined
-        dm_echo: Meaning undetermined
-        efws: Estimated fetal weight data (see FetusEfwData)
-        ectopic_preg: Meaning undetermined
-        fbscvs: Meaning undetermined
-        fetal_echo_anatomy: Meaning undetermined
-        fetal_echo_measurements: Meaning undetermined
-        fetalvessels: Meaning undetermined
-        firsttrimester: Meaning undetermined
-        impression: Meaning undetermined
-        measurements: Quantitative biometric measurements (see MeasurementsData)
-        nst: Meaning undetermined
-        otherprocs: Meaning undetermined
-        placenta: Meaning undetermined
-        ratios: Computed biometric ratios (e.g., HC/AC) (see FetusRatiosData)
-        uards: Meaning undetermined
-        hpo_term_list: List of HPO phenotype terms extracted from anatomy text
-    """
+    This class aggregates semantically-grouped Observer JSON data into 7 logical
+    categories instead of 21 individual fields, making construction more intuitive
+    and maintainable.
 
-    _hpo_term_list: typing.List[SimpleTerm]
+    Attributes:
+        fetus_core: Core fetal metadata (fetus number, GA, gender, presentation)
+        anatomy: Anatomy findings, impressions, and HPO terms
+        biometry: Measurements, ratios, and estimated fetal weights
+        echo: Fetal echocardiography data
+        procedures: Prenatal procedures and assessments
+        environment: Fetal environment (fluids, vessels, placenta)
+        gestational: Early pregnancy and gestational data
+    """
 
     def __init__(
         self,
-        hpo_term_list: typing.List[SimpleTerm],
-        fetus: typing.Optional[FetusCoreData] = None,
-        measurements: typing.Optional[MeasurementsData] = None,
-        ratios: typing.Optional[FetusRatiosData] = None,
-        efws: typing.Optional[FetusEfwData] = None,
-        amioticfluid: typing.Optional[typing.Any] = None,
-        amniocentesis: typing.Optional[typing.Any] = None,
-        anatomy: typing.Optional[typing.Any] = None,
-        bpp: typing.Optional[typing.Any] = None,
-        dm_echo: typing.Optional[typing.Any] = None,
-        ectopic_preg: typing.Optional[typing.Any] = None,
-        fbscvs: typing.Optional[typing.Any] = None,
-        fetal_echo_anatomy: typing.Optional[typing.Any] = None,
-        fetal_echo_measurements: typing.Optional[typing.Any] = None,
-        fetalvessels: typing.Optional[typing.Any] = None,
-        firsttrimester: typing.Optional[typing.Any] = None,
-        impression: typing.Optional[typing.Any] = None,
-        nst: typing.Optional[typing.Any] = None,
-        otherprocs: typing.Optional[typing.Any] = None,
-        placenta: typing.Optional[typing.Any] = None,
-        uards: typing.Optional[typing.Any] = None,
+        fetus_core: FetusCoreData,
+        anatomy: Optional[FetusAnatomyData] = None,
+        biometry: Optional[FetusBiometryData] = None,
+        echo: Optional[FetusEchoData] = None,
+        procedures: Optional[FetusProceduresData] = None,
+        environment: Optional[FetusEnvironmentData] = None,
+        gestational: Optional[FetusGestationalData] = None,
     ) -> None:
-        """Encapsulates phenotype and biometric data for one fetus."""
-        self._hpo_term_list = hpo_term_list
-        self._fetus = fetus
-        self._measurements = measurements
-        self._ratios = ratios
-        self._efws = efws
+        """
+        Encapsulates phenotype and biometric data for one fetus.
 
-        # Placeholder fields for additional Observer sub-sections
-        self._amioticfluid = amioticfluid
-        self._amniocentesis = amniocentesis
+        Args:
+            fetus_core: Required core fetal metadata
+            anatomy: Optional anatomy findings and impressions
+            biometry: Optional biometric measurements
+            echo: Optional fetal echocardiography data
+            procedures: Optional prenatal procedures
+            environment: Optional fetal environment data
+            gestational: Optional early pregnancy data
+        """
+        self._fetus_core = fetus_core
         self._anatomy = anatomy
-        self._bpp = bpp
-        self._dm_echo = dm_echo
-        self._ectopic_preg = ectopic_preg
-        self._fbscvs = fbscvs
-        self._fetal_echo_anatomy = fetal_echo_anatomy
-        self._fetal_echo_measurements = fetal_echo_measurements
-        self._fetalvessels = fetalvessels
-        self._firsttrimester = firsttrimester
-        self._impression = impression
-        self._nst = nst
-        self._otherprocs = otherprocs
-        self._placenta = placenta
-        self._uards = uards
+        self._biometry = biometry
+        self._echo = echo
+        self._procedures = procedures
+        self._environment = environment
+        self._gestational = gestational
 
     # -------------------------------------------------------------------------
     # Properties
     # -------------------------------------------------------------------------
 
     @property
-    def hpo_term_list(self) -> typing.List[SimpleTerm]:
-        """Return list of HPO terms linked to fetal phenotype."""
-        return self._hpo_term_list
-
-    @property
-    def fetus(self) -> typing.Optional[FetusCoreData]:
+    def fetus_core(self) -> FetusCoreData:
         """Core fetal attributes (fetus number, GA, gender, etc.)."""
-        return self._fetus
+        return self._fetus_core
 
     @property
-    def measurements(self) -> typing.Optional[MeasurementsData]:
-        """Quantitative biometric measurements."""
-        return self._measurements
+    def anatomy(self) -> Optional[FetusAnatomyData]:
+        """Anatomy findings, impressions, and HPO terms."""
+        return self._anatomy
 
     @property
-    def ratios(self) -> typing.Optional[FetusRatiosData]:
-        """Computed biometric ratios (e.g., HC/AC)."""
-        return self._ratios
+    def biometry(self) -> Optional[FetusBiometryData]:
+        """Biometric measurements, ratios, and EFWs."""
+        return self._biometry
 
     @property
-    def efws(self) -> typing.Optional[FetusEfwData]:
-        """Estimated fetal weight data."""
-        return self._efws
+    def echo(self) -> Optional[FetusEchoData]:
+        """Fetal echocardiography data."""
+        return self._echo
+
+    @property
+    def procedures(self) -> Optional[FetusProceduresData]:
+        """Prenatal procedures and assessments."""
+        return self._procedures
+
+    @property
+    def environment(self) -> Optional[FetusEnvironmentData]:
+        """Fetal environment (fluids, vessels, placenta)."""
+        return self._environment
+
+    @property
+    def gestational(self) -> Optional[FetusGestationalData]:
+        """Early pregnancy and gestational data."""
+        return self._gestational
+
+    # -------------------------------------------------------------------------
+    # Convenience Properties for Common Access Patterns
+    # -------------------------------------------------------------------------
+
+    @property
+    def hpo_terms(self):
+        """Convenience accessor for HPO terms from anatomy data."""
+        return self._anatomy.hpo_terms if self._anatomy else []
+
+    @property
+    def measurements(self):
+        """Convenience accessor for measurements from biometry data."""
+        return self._biometry.measurements if self._biometry else None
+
+    @property
+    def ratios(self):
+        """Convenience accessor for ratios from biometry data."""
+        return self._biometry.ratios if self._biometry else None
+
+    @property
+    def efws(self):
+        """Convenience accessor for EFWs from biometry data."""
+        return self._biometry.efws if self._biometry else None
+
+    @property
+    def fetus_number(self):
+        """Convenience accessor for fetus number from core data."""
+        return self._fetus_core.fetus_number if self._fetus_core else None
 
     # -------------------------------------------------------------------------
     # Representation
@@ -130,8 +139,11 @@ class FetusData:
     def __repr__(self) -> str:
         return (
             f"FetusData("
-            f"fetus={self._fetus}, "
-            f"measurements={self._measurements}, "
-            f"ratios={self._ratios}, "
-            f"efws={self._efws})"
+            f"fetus_core={self._fetus_core}, "
+            f"anatomy={self._anatomy}, "
+            f"biometry={self._biometry}, "
+            f"echo={self._echo}, "
+            f"procedures={self._procedures}, "
+            f"environment={self._environment}, "
+            f"gestational={self._gestational})"
         )
