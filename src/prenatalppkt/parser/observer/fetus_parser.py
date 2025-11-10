@@ -4,20 +4,18 @@ src/prenatalppkt/parser/observer/fetus_parser.py
 Main parser for a single fetus entry within the Observer JSON.
 
 This acts as a coordinator that delegates parsing of the individual
-subsections of the "fetuses" top-level key, including:
-- fetus: core fetal metadata (e.g., gender, GA, presentation)
-- anatomy_text: qualitative HPO-annotated findings
-- measurements: quantitative biometry
-- ratios: computed biometric ratios (e.g., HC/AC)
-- efws: estimated fetal weights
-
-Each subsection is handled by a dedicated subparser, and the results are assembled into a unified FetusData Data Transfer Object.
+subsections of the "fetuses" top-level key, assembling results into
+semantically-grouped DTOs via the FetusDataBuilder.
 """
 
 import typing
 import logging
 
 from prenatalppkt.dto.fetus_data import FetusData
+from prenatalppkt.dto.observer.builders.fetus_data_builder import FetusDataBuilder
+from prenatalppkt.dto.observer.fetuses.fetus_core_data import FetusCoreData
+from prenatalppkt.dto.observer.builders.fetus_anatomy_data import FetusAnatomyData
+from prenatalppkt.dto.observer.builders.fetus_biometry_data import FetusBiometryData
 from prenatalppkt.parser.observer.fetus.fetus_anatomy_text_parser import (
     FetusAnatomyTextParser,
 )
@@ -70,6 +68,42 @@ class FetusParser:
 
         return section_data
 
+    def _build_anatomy_data(
+        self, json_data: typing.Dict[str, typing.Any], anatomy_text_result
+    ) -> typing.Optional[FetusAnatomyData]:
+        """Build FetusAnatomyData from parsed anatomy_text and raw JSON."""
+        hpo_terms = anatomy_text_result.hpo_term_list if anatomy_text_result else []
+
+        # Extract raw anatomy_text string from fetus section
+        fetus_section = json_data.get("fetus", {})
+        anatomy_text_str = fetus_section.get("anatomy_text")
+
+        # Extract structured anatomy array
+        anatomy_array = json_data.get("anatomy")
+
+        # Extract impression data
+        impression = json_data.get("impression")
+
+        # Only create if we have any anatomy data
+        if hpo_terms or anatomy_text_str or anatomy_array or impression:
+            return FetusAnatomyData(
+                hpo_terms=hpo_terms,
+                anatomy_text=anatomy_text_str,
+                anatomy=anatomy_array,
+                impression=impression,
+            )
+        return None
+
+    def _build_biometry_data(
+        self, measurements_data, ratios_data, efw_data
+    ) -> typing.Optional[FetusBiometryData]:
+        """Build FetusBiometryData from parsed measurements, ratios, and EFWs."""
+        if measurements_data or ratios_data or efw_data:
+            return FetusBiometryData(
+                measurements=measurements_data, ratios=ratios_data, efws=efw_data
+            )
+        return None
+
     # -------------------------------------------------------------------------
     # Public entry point
     # -------------------------------------------------------------------------
@@ -84,20 +118,28 @@ class FetusParser:
                 f"Malformed argument: expected dict but got {type(json_data)}"
             )
 
-        # Parse fetus core info
-        fetus_info_data = self._parse_section(
+        # Parse fetus core info (required)
+        fetus_core_dict = self._parse_section(
             self._fetus_parser, json_data.get("fetus", {}), "fetus", "fetus section"
         )
 
-        # Parse anatomy text
-        anatomy_data = self._parse_section(
+        if not fetus_core_dict:
+            raise ValueError("Missing required 'fetus' section in JSON")
+
+        fetus_core = FetusCoreData(**fetus_core_dict)
+
+        # Parse anatomy text for HPO terms
+        anatomy_text_result = self._parse_section(
             self._anatomy_parser,
             json_data.get("fetus", {}),
             "anatomy_text",
             "anatomy_text section",
         )
 
-        # Parse sub-sections directly under fetus
+        # Build grouped anatomy data
+        anatomy_data = self._build_anatomy_data(json_data, anatomy_text_result)
+
+        # Parse biometry sub-sections
         measurements_data = self._parse_section(
             self._measurements_parser, json_data, "measurements", "measurements section"
         )
@@ -110,23 +152,31 @@ class FetusParser:
             self._efw_parser, json_data, "efws", "efws section"
         )
 
-        # Assemble unified FetusData
-        fetus_data = FetusData(
-            hpo_term_list=(anatomy_data.hpo_term_list if anatomy_data else []),
-            measurements=measurements_data,
-            ratios=ratios_data,
-            efws=efw_data,
-            **(fetus_info_data or {}),
+        # Build grouped biometry data
+        biometry_data = self._build_biometry_data(
+            measurements_data, ratios_data, efw_data
         )
 
+        # Assemble FetusData using builder
+        builder = FetusDataBuilder(fetus_core)
+
+        if anatomy_data:
+            builder.with_anatomy(anatomy_data)
+
+        if biometry_data:
+            builder.with_biometry(biometry_data)
+
+        # Future: Add echo, procedures, environment, gestational when parsers exist
+        # if echo_data:
+        #     builder.with_echo(echo_data)
+
+        fetus_data = builder.build()
+
         logger.debug(
-            "FetusParser complete: fetus_number=%s, measurements=%s, ratios=%s, efws=%s",
-            getattr(fetus_data, "fetus_number", None),
-            getattr(measurements_data, "measurement_count", 0)
-            if measurements_data
-            else None,
-            getattr(ratios_data, "ratio_count", 0) if ratios_data else None,
-            getattr(efw_data, "efw_count", 0) if efw_data else None,
+            "FetusParser complete: fetus_number=%s, anatomy=%s, biometry=%s",
+            fetus_core.fetus_number,
+            anatomy_data is not None,
+            biometry_data is not None,
         )
 
         return fetus_data
