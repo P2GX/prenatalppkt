@@ -4,7 +4,7 @@ Parser for extracting biometric measurements from Observer JSON
 """
 
 import typing
-from prenatalppkt.dto.measurements_data import MeasurementsData, Measurement
+from prenatalppkt.dto.fetuses.measurements_data import MeasurementsData, Measurement
 
 
 class FetusMeasurementsParser:

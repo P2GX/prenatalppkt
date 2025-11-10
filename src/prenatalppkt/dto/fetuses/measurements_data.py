@@ -1,6 +1,6 @@
 """
-src/prenatalppkt/dto/measurements_data.py
-Data Transfer Object for fetal measurements
+src/prenatalppkt/dto/fetuses/measurements_data.py
+Data Transfer Object for fetal measurements.
 """
 
 from dataclasses import dataclass
@@ -14,21 +14,29 @@ class Measurement:
 
     Attributes:
         label: Measurement type (e.g., "AC", "BPD", "HC", "Femur")
-        value: Measured value
+        value: Measured value (in unit_of_measure)
+        decimal_places: Number of decimal places used for display
         unit_of_measure: Unit (typically "cm")
-        calculated_percentile: Percentile value (0-100)
-        calculated_z_score: Z-score value
         calculated_ega: Estimated gestational age from this measurement
+        calculated_percentile: Percentile value (0-100)
+        percentile_for_display: Display-friendly percentile string (e.g., "56%")
+        include_in_avg_ga_calc: Whether this measurement contributes to GA average
+        print_in_report: Whether measurement is printed in the ultrasound report
+        calculated_z_score: Z-score for deviation from mean
         fetus_number: Fetus identifier
     """
 
     label: str
     value: float
-    unit_of_measure: str
-    calculated_percentile: float
-    calculated_z_score: float
-    calculated_ega: float
-    fetus_number: int
+    decimal_places: int = 0
+    unit_of_measure: str = ""
+    calculated_ega: float = 0.0
+    calculated_percentile: float = 0.0
+    percentile_for_display: str = ""
+    include_in_avg_ga_calc: bool = True
+    print_in_report: bool = True
+    calculated_z_score: float = 0.0
+    fetus_number: int = 0
 
 
 @dataclass
