@@ -16,22 +16,22 @@ from prenatalppkt.dto.observer.builders.fetus_data_builder import FetusDataBuild
 from prenatalppkt.dto.observer.fetuses.fetus_core_data import FetusCoreData
 from prenatalppkt.dto.observer.builders.fetus_anatomy_data import FetusAnatomyData
 from prenatalppkt.dto.observer.builders.fetus_biometry_data import FetusBiometryData
-from prenatalppkt.parser.observer.fetus.fetus_anatomy_text_parser import (
+from prenatalppkt.parser.observer.fetuses.fetuses_anatomy_text_parser import (
     FetusAnatomyTextParser,
 )
-from prenatalppkt.parser.observer.fetus.fetus_fetus_parser import FetusFetusParser
-from prenatalppkt.parser.observer.fetus.fetus_measurements_parser import (
+from prenatalppkt.parser.observer.fetuses.fetuses_fetus_parser import FetusFetusParser
+from prenatalppkt.parser.observer.fetuses.fetuses_measurements_parser import (
     FetusMeasurementsParser,
 )
-from prenatalppkt.parser.observer.fetus.fetus_ratios_parser import FetusRatiosParser
-from prenatalppkt.parser.observer.fetus.fetus_efw_parser import FetusEfwParser
+from prenatalppkt.parser.observer.fetuses.fetuses_ratios_parser import FetusRatiosParser
+from prenatalppkt.parser.observer.fetuses.fetuses_efw_parser import FetusEfwParser
 from prenatalppkt.hpo import HpoConceptRecognizer
 
 logger = logging.getLogger(__name__)
 
 
-class FetusParser:
-    """Main parser for a single fetus JSON object."""
+class FetusesParser:
+    """Main parser for a single fetuses entry within the Observer JSON."""
 
     def __init__(self, hcr: HpoConceptRecognizer):
         self._hcr = hcr

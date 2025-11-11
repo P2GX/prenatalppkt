@@ -1,5 +1,5 @@
 import pytest
-from prenatalppkt.parser.observer.fetus.fetus_ratios_parser import FetusRatiosParser
+from prenatalppkt.parser.observer.fetuses.fetuses_ratios_parser import FetusRatiosParser
 
 sample_ratios_json = {
     "ratios": [

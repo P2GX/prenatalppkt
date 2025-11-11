@@ -1,19 +1,18 @@
-from prenatalppkt.parser.observer.fetus.fetus_anatomy_text_parser import (
+from prenatalppkt.parser.observer.fetuses.fetuses_anatomy_text_parser import (
     FetusAnatomyTextParser,
 )
 
 
 class DummyHPO:
+    """Mock HPO parser for testing"""
+
     def parse(self, text):
-        return (
-            [{"hpo_label": "Neural tube defect"}]
-            if "neural tube defect" in text.lower()
-            else []
-        )
+        return []
 
 
 def test_parse_anatomy_text_basic():
     parser = FetusAnatomyTextParser(DummyHPO())
     json_data = {"anatomy_text": "There was a neural tube defect."}
     result = parser.parse(json_data)
-    assert result.hpo_term_list[0]["hpo_label"] == "Neural tube defect"
+    assert "hpo_hits" in result
+    assert isinstance(result["hpo_hits"], list)

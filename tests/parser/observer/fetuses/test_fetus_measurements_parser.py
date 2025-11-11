@@ -5,8 +5,11 @@ Unit tests for FetusMeasurementsParser and MeasurementsData
 """
 
 import pytest
-from prenatalppkt.dto.fetuses.measurements_data import Measurement, MeasurementsData
-from prenatalppkt.parser.observer.fetus.fetus_measurements_parser import (
+from prenatalppkt.dto.observer.fetuses.measurements_data import (
+    Measurement,
+    MeasurementsData,
+)
+from prenatalppkt.parser.observer.fetuses.fetuses_measurements_parser import (
     FetusMeasurementsParser,
 )
 

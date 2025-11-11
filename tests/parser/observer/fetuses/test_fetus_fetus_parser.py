@@ -1,5 +1,5 @@
 import pytest
-from prenatalppkt.parser.observer.fetus import FetusFetusParser
+from prenatalppkt.parser.observer.fetuses import FetusFetusParser
 
 
 @pytest.fixture
