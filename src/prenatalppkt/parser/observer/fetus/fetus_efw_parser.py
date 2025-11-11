@@ -6,7 +6,7 @@ Parser for the 'efws' section of the fetus JSON, handling Estimated Fetal Weight
 
 import logging
 import typing
-from prenatalppkt.dto.fetuses.efw_data import EfwEntry, FetusEfwData
+from prenatalppkt.dto.observer.fetuses.efw_data import EfwEntry, FetusEfwData
 
 logger = logging.getLogger(__name__)
 

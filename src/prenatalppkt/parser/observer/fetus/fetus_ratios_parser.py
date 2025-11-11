@@ -7,7 +7,7 @@ Each ratio includes its calculated percentile, range, and report flag.
 
 import logging
 import typing
-from prenatalppkt.dto.fetuses.ratios_data import FetusRatiosData, Ratio
+from prenatalppkt.dto.observer.fetuses.ratios_data import FetusRatiosData, Ratio
 
 logger = logging.getLogger(__name__)
 
