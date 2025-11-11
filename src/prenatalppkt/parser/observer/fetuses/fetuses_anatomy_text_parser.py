@@ -1,7 +1,6 @@
 import logging
 import typing
 from prenatalppkt.hpo import HpoConceptRecognizer
-from prenatalppkt.dto import FetusData
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +11,7 @@ class FetusAnatomyTextParser:
     def __init__(self, hcr: HpoConceptRecognizer):
         self._hcr = hcr
 
-    def parse(self, json_data: typing.Dict[str, object]) -> FetusData:
+    def parse(self, json_data: typing.Dict[str, object]) -> typing.Dict[str, object]:
         """
         Parse the 'anatomy_text' subfield to extract HPO terms.
 
@@ -20,7 +19,7 @@ class FetusAnatomyTextParser:
             json_data: The fetus-level dictionary containing 'anatomy_text'
 
         Returns:
-            FetusData: with extracted HPO terms
+            Dict with 'hpo_hits' key containing list of HPO terms
         """
         if "anatomy_text" not in json_data:
             raise ValueError("did not find 'anatomy_text' in fetus")
@@ -31,4 +30,4 @@ class FetusAnatomyTextParser:
         for hpo_hit in hpo_hits:
             logger.debug("HPO hit: %s", hpo_hit)
 
-        return FetusData(hpo_term_list=hpo_hits)
+        return {"hpo_hits": hpo_hits}

@@ -1,4 +1,3 @@
-from .exam_data_parser import ExamDataParser
-from .fetus_parser import FetusParser
+from .fetuses_parser import FetusesParser
 
-__all__ = ["ExamDataParser", "FetusParser"]
+__all__ = ["FetusesParser"]

@@ -1,5 +1,5 @@
 import pytest
-from prenatalppkt.parser.observer.fetus.fetus_efw_parser import FetusEfwParser
+from prenatalppkt.parser.observer.fetuses.fetuses_efw_parser import FetusEfwParser
 
 sample_efw_json = {
     "efws": [

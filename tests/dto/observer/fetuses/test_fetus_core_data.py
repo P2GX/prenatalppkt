@@ -2,7 +2,7 @@
 Unit tests for FetusCoreData DTO.
 """
 
-from prenatalppkt.dto.fetuses.fetus_core_data import FetusCoreData
+from prenatalppkt.dto.observer.fetuses.fetus_core_data import FetusCoreData
 
 
 def test_fetus_core_data_repr():
