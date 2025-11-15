@@ -1,7 +1,12 @@
+"""
+src/prenatalppkt/hpo/hp_term.py
+"""
+
 import hpotk
 import pandas as pd
 import typing
 from pyphetools.pp.v202 import TimeElement as TimeElement202
+from prenatalppkt.hpo.simple_term import SimpleTerm
 
 
 class HpTerm:
@@ -213,6 +218,21 @@ class HpTerm:
         hpo_id = hpotk_term.identifier.value
         hpo_label = hpotk_term.name
         return HpTerm(hpo_id=hpo_id, label=hpo_label)
+
+    # Add this method to HpTerm class:
+    def to_simple_term(self) -> SimpleTerm:
+        """
+        Convert this HpTerm to a lightweight SimpleTerm.
+
+        Returns:
+            SimpleTerm with just ID, label, and exclusion status
+        """
+        return SimpleTerm(
+            hpo_id=self._id,
+            hpo_label=self._label,
+            excluded=not self._observed,
+            gestational_age=None,
+        )
 
 
 class HpTermBuilder:
