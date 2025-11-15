@@ -1,6 +1,13 @@
+"""
+src/prenatalppkt/parser/observer/fetuses/fetuses_anatomy_text_parser.py
+
+Parses the 'anatomy_text' subfield within a fetus JSON object.
+"""
+
 import logging
 import typing
 from prenatalppkt.hpo import HpoConceptRecognizer
+from prenatalppkt.hpo.simple_term import SimpleTerm
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +26,17 @@ class FetusAnatomyTextParser:
             json_data: The fetus-level dictionary containing 'anatomy_text'
 
         Returns:
-            Dict with 'hpo_hits' key containing list of HPO terms
+            Dict with 'hpo_hits' key containing list of SimpleTerm objects
         """
         if "anatomy_text" not in json_data:
             raise ValueError("did not find 'anatomy_text' in fetus")
 
         anatomy_text = json_data.get("anatomy_text")
-        hpo_hits = self._hcr.parse(anatomy_text)
+        simple_hits: typing.List[SimpleTerm] = self._hcr.parse(
+            anatomy_text
+        )  # Changed from parse_cell
 
-        for hpo_hit in hpo_hits:
-            logger.debug("HPO hit: %s", hpo_hit)
+        for hit in simple_hits:
+            logger.debug("HPO hit: %s", hit)
 
-        return {"hpo_hits": hpo_hits}
+        return {"hpo_hits": simple_hits}  # Returns SimpleTerm objects, not dicts
