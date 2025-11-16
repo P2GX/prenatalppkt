@@ -5,11 +5,14 @@ import typing
 import re
 
 
-
 N_FETUSES_REGEX = r"Number of fetuses: (\d)"
 
 
 class ViewpointPregnancyParser:
+    """
+    Parser for prengancy information such as the number of fetuses
+    """
+
     def __init__(self, lines: typing.List[str]):
         text = ";".join([line for line in lines if len(line.strip()) > 0])
         if "Singleton" in text:
@@ -21,4 +24,10 @@ class ViewpointPregnancyParser:
             raise ValueError(f"Did not understand pregnancy line {text}")
 
     def n_pregnancies(self) -> int:
+        """
+        Return the integer number of pregnancies
+
+        Returns:
+            int: _description_
+        """
         return self._n_pregnancies

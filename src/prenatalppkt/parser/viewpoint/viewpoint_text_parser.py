@@ -3,8 +3,10 @@
 import typing
 from pathlib import Path
 from collections import defaultdict
-
+import logging
 from prenatalppkt.parser.viewpoint.viewpoint_text_sections import SectionHeader
+
+logger = logging.getLogger(__name__)
 
 
 class ViewpointTextParse:
@@ -37,7 +39,7 @@ class ViewpointTextParse:
                 return False
         return len(line) >= 3
 
-    # TODO: @VarenyaJ, check if the section headers are always succeeded by at least three equal signs and then a newline
+    # TODO @VarenyaJ, check if the section headers are always succeeded by at least three equal signs and then a newline
 
     def _get_sections(
         self, lines: typing.List[str]
@@ -56,10 +58,10 @@ class ViewpointTextParse:
         ]
         # for i in indx: print(i)
         block_start_idx = [i - 1 for i in indx]
-        print(block_start_idx)
+        logger.debug("block_start_idx: &s", block_start_idx)
         block_end_idx = [i for i in block_start_idx[1:]]
         block_end_idx.append(len(lines))
-        print(block_end_idx)
+        logger.debug("block_end_idx: &s", block_end_idx)
         section_d = defaultdict(list)
         for i in range(len(block_start_idx)):
             s = block_start_idx[i]

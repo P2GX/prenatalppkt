@@ -34,6 +34,18 @@ class SectionHeader(Enum):
 
     @classmethod
     def from_string(cls, s: str) -> "SectionHeader":
+        """
+        Return teh enum member whose value matches the given string
+
+        Args:
+            s (str): _description_
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            SectionHeader: _description_
+        """
         for member in cls:
             if member.value == s:
                 return member
