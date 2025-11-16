@@ -3,7 +3,7 @@
 
 import typing
 
-from prenatalppkt.constants import ABNORMAL_BPD_TERM, DECREASED_BPD_TERM, DEFAULT_BPD_HIGH, DEFAULT_BPD_LOW, INCREASED_BPD_TERM
+from prenatalppkt.constants import ABNORMAL_BPD_TERM, ABNORMAL_OFD_TERM, DECREASED_BPD_TERM, DECREASED_OFD_TERM, DEFAULT_BPD_HIGH, DEFAULT_BPD_LOW, DEFAULT_OFD_LOW, INCREASED_BPD_TERM, INCREASED_OFD_TERM
 from prenatalppkt.measurements.percentile_range import PercentileRange
 from prenatalppkt.measurements.reference_range import ReferenceRange
 from prenatalppkt.measurements.term_bin import TermBin
@@ -15,9 +15,12 @@ class ViewpointFetalBiometryParser:
     def __init__(self, lines: typing.List[str]) -> None:
         lines = [line for line in lines if len(line.strip()) > 0]
         self._bpd = None
+        self._ofd = None
         for line in lines:
             if line.strip().startswith("BPD"):
                 self._bpd = self._parse_bpd_line(line.strip())
+            elif line.strip().startswith("OFD"):
+                self._ofd = self._parse_ofd_line(line.strip())
 
 
 
@@ -58,6 +61,18 @@ class ViewpointFetalBiometryParser:
         if method not in acceptable_methods:
             raise ValueError(f"Did not recognize method {method} in line {line}")
         return method
+    
+    def _get_range_and_description(self, line: str, parts: typing.List[str]) -> typing.Tuple[PercentileRange, str]:
+        if len(parts) != 7:
+            raise ValueError(f"Could not parse line {line} -- got parts {parts}")
+        self._check_field(line, parts, "mm", 2)
+        value = f"{parts[1]} {parts[2]}"
+        ga = self._get_ga(line=line, parts=parts, week=3, day=4)
+        perc = self._get_percentile_str(line=line, field=parts[5])
+        method = self._get_method(line=line, field=parts[6])
+        mes_res = self.get_percentile_range(perc=perc)
+        description = f"{value} {perc}% at {ga} ({method})"
+        return mes_res, description
 
     def _parse_bpd_line(self, line: str) -> TermBin:
         """
@@ -66,16 +81,8 @@ class ViewpointFetalBiometryParser:
         ['BPD', '87.1', 'mm', '35w', '1d', '89%', 'Hadlock']
         """
         parts = line.split()  
-        if len(parts) != 7:
-            raise ValueError(f"Could not parse line {line} -- got parts {parts}")
         self._check_field(line, parts, "BPD", 0)
-        self._check_field(line, parts, "mm", 2)
-        value = f"{parts[1]} {parts[2]}"
-        ga = self._get_ga(line=line, parts=parts, week=3, day=4)
-        perc = self._get_percentile_str(line=line, field=parts[5])
-        method = self._get_method(line=line, field=parts[6])
-        mes_res = self.get_percentile_range(perc=perc)
-        description = f"{value} {perc}% at {ga} ({method})"
+        mes_res, description = self._get_range_and_description(line=line, parts=parts)
         if mes_res <= DEFAULT_BPD_LOW:
             return TermBin.from_term(range=mes_res, term=DECREASED_BPD_TERM, normal=False, description=description)
         elif mes_res >= DEFAULT_BPD_HIGH:
@@ -84,9 +91,31 @@ class ViewpointFetalBiometryParser:
             return TermBin.from_term(range=mes_res, term=ABNORMAL_BPD_TERM, normal=True, description=description)
         
 
+    def _parse_ofd_line(self, line: str) -> TermBin:
+        """
+        The lines contain an arbitrary amount of whitespace characters
+        We use split to get the components
+        ['OFD', '103.3', 'mm', '30w', '3d', '2%', 'Nicolaides']
+        """
+        parts = line.split()  
+        self._check_field(line, parts, "OFD", 0)
+        perc_range, description = self._get_range_and_description(line=line, parts=parts)
+        if perc_range <= DEFAULT_OFD_LOW:
+            return TermBin.from_term(range=perc_range, term=DECREASED_OFD_TERM, normal=False, description=description)
+        elif perc_range >= DEFAULT_BPD_HIGH:
+            return TermBin.from_term(range=perc_range, term=INCREASED_OFD_TERM, normal=False, description=description)
+        else:
+            return TermBin.from_term(range=perc_range, term=ABNORMAL_OFD_TERM, normal=True, description=description)
+
+        
+
     @property
     def bpd(self) -> typing.Optional[TermBin]:
         return self._bpd
+    
+    @property
+    def ofd(self) -> typing.Optional[TermBin]:
+        return self._ofd
             
 
 

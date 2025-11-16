@@ -32,9 +32,15 @@ def lines() -> typing.List[str]:
  " "]
     return lines
 
-def test_ctor(lines: typing.List[str]):
+def test_bpd(lines: typing.List[str]):
     parser = ViewpointFetalBiometryParser(lines=lines)
     assert parser is not None
     bpd = parser.bpd
     assert bpd is not None
     assert not bpd.normal
+
+def test_ofd(lines: typing.List[str]):
+    parser = ViewpointFetalBiometryParser(lines=lines)
+    ofd = parser.ofd
+    assert ofd is not None
+    assert not ofd.normal
