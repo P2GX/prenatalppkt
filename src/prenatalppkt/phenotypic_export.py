@@ -11,7 +11,7 @@ from prenatalppkt.biometry_reference import FetalGrowthPercentiles
 from prenatalppkt.biometry_type import BiometryType
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurement_eval import MeasurementEvaluation
-from prenatalppkt.measurements.measurement_result import MeasurementResult
+from prenatalppkt.measurements.percentile_range import PercentileRange
 from prenatalppkt.term_observation import TermObservation
 
 logger = logging.getLogger(__name__)
@@ -133,7 +133,7 @@ class PhenotypicExporter:
     def evaluate_and_export(
         self,
         measurement_type: BiometryType,
-        measurement_result: MeasurementResult,
+        measurement_result: PercentileRange,
         gestational_age: GestationalAge,
         normal_bins: Optional[Set[str]] = None,
     ) -> Dict[str, object]:
@@ -175,7 +175,7 @@ class PhenotypicExporter:
     def export_feature(
         self,
         measurement_type: BiometryType,
-        measurement_result: MeasurementResult,
+        measurement_result: PercentileRange,
         gestational_age: GestationalAge,
         normal_bins: Optional[Set[str]] = None,
     ) -> Dict[str, object]:
