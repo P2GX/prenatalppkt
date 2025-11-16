@@ -1,6 +1,8 @@
+from pathlib import Path
 from prenatalppkt.parser.viewpoint.sections.viewpoint_impression_parse import (
     ViewpointImpressionParser,
 )
+from prenatalppkt.hpo.simple_term import SimpleTerm
 
 
 IMPRESSION_LINES = [
@@ -39,8 +41,21 @@ EXPECTED_SENTENCES = [
 def test_viewpoint_impression_parser():
     parser = ViewpointImpressionParser(IMPRESSION_LINES)
 
-    # Sentence-by-sentence correctness
     assert parser.paragraphs == EXPECTED_SENTENCES
-
-    # Flattened impression correctness
     assert parser.impression == " ".join(EXPECTED_SENTENCES)
+
+
+def test_viewpoint_impression_parser_hpo_terms_from_file(hpo_cr):
+    data_path = (
+        Path(__file__).resolve().parent.parent / "data" / "viewpoint_text_test.txt"
+    )
+    lines = data_path.read_text().splitlines()
+
+    parser = ViewpointImpressionParser(lines, hpo_cr)
+
+    expected = SimpleTerm(hpo_id="HP:0012418", hpo_label="Hypoxemia")
+    found_ids = {t.hpo_id for t in parser.hpo_terms}
+
+    assert expected.hpo_id in found_ids, (
+        f"Expected {expected.hpo_id} not found. Extracted: {parser.hpo_terms}"
+    )

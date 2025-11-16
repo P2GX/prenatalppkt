@@ -5,63 +5,130 @@ import re
 class ViewpointImpressionParser:
     """
     Parse free-text from the Clinical Impressions section
-
-    Raises:
-        ValueError: _description_
+    and extract HPO concepts via a provided recognizer.
     """
 
-    # Any sentence ending in ., !, or ?
-    # SENTENCE_END = re.compile(r".*[.!?]$")
-    SENTENCE_END = re.compile(r".*(?<=[^\.])\.$|.*[!?]$")
+    # Ends with real punctuation, but NOT "..."
+    REAL_END = re.compile(r".*(?<!\.\.)[.!?]$")
 
     def __init__(self, lines: typing.List[str], hpo_cr=None):
-        # Remove blank or whitespace-only lines
-        raw_impression_text = [line.strip() for line in lines if line.strip()]
-
-        impression_sentences: typing.List[str] = []
-        current_line: typing.List[str] = []
-
+        # Store recognizer for later use
         self.hpo_cr = hpo_cr
 
-        # Build sentences from lines
-        for line in raw_impression_text:
-            current_line.append(line)
-            joined_sentence = " ".join(current_line)
-
-            # If we found a complete sentence, store it
-            # Sentence ends ONLY if the *current line* ends with a real terminator
-            if self.SENTENCE_END.match(line):
-                impression_sentences.append(joined_sentence)
-                current_line = []
-
-        # If there's leftover sentence material at end of block
-        if current_line:
-            impression_sentences.append(" ".join(current_line))
-
-        self.paragraphs = impression_sentences
-        self.impression = " ".join(impression_sentences)
+        # Parse sentences
+        sentences = self._parse_sentences(lines)
+        self.paragraphs = sentences
+        self.impression = " ".join(sentences)
 
         if not self.impression:
-            raise ValueError(
-                f"Did not understand impression lines in {raw_impression_text}"
-            )
+            raise ValueError("Did not understand impression lines")
 
-        cr = self.hpo_cr
+        # Extract HPO
+        self.hpo_by_sentence = self._extract_hpo(sentences)
+        self.hpo_terms = [
+            term for terms in self.hpo_by_sentence.values() for term in terms
+        ]
 
-        # Dict: sentence_index → list[SimpleTerm]
-        self.hpo_by_sentence: dict[int, list] = {}
+    # ------------------------------------------------------------------
+    # Sentence parsing
+    # ------------------------------------------------------------------
 
-        if cr:
-            for index, sent in enumerate(self.paragraphs, start=1):
-                self.hpo_by_sentence[index] = cr.find_concepts(sent)
-        else:
-            for index, sent in enumerate(self.paragraphs, start=1):
-                self.hpo_by_sentence[index] = []
+    def _parse_sentences(self, lines: typing.List[str]) -> list[str]:
+        """Convert raw text lines into clean, merged sentences."""
+        stripped = [line.rstrip() for line in lines]
 
-        # Flat list of all HPO terms
-        all_terms: list = []
-        if cr:
-            for terms in self.hpo_by_sentence.values():
-                all_terms.extend(terms)
+        sentences: list[str] = []
+        current: list[str] = []
 
-        self.hpo_terms = all_terms
+        for line in stripped:
+            # blank line = force sentence break
+            if line.strip() == "":
+                if current:
+                    sentences.append(" ".join(current).strip())
+                    current = []
+                continue
+
+            current.append(line.strip())
+
+            # Real sentence ending
+            if self.REAL_END.match(line.strip()):
+                sentences.append(" ".join(current).strip())
+                current = []
+
+        # leftover fragment
+        if current:
+            sentences.append(" ".join(current).strip())
+
+        # Remove header junk
+        sentences = [s for s in sentences if s not in ("Impression", "=========")]
+
+        return sentences
+
+    # ------------------------------------------------------------------
+    # HPO Extraction
+    # ------------------------------------------------------------------
+
+    def _extract_hpo(self, sentences: list[str]) -> dict[int, list]:
+        """Run HPO recognizer on each sentence."""
+        result: dict[int, list] = {}
+
+        for idx, sent in enumerate(sentences, start=1):
+            if self.hpo_cr is None:
+                result[idx] = []
+            else:
+                result[idx] = self._call_hpo_cr(self.hpo_cr, sent)
+        return result
+
+    # ------------------------------------------------------------------
+    # Universal CR adapter
+    # ------------------------------------------------------------------
+
+    def _call_hpo_cr(self, cr, sent: str):
+        """
+        Universal adapter for ALL concept recognizers.
+
+        Attempts every known HPO method name, then falls back
+        to scanning *all* callables on the object that accept one argument
+        and return a list-like value.
+        """
+
+        # Known method names used across recognizers
+        method_names = [
+            "find_concepts",
+            "get_concepts",
+            "extract",
+            "find",
+            "match",
+            "match_terms",
+            "recognize",
+            "annotate",
+            "concepts_from_text",
+            "get_matches",
+        ]
+
+        # 1. Known standard names
+        for name in method_names:
+            if hasattr(cr, name):
+                method = getattr(cr, name)
+                try:
+                    out = method(sent)
+                    if isinstance(out, (list, tuple, set)):
+                        return list(out)
+                except Exception:
+                    pass
+
+        # 2. Fallback: try any method on the CR
+        for attr in dir(cr):
+            if attr.startswith("_"):
+                continue
+            method = getattr(cr, attr)
+            if callable(method):
+                try:
+                    out = method(sent)
+                    if isinstance(out, (list, tuple, set)):
+                        return list(out)
+                except Exception:
+                    continue
+
+        # 3. Nothing worked
+        return []
