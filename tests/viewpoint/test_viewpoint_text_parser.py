@@ -3,7 +3,7 @@ from pathlib import Path
 from prenatalppkt.parser.viewpoint.viewpoint_text_parser import ViewpointTextParse
 
 parent_dir = Path(__file__).parent.parent
-viewpoint_file = parent_dir / "data" / "viewpoint_1.txt"
+viewpoint_file = parent_dir / "data" / "viewpoint_text_1-8.txt"
 
 
 def test_ctor():
