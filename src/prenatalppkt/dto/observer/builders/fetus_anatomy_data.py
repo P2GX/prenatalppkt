@@ -7,6 +7,7 @@ Anatomy findings and clinical impressions grouping.
 from dataclasses import dataclass
 from typing import Any, List, Optional
 from prenatalppkt.hpo.simple_term import SimpleTerm
+from prenatalppkt.dto.observer.fetuses.fetus_impression_data import FetusImpressionData
 
 
 @dataclass
@@ -24,7 +25,7 @@ class FetusAnatomyData:
     hpo_terms: List[SimpleTerm]
     anatomy_text: Optional[str] = None
     anatomy: Optional[Any] = None
-    impression: Optional[Any] = None
+    impression: Optional[FetusImpressionData] = None
 
     def __repr__(self) -> str:
         return (
