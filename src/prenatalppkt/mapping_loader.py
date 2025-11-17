@@ -46,8 +46,9 @@ class BiometryMappingLoader:
             bins: List[TermBin] = []
 
             for range_dict in range_list:
-                prange = PercentileRange.from_min_max(int(range_dict["min"]),
-                    int(range_dict["max"]))
+                prange = PercentileRange.from_min_max(
+                    int(range_dict["min"]), int(range_dict["max"])
+                )
 
                 term_bin = TermBin(
                     range=prange,

@@ -33,8 +33,6 @@ def test_load_mappings():
     assert first_bin.hpo_label == "Microcephaly"
     assert first_bin.normal is False
 
-    
-
 
 def test_load_nonexistent_file():
     """Test error handling for missing file."""

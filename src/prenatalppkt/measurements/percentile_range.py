@@ -3,6 +3,7 @@ import functools
 
 from prenatalppkt.measurements.percentile import Percentile
 
+
 @functools.total_ordering
 class PercentileRange:
     """
@@ -95,9 +96,7 @@ class PercentileRange:
         """
         Percentile bin for between 90th and 95th Percentiles.
         """
-        return PercentileRange(
-            lower=Percentile.Ninetieth, upper=Percentile.Ninetyfifth
-        )
+        return PercentileRange(lower=Percentile.Ninetieth, upper=Percentile.Ninetyfifth)
 
     @staticmethod
     def between_95p_97p() -> "PercentileRange":
@@ -144,9 +143,28 @@ class PercentileRange:
         lower = self._lower.name if self._lower else "None"
         upper = self._upper.name if self._upper else "None"
         return f"MeasurementResult(lower={lower}, upper={upper})"
-    
+
     @staticmethod
     def evaluate(perc: float) -> "PercentileRange":
+        """
+        Return the percentile interval (as a PercentileRange) corresponding to
+        a numeric percentile value.
+
+        Parameters
+        ----------
+        perc : float
+            Percentile value between 0 and 100.
+
+        Returns
+        -------
+        PercentileRange
+            The matching percentile bin.
+
+        Raises
+        ------
+        ValueError
+            If the percentile is outside the 0-100 range.
+        """
         if perc < 3.0:
             return PercentileRange.below_3p()
         elif perc < 5.0:
@@ -165,7 +183,7 @@ class PercentileRange:
             return PercentileRange.above_97p()
         else:
             raise ValueError(f"Invalid percentile: {perc}")
-        
+
     def _sort_key(self) -> float:
         """
         Defines a numeric key for sorting / comparison.
@@ -174,7 +192,7 @@ class PercentileRange:
         if self._upper is None:
             return 100.1
         return self._upper.value_numeric
-    
+
     def __lt__(self, other):
         if not isinstance(other, PercentileRange):
             return NotImplemented
@@ -183,13 +201,30 @@ class PercentileRange:
     def __eq__(self, other):
         if not isinstance(other, PercentileRange):
             return NotImplemented
-        return (
-            self._lower == other._lower and
-            self._upper == other._upper
-        )
-    
+        return self._lower == other._lower and self._upper == other._upper
+
     @staticmethod
     def from_min_max(min: int, max: int) -> "PercentileRange":
+        """
+        Construct a PercentileRange from explicit integer percentile bounds. This helper converts known (min, max) percentile intervals from the reference tables into the corresponding PercentileRange constructor (e.g., (0, 3) -> below_3p(), (10, 50) -> between_10p_50p()).
+
+        Parameters
+        ----------
+        min : int
+            Lower percentile bound.
+        max : int
+            Upper percentile bound.
+
+        Returns
+        -------
+        PercentileRange
+            The matching percentile interval.
+
+        Raises
+        ------
+        ValueError
+            If the (min, max) pair does not correspond to a supported percentile bin.
+        """
         if min == 0 and max == 3:
             return PercentileRange.below_3p()
         elif min == 3 and max == 5:

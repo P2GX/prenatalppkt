@@ -6,8 +6,6 @@ from prenatalppkt.hpo.simple_term import SimpleTerm
 from prenatalppkt.measurements.percentile_range import PercentileRange
 
 
-
-
 class TermBin:
     """
     HPO term mapped to a percentile range.
@@ -26,7 +24,7 @@ class TermBin:
         hpo_id: str,
         hpo_label: str,
         normal: bool,
-        description: str = ""
+        description: str = "",
     ):
         self.range = range
         self.hpo_id = hpo_id
@@ -36,22 +34,56 @@ class TermBin:
 
     @staticmethod
     def from_term(
-        range: PercentileRange,
-        term: SimpleTerm,
-        normal: bool, 
-        description: str = ""
+        range: PercentileRange, term: SimpleTerm, normal: bool, description: str = ""
     ) -> "TermBin":
-        return TermBin(range=range, 
-                       hpo_id=term.hpo_id,
-                       hpo_label=term.hpo_label,
-                       normal=normal,
-                       description=description)
+        """
+        Create a TermBin from a SimpleTerm and percentile range.
+
+        Parameters
+        ----------
+        range : PercentileRange
+            Percentile interval covered by this bin.
+        term : SimpleTerm
+            HPO term providing ID and label.
+        normal : bool
+            Whether this bin represents a normal finding.
+        description : str, optional
+            Free-text description of the measurement context.
+
+        Returns
+        -------
+        TermBin
+            The constructed term bin.
+        """
+        return TermBin(
+            range=range,
+            hpo_id=term.hpo_id,
+            hpo_label=term.hpo_label,
+            normal=normal,
+            description=description,
+        )
 
     def fits(self, percentile: float) -> bool:
+        """
+        Return True if a percentile value falls within this bin's range.
+
+        Parameters
+        ----------
+        percentile : float
+            Raw percentile value.
+
+        Returns
+        -------
+        bool
+            Whether the percentile is contained in this bin.
+        """
         return self.range.contains(percentile)
 
     @property
     def category(self) -> str:
+        """
+        Return a coarse-grained label describing the percentile interval (e.g., 'normal_term', 'lower_extreme_term'). This category is used when grouping term bins for interpretation.
+        """
         r = self.range
         if r.max_percentile <= 3:
             return "lower_extreme_term"
@@ -80,9 +112,9 @@ class TermBin:
         if not isinstance(other, TermBin):
             return False
         return (
-            self.range == other.range and
-            self.hpo_id == other.hpo_id and
-            self.hpo_label == other.hpo_label and
-            self.normal == other.normal and
-            self.description == other.description
+            self.range == other.range
+            and self.hpo_id == other.hpo_id
+            and self.hpo_label == other.hpo_label
+            and self.normal == other.normal
+            and self.description == other.description
         )

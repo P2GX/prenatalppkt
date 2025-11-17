@@ -2,10 +2,8 @@
 test_term_bin.py - Tests for PercentileRange and TermBin
 """
 
-import pytest
 from prenatalppkt.measurements.percentile import Percentile
 from prenatalppkt.measurements.term_bin import PercentileRange, TermBin
-
 
 
 class TestTermBin:
