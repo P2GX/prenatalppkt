@@ -2,3 +2,12 @@ Impression
 =========
  
 Hypoxemia
+
+Indication
+========
+ 
+Fetal Growth Restriction. Growth/Doppler
+Fetal CNS Malformation or Damage (Unspecified)
+Malformation of Placenta, Unspecified
+Fetal Growth Restriction
+Advanced Maternal Age (AMA), Multigravida
