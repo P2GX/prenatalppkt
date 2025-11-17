@@ -15,7 +15,7 @@ all defined measurement ranges (<=3rd, 3rd-5th, 5th-10th, 10th-50th, 50th-90th,
 import pytest
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.reference_range import ReferenceRange
-from prenatalppkt.measurements.measurement_result import MeasurementResult
+from prenatalppkt.measurements.percentile_range import PercentileRange
 
 
 @pytest.fixture
@@ -33,14 +33,14 @@ def reference_range() -> ReferenceRange:
 @pytest.mark.parametrize(
     "value, expected_method",
     [
-        (140.0, MeasurementResult.below_3p),
-        (146.0, MeasurementResult.between_3p_5p),
-        (149.0, MeasurementResult.between_5p_10p),
-        (155.0, MeasurementResult.between_10p_50p),
-        (170.0, MeasurementResult.between_50p_90p),
-        (176.0, MeasurementResult.between_90p_95p),
-        (179.0, MeasurementResult.between_95p_97p),
-        (185.0, MeasurementResult.above_97p),
+        (140.0, PercentileRange.below_3p),
+        (146.0, PercentileRange.between_3p_5p),
+        (149.0, PercentileRange.between_5p_10p),
+        (155.0, PercentileRange.between_10p_50p),
+        (170.0, PercentileRange.between_50p_90p),
+        (176.0, PercentileRange.between_90p_95p),
+        (179.0, PercentileRange.between_95p_97p),
+        (185.0, PercentileRange.above_97p),
     ],
 )
 def test_reference_range_bin_mapping(
