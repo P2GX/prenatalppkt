@@ -7,15 +7,15 @@
 ```
 exam
   - patient, ob_gyn_history, exam metadata
-  - fetuses[]
-    - fetus (core data: fetus_number, presentation, gender)
-    - measurements[] (AC, BPD, HC, FL with percentiles)
-    - efws[] (EFW calculations with percentiles)
-    - ratios[] (HC/AC, FL/BPD, etc.)
-    - anatomy[] (structured anatomy findings)
-    - fetalvessels (doppler data)
-    - impression (fetus_anomalies[])
-    - other blocks (placenta, amniotic fluid, etc.)
+- fetuses[]
+  - fetus (core data: fetus_number, presentation, gender)
+  - measurements[] (AC, BPD, HC, FL with percentiles)
+  - efws[] (EFW calculations with percentiles)
+  - ratios[] (HC/AC, FL/BPD, etc.)
+  - anatomy[] (structured anatomy findings)
+  - fetalvessels (doppler data)
+  - impression (fetus_anomalies[])
+  - other blocks (placenta, amniotic fluid, etc.)
 ```
 
 **Units**: Predominantly centimeters (cm) for linear measurements, grams (g) for weight.
@@ -27,7 +27,7 @@ exam
 ```
 Indication
 ========
-[clinical reason text]
+[clinical reason ingtext]
 
 History
 ======
