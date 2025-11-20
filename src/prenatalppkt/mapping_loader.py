@@ -46,9 +46,8 @@ class BiometryMappingLoader:
             bins: List[TermBin] = []
 
             for range_dict in range_list:
-                prange = PercentileRange(
-                    min_percentile=float(range_dict["min"]),
-                    max_percentile=float(range_dict["max"]),
+                prange = PercentileRange.from_min_max(
+                    int(range_dict["min"]), int(range_dict["max"])
                 )
 
                 term_bin = TermBin(
@@ -59,7 +58,7 @@ class BiometryMappingLoader:
                 )
                 bins.append(term_bin)
 
-            bins.sort(key=lambda b: b.range.min_percentile)
+            bins.sort(key=lambda b: b.range)
 
             processed[measurement_type] = bins
             logger.debug("Loaded %d bins for %s", len(bins), measurement_type)

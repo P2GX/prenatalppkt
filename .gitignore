@@ -218,11 +218,13 @@ src/*/_version.py
 */*/.DS_Store
 */*/*/.DS_Store
 
-# HPO file
+# HPO and datas file
 data/hp.jsonout.txt
 prenatalppkt-about.txt
 prenatalppkt-about.sh
 temp.ipynb
-Apple_Sally_pretty.json
 hp.json
 explore-observer.ipynb
+viewpoint_*.txt
+*pretty.json
+Discrete*.txt

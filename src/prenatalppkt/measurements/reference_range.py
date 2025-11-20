@@ -1,6 +1,6 @@
 import typing
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.measurement_result import MeasurementResult
+from prenatalppkt.measurements.percentile_range import PercentileRange
 
 
 class ReferenceRange:
@@ -39,7 +39,7 @@ class ReferenceRange:
         """Return the percentile thresholds as a list (3rd-97th inclusive)."""
         return self._percentile_thresholds
 
-    def evaluate(self, value: float) -> MeasurementResult:
+    def evaluate(self, value: float) -> PercentileRange:
         """
         Compare a measurement value against percentile thresholds and return a
         corresponding MeasurementResult.
@@ -52,18 +52,18 @@ class ReferenceRange:
 
         p = self._percentile_thresholds
         if value <= p[0]:
-            return MeasurementResult.below_3p()
+            return PercentileRange.below_3p()
         elif value <= p[1]:
-            return MeasurementResult.between_3p_5p()
+            return PercentileRange.between_3p_5p()
         elif value <= p[2]:
-            return MeasurementResult.between_5p_10p()
+            return PercentileRange.between_5p_10p()
         elif value <= p[3]:
-            return MeasurementResult.between_10p_50p()
+            return PercentileRange.between_10p_50p()
         elif value <= p[4]:
-            return MeasurementResult.between_50p_90p()
+            return PercentileRange.between_50p_90p()
         elif value <= p[5]:
-            return MeasurementResult.between_90p_95p()
+            return PercentileRange.between_90p_95p()
         elif value <= p[6]:
-            return MeasurementResult.between_95p_97p()
+            return PercentileRange.between_95p_97p()
         else:
-            return MeasurementResult.above_97p()
+            return PercentileRange.above_97p()

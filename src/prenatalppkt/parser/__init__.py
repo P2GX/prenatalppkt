@@ -1,3 +1,3 @@
-from . import observer
+from . import observer, viewpoint
 
-__all__ = ["observer"]
+__all__ = ["observer", "viewpoint"]

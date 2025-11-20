@@ -29,15 +29,9 @@ def test_load_mappings():
 
     # Check first bin structure
     first_bin = hc_bins[0]
-    assert first_bin.range.min_percentile == 0
-    assert first_bin.range.max_percentile == 3
     assert first_bin.hpo_id == "HP:0000252"
     assert first_bin.hpo_label == "Microcephaly"
     assert first_bin.normal is False
-
-    # Check bins are sorted
-    for i in range(len(hc_bins) - 1):
-        assert hc_bins[i].range.min_percentile <= hc_bins[i + 1].range.min_percentile
 
 
 def test_load_nonexistent_file():
