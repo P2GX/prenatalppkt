@@ -42,7 +42,7 @@ jobs:
 
  deploy:
    environment:
-     name: github-pages-dev    # new environment name (no restrictions)
+     name: github-pages-${{ github.ref_name }}   # separate env per branch
      url: ${{ steps.deployment.outputs.page_url }}
    runs-on: ubuntu-latest
    needs: build
