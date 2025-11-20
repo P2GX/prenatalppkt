@@ -1,17 +1,23 @@
-name: Deploy MkDocs to GitHub Pages
+name: Deploy MkDocs (GitHub Pages Actions)
 on:
  push:
-   branches: [ main, develop, vj/cleandocs ]
+   branches:
+     - main
+     - develop
+     - vj/cleandocs
 
 permissions:
- contents: write        # allows mkdocs deploy to push pages
+ contents: read
  pages: write
  id-token: write
 
-jobs:
- build-deploy:
-   runs-on: ubuntu-latest
+concurrency:
+ group: "pages"
+ cancel-in-progress: false
 
+jobs:
+ build:
+   runs-on: ubuntu-latest
    steps:
      - name: Checkout repository
        uses: actions/checkout@v4
@@ -21,19 +27,26 @@ jobs:
        with:
          python-version: '3.11'
 
-     - name: Install MkDocs + plugins
+     - name: Install dependencies
        run: pip install .[docs]
 
-     # Build MkDocs site; output to branch-specific subfolder
-     - name: Build docs
+     - name: Build MkDocs site
        run: |
          BRANCH=${GITHUB_REF_NAME}
-         SITE_DIR="site/${BRANCH}"
-         mkdocs build --site-dir "${SITE_DIR}"
+         mkdocs build --site-dir "site/${BRANCH}"
 
-     # Deploy with built-in token; no PAT or deploy key required
-     - name: Deploy to GitHub Pages
-       uses: peaceiris/actions-gh-pages@v4
+     - name: Upload build artifact
+       uses: actions/upload-pages-artifact@v3
        with:
-         github_token: ${{ secrets.GITHUB_TOKEN }}
-         publish_dir: ./site
+         path: ./site
+
+ deploy:
+   environment:
+     name: github-pages
+     url: ${{ steps.deployment.outputs.page_url }}
+   runs-on: ubuntu-latest
+   needs: build
+   steps:
+     - name: Deploy to GitHub Pages
+       id: deployment
+       uses: actions/deploy-pages@v4
