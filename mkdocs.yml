@@ -28,7 +28,6 @@ theme:
       primary: teal
       accent: lime
 
-# --- Added Mermaid and README include support ---
 plugins:
   - search
   - include-markdown
@@ -39,7 +38,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          import:
+          inventories:
             - https://docs.python.org/3/objects.inv
             - https://thejacksonlaboratory.github.io/hpo-toolkit/stable/objects.inv
             - https://pandas.pydata.org/docs/objects.inv
@@ -79,8 +78,8 @@ markdown_extensions:
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
-        - class: mermaid
-        - format: !!python/name:pymdownx.superfences.fence_div_format
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
   - pymdownx.details
   - pymdownx.tabbed:
       alternate_style: true
