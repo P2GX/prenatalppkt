@@ -15,6 +15,8 @@ from prenatalppkt.etl.constants import OBSERVER_NAME_MAP, BiometryMeasurement
 
 logger = logging.getLogger(__name__)
 
+# ruff: noqa: PERF203
+
 
 class ObserverExtractor(BiometryExtractor):
     """

@@ -20,6 +20,8 @@ from prenatalppkt.etl.constants import (
 
 logger = logging.getLogger(__name__)
 
+# ruff: noqa: PERF203
+
 
 class ViewPointTextExtractor(BiometryExtractor):
     """
