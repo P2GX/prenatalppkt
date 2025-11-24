@@ -1,13 +1,121 @@
 Impression
 =========
  
-Hypoxemia
+The patient is referred for an ultrasound for interval fetal growth and Doppler velocimetry due to FGR identified on her prior scans. This pregnancy is further complicated by
+hyperemesis gravidarum and maternal obesity (BMI 34 kg/m2). Her obstetric history includes preeclampsia during her last pregnancy (2025). She is currently on daily baby
+aspirin. The results of her NIPT are consistent with diploid chromosome 21, 18, and 13 - no aneuploidy detected.
+ 
+The fetal biometry continues to measure small for gestational dating derived from her outside 1st trimester ultrasound. The estimated fetal weight is 2042 g at the 2%. ; AC
+at the 2%. The HC and BPD measure <1st percentile. Fetal movement, breathing and tone are observed. The amniotic fluid volume appears normal with a single deepest
+pocket of 5.6 cm. BPP 8/8
+ 
+-Doppler velocimetry evaluation of the umbilical artery is ABNORMAL with DECREASED end diastolic flow which may suggest an early stage of fetal cardiovascular
+adaptation to hypoxemia.
+- Doppler velocimetry evaluation of the middle cerebral artery is within normal limits for this gestational age.
+- Unable to obtain Doppler of the ductus venosus due to constant fetal breathing
+ 
+Prominent loops of fetal small bowel are seen with the largest measuring 16 mm. Normal filling of the stomach is observed. This could reflect some form of small bowel
+obstruction.
+ 
+The patient is informed of the findings by Dr. Warsof. Prenatal ultrasound has inherent limitations and cannot exclude all structural or genetic abnormalities. 
+Narrative
 
+Ω
+Hypoxemia
+Ω
+ 
 Indication
 ========
- 
+
+Supervision of Pregnancy with insufficient Antenatal Care
 Fetal Growth Restriction. Growth/Doppler
+
+Ω
 Fetal CNS Malformation or Damage (Unspecified)
 Malformation of Placenta, Unspecified
 Fetal Growth Restriction
 Advanced Maternal Age (AMA), Multigravida
+Ω
+
+ 
+History
+======
+ 
+OB History                           Gravida 9. Para 5
+                                           T5P0A3L5
+                                           SVD x 5
+ 
+Method
+======
+ 
+Voluson E22, Transabdominal ultrasound examination. View: Adequate
+ 
+Pregnancy
+=========
+ 
+Singleton pregnancy. Number of fetuses: 1
+ 
+Dating
+======
+ 
+                                         Date                                Details                                                                                      Gest. age                      EDD
+LMP                                                                         Cycle: LMP date uncertain
+Stated EDD                                                              SNGH u/s
+Previous U/S                      7/27/2025                        GA, GA 15 w + 3 d                                                                      28 w + 0 d                     1/15/2026
+U/S                                   10/23/2025                       based upon AC, BPD, Femur, HC                                                28 w + 2 d                     1/13/2026
+Assigned dating                  based on ultrasound (GA), selected on 10/23/2025                                                              28 w + 0 d                     1/15/2026
+ 
+Fetal Growth Overview
+=================
+ 
+Exam date        GA              BPD (mm)          HC (mm)            AC (mm)              FL (mm)             HL (mm)             EFW (g)
+08/13/2025        17w 6d        37.6     33%        143.7                123.2    52%         25.8    43%        25.7    64%         213    45%
+10/23/2025        28w 0d        74     87%           268    66%        229    22%           51.1     18%        47.4    42%        1104     25%
+ 
+Fetal Biometry
+============
+ 
+BPD                                                         74.0                    mm                         29w 5d                     87%                     Hadlock
+OFD                                                         92.6                    mm                         27w 3d                     45%                     Nicolaides
+HC                                                           268.0                  mm                         28w 5d                      66%                    Chervenak
+Cerebellum tr                                            34.5                    mm                         29w 0d                      77%                    Hill
+Nuchal fold                                            2.7                    mm
+AC                                                           229.0                  mm                         27w 2d                      22%                    Hadlock
+Femur                                                      51.1                    mm                         27w 3d                      18%                    Hadlock
+Humerus                                                   47.4                   mm                                                         42%                     Romero
+Fetal Weight Calculation:
+EFW                                                        1,104                  g                                                             25%
+EFW (lb,oz)                                              2 lb 7                  oz
+EFW by                                                     Hadlock (BPD-HC-AC-FL)
+Head / Face / Neck Biometry:
+Vp                                                            4.9                     mm
+CM                                                           4.1                     mm                                                         1%                      Nicolaides
+Extremities / Bony Struc Biometry:
+FL / HC                                                    0.19
+ 
+General Evaluation
+==============
+ 
+Cardiac activity present. FHR 133 bpm. Fetal movements: movement and tone. Presentation: cephalic
+Placenta: posterior
+Umbilical cord: 3 vessel cord
+Amniotic fluid: MVP 6.2 cm
+ 
+Fetal Anatomy
+===========
+ 
+The following structures appear normal:
+Cranium. Brain. Face. Heart. Situs. Cardiac rhythm. Thorax. Abdominal wall. GI tract. Stomach. Urogenital tract. Spine. Arms. Legs.
+ 
+Fetal sex: normal male
+ 
+Maternal Structures
+===============
+ 
+Right Ovary                          Normal
+Left Ovary                            Normal
+ 
+Follow-up
+========
+ 
+A scan for interval fetal growth is scheduled in 4 weeks. ROB is scheduled on 10/27/2025.
