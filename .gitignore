@@ -220,13 +220,10 @@ src/*/_version.py
 
 # HPO and datas file
 data/hp.jsonout.txt
-prenatalppkt-about.txt
-prenatalppkt-about.sh
-temp.ipynb
+prenatalppkt-about.*
 hp.json
-explore-observer.ipynb
+*.ipynb
 viewpoint_*.txt
 *pretty.json
 Discrete*.txt
-prenatalppkt.ipynb
-tests/data/Discrete_HL7_Messages_Sample.txt
+tests/data/*
