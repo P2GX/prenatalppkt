@@ -1,271 +1,241 @@
 """
-TermBin factory for creating TermBin objects from raw biometry measurements.
+TermBin factory for creating TermBin objects from biometry measurements.
 
-This module provides a factory class that:
-
-1. Loads HPO mappings once at initialization via BiometryMappingLoader
-2. Treats the loaded TermBin objects as *configuration bins*:
-    - range: PercentileRange
-    - hpo_id: str
-    - hpo_label: str
-    - normal: bool
-    - description: config-level description (e.g. "Below 3rd percentile")
-3. Creates new *runtime* TermBin objects for specific measurements/percentiles
-    - Keeps range / hpo_id / hpo_label / normal from the matching config bin
-    - Builds a measurement-specific description string
-4. Validates required measurements (HC, BPD, AC, Femur)
-5. Handles optional measurements gracefully
-
-Key design choice (Model B):
-
-- YAML + BiometryMappingLoader.load() define static configuration TermBins.
-- TermBinFactory is responsible for creating runtime TermBins that include
- measurement-specific context in their description.
+Handles mapping of measurement names to HPO terms and percentile ranges.
 """
 
-from __future__ import annotations
-
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional, Set
 
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.mapping_loader import BiometryMappingLoader
 from prenatalppkt.measurements.percentile_range import PercentileRange
 from prenatalppkt.measurements.term_bin import TermBin
 
 logger = logging.getLogger(__name__)
 
-# Required biometry measurements - must be present in every file
-REQUIRED_MEASUREMENTS = {"HC", "BPD", "AC", "Femur"}
+# Enable debug logging by default
+logging.basicConfig(level=logging.DEBUG)
 
-# Optional biometry measurements - may not be present
-OPTIONAL_MEASUREMENTS = {"Nuchal Fold", "Cerebellum", "OFD", "Humerus"}
+# Required measurements that MUST be present in biometry data
+REQUIRED_MEASUREMENTS: Set[str] = {"HC", "BPD", "AC", "Femur"}
+
+# Optional measurements (may or may not be present)
+OPTIONAL_MEASUREMENTS: Set[str] = {"Nuchal Fold", "Cerebellum", "Humerus", "OFD"}
+
+
+# TODO(@VarenyaJ): Add HPO mappings for optional measurements
+# Current HPO does not have specific terms for:
+# - Nuchal Fold thickness abnormalities
+# - Cerebellar size abnormalities
+# - Humerus length abnormalities
+# - OFD (Occipitofrontal Diameter) abnormalities
+# These should map to more general skull/bone morphology terms for now
 
 
 class TermBinFactory:
-    """
-    Factory for creating TermBin objects from biometry measurements.
+   """
+   Factory for creating TermBin objects from biometry measurements.
 
-    Loads HPO mappings once and provides a method to create TermBins
-    using existing percentile range infrastructure.
+   Maps measurement names to appropriate HPO terms based on percentile ranges.
+   """
 
-    BiometryMappingLoader.load() is expected to return a mapping:
+   # HPO term mappings for each measurement type
+   # Format: measurement_name -> {range_type -> (hpo_id, hpo_label)}
+   _HPO_MAPPINGS = {
+       "HC": {
+           "increased": ("HP:0000256", "Macrocephaly"),
+           "decreased": ("HP:0000252", "Microcephaly"),
+           "normal": ("HP:0000240", "Abnormality of skull size"),
+       },
+       "BPD": {
+           "increased": ("HP:0000256", "Macrocephaly"),
+           "decreased": ("HP:0000252", "Microcephaly"),
+           "normal": ("HP:0000240", "Abnormality of skull size"),
+       },
+       "AC": {
+           "increased": ("HP:0012720", "Abnormal fetal abdominal circumference"),
+           "decreased": ("HP:0012720", "Abnormal fetal abdominal circumference"),
+           "normal": ("HP:0034207", "Abnormal fetal gastrointestinal system morphology"),
+       },
+       "Femur": {
+           "increased": ("HP:0003498", "Disproportionate tall stature"),
+           "decreased": ("HP:0003498", "Disproportionate short stature"),
+           "normal": ("HP:0002823", "Abnormal femur morphology"),
+       },
+       # TODO(@VarenyaJ): Add mappings for optional measurements when HPO terms available
+       # "Nuchal Fold": {...},
+       # "Cerebellum": {...},
+       # "Humerus": {...},
+       # "OFD": {...},
+   }
 
-        {
-            "head_circumference": [
-                TermBin(range=..., hpo_id="HP:0000252", hpo_label="Microcephaly", ...),
-                TermBin(range=..., hpo_id="HP:0000240", hpo_label="Abnormality of skull size", ...),
-                ...
-            ],
-            "femur_length": [...],
-            ...
-        }
+   def create_term_bin(
+       self,
+       name: str,
+       value_mm: float,
+       percentile: float,
+       gestational_age: Optional[GestationalAge] = None,
+       method: Optional[str] = None,
+       fetus_number: Optional[int] = None,
+   ) -> Optional[TermBin]:
+       """
+       Create a TermBin from measurement data.
 
-    These loaded TermBins are treated as *configuration bins*; the factory
-    uses them as templates but returns fresh TermBin instances whose
-    descriptions encode the actual measurement, percentile, GA, method, etc.
-    """
+       Args:
+           name: Measurement name (e.g., "HC", "BPD")
+           value_mm: Measurement value in millimeters
+           percentile: Percentile value (0-100 scale)
+           gestational_age: Optional gestational age
+           method: Optional measurement method (e.g., "Hadlock")
+           fetus_number: Optional fetus identifier
 
-    def __init__(self, mappings_path: Optional[Path] = None):
-        """
-        Initialize factory with HPO mappings.
+       Returns:
+           TermBin object or None if measurement cannot be mapped
 
-        Args:
-            mappings_path:
-                Path to YAML mappings file. If None, uses the default
-                data/mappings/biometry_hpo_mappings.yaml at project root.
-        """
-        self._mappings: Dict[str, List[TermBin]] = BiometryMappingLoader.load(
-            mappings_path or self._get_default_mappings_path()
-        )
-        logger.info("Loaded HPO mappings for %d measurements", len(self._mappings))
+       Raises:
+           ValueError: If percentile is out of valid range or required measurement lacks HPO mapping
+       """
+       logger.debug(
+           f"Creating TermBin: name={name}, value={value_mm}mm, "
+           f"percentile={percentile}%, ga={gestational_age}, method={method}"
+       )
 
-    # ------------------------------------------------------------------ #
-    # Public API
-    # ------------------------------------------------------------------ #
+       # Validate percentile range
+       if percentile < 0 or percentile > 100:
+           logger.error(f"Invalid percentile for {name}: {percentile}")
+           raise ValueError(f"Percentile must be 0-100, got {percentile}")
 
-    def create_term_bin(
-        self,
-        name: str,
-        value_mm: float,
-        percentile: float,
-        gestational_age: Optional[GestationalAge] = None,
-        method: Optional[str] = None,
-        fetus_number: Optional[int] = None,
-    ) -> Optional[TermBin]:
-        """
-        Create TermBin from raw measurement data.
+       # Check for HPO mapping
+       mapping = self._HPO_MAPPINGS.get(name)
 
-        Args:
-            name:
-                Canonical measurement name (e.g., "HC", "BPD").
-                Must match the canonical names used in BiometryMeasurement
-                and YAML mappings (after normalization).
-            value_mm:
-                Measurement value in millimeters.
-            percentile:
-                Percentile value (0-100 scale).
-            gestational_age:
-                GestationalAge object (optional).
-            method:
-                Measurement method (e.g., "Hadlock") (optional).
-            fetus_number:
-                Fetus identifier (optional).
+       if not mapping:
+           # Check if this is an optional measurement
+           if name in OPTIONAL_MEASUREMENTS:
+               logger.warning(
+                   f"No HPO mapping for optional measurement '{name}' - skipping. "
+                   f"TODO(@VarenyaJ): Add HPO terms when available"
+               )
+               return None
+           else:
+               # Required measurement without mapping is an error
+               logger.error(f"No HPO mapping for REQUIRED measurement: {name}")
+               raise ValueError(
+                   f"Missing HPO mapping for required measurement: {name}"
+               )
 
-        Returns:
-            TermBin object or None if mapping fails or percentile does not
-            fall into any configured bin.
+       # Evaluate percentile range
+       perc_range = PercentileRange.evaluate(percentile)
+       logger.debug(f"Percentile {percentile}% -> range {perc_range.bin_key}")
 
-        Raises:
-            ValueError:
-                If percentile is out of the inclusive 0-100 range.
-        """
-        # Validate percentile
-        if not 0 <= percentile <= 100:
-            raise ValueError(f"Percentile must be 0-100, got {percentile}")
+       # Determine if measurement is normal/abnormal
+       is_normal = self._is_normal_range(perc_range)
 
-        # Normalize measurement name to the YAML mapping key
-        measurement_type = self._normalize_measurement_type(name)
+       # Select appropriate HPO term
+       hpo_id, hpo_label = self._select_hpo_term(mapping, perc_range)
+       logger.debug(f"Selected HPO: {hpo_id} - {hpo_label}")
 
-        # Get configured TermBins for this measurement type
-        if measurement_type not in self._mappings:
-            logger.warning("No HPO mappings found for: %s", measurement_type)
-            return None
+       # Build description
+       description = self._build_description(
+           name, value_mm, percentile, gestational_age, method, fetus_number
+       )
 
-        configured_bins = self._mappings[measurement_type]
+       # Create TermBin
+       term_bin = TermBin.from_term(
+           range=perc_range,
+           term_id=hpo_id,
+           term_label=hpo_label,
+           normal=is_normal,
+           description=description,
+       )
 
-        # Determine which percentile bin this measurement belongs to
-        target_range = PercentileRange.evaluate(percentile)
+       logger.debug(f"Created TermBin: {hpo_id} - normal={is_normal}")
+       return term_bin
 
-        # Find matching configuration TermBin (by bin_key)
-        matching_bin: Optional[TermBin] = None
-        for tb in configured_bins:
-            if tb.range.bin_key == target_range.bin_key:
-                matching_bin = tb
-                break
+   def _is_normal_range(self, perc_range: PercentileRange) -> bool:
+       """Determine if percentile range is considered normal."""
+       # Normal range is typically 10th-90th percentile
+       normal_bins = {"between_10p_50p", "between_50p_90p"}
+       return perc_range.bin_key in normal_bins
 
-        if not matching_bin:
-            logger.warning(
-                "No TermBin matches percentile %s (%s) for %s",
-                percentile,
-                target_range.bin_key,
-                name,
-            )
-            return None
+   def _select_hpo_term(
+       self, mapping: dict, perc_range: PercentileRange
+   ) -> tuple[str, str]:
+       """
+       Select appropriate HPO term based on percentile range.
 
-        # Build a measurement-specific description
-        description = self._build_description(
-            name=name,
-            value_mm=value_mm,
-            percentile=percentile,
-            gestational_age=gestational_age,
-            method=method,
-            fetus_number=fetus_number,
-        )
+       Args:
+           mapping: HPO mapping dict for this measurement
+           perc_range: Evaluated percentile range
 
-        # Create a new runtime TermBin using:
-        #   - range from PercentileRange.evaluate (target_range)
-        #   - hpo_id / hpo_label / normal from the config bin
-        #   - contextual description we just built
-        return TermBin(
-            range=target_range,
-            hpo_id=matching_bin.hpo_id,
-            hpo_label=matching_bin.hpo_label,
-            normal=matching_bin.normal,
-            description=description,
-        )
+       Returns:
+           Tuple of (hpo_id, hpo_label)
+       """
+       # Map percentile ranges to increased/decreased/normal
+       if perc_range.bin_key in {"above_97p"}:
+           return mapping["increased"]
+       elif perc_range.bin_key in {"below_3p"}:
+           return mapping["decreased"]
+       else:
+           return mapping["normal"]
 
-    # ------------------------------------------------------------------ #
-    # Internal helpers
-    # ------------------------------------------------------------------ #
+   def _build_description(
+       self,
+       name: str,
+       value_mm: float,
+       percentile: float,
+       gestational_age: Optional[GestationalAge],
+       method: Optional[str],
+       fetus_number: Optional[int],
+   ) -> str:
+       """
+       Build human-readable description for TermBin.
 
-    def _normalize_measurement_type(self, name: str) -> str:
-        """
-        Normalize measurement name to match YAML mapping keys.
+       Format: "NAME: value mm (percentile%) at GAw GAd (method) [Fetus N]"
+       """
+       parts = [f"{name}: {value_mm} mm ({percentile}%)"]
 
-        Args:
-            name:
-                Canonical measurement name (e.g., "HC", "BPD", "Femur").
+       if gestational_age:
+           parts.append(f"at {gestational_age.weeks}w{gestational_age.days}d")
 
-        Returns:
-            Normalized name for YAML lookup (e.g., "head_circumference").
-        """
-        name_map = {
-            "HC": "head_circumference",
-            "BPD": "biparietal_diameter",
-            "AC": "abdominal_circumference",
-            "Femur": "femur_length",
-            "Nuchal Fold": "nuchal_fold",
-            "Cerebellum": "cerebellum",
-            "OFD": "occipitofrontal_diameter",
-            "Humerus": "humerus_length",
-        }
-        return name_map.get(name, name.lower().replace(" ", "_"))
+       if method:
+           parts.append(f"({method})")
 
-    def _build_description(
-        self,
-        name: str,
-        value_mm: float,
-        percentile: float,
-        gestational_age: Optional[GestationalAge],
-        method: Optional[str],
-        fetus_number: Optional[int],
-    ) -> str:
-        """
-        Build human-readable description for TermBin.
+       if fetus_number:
+           parts.append(f"[Fetus {fetus_number}]")
 
-        Example:
-            "HC: 250.0 mm (42.5%) at 27w1d (Hadlock) [Fetus 1]"
-        """
-        parts = [f"{name}: {value_mm} mm", f"({percentile}%)"]
-
-        if gestational_age:
-            parts.append(f"at {gestational_age.weeks}w{gestational_age.days}d")
-
-        if method:
-            parts.append(f"({method})")
-
-        if fetus_number is not None:
-            parts.append(f"[Fetus {fetus_number}]")
-
-        return " ".join(parts)
-
-    def _get_default_mappings_path(self) -> Path:
-        """
-        Get path to the default HPO mappings YAML.
-
-        Expected location (relative to project root):
-            data/mappings/biometry_hpo_mappings.yaml
-        """
-        package_root = Path(__file__).parents[3]
-        return package_root / "data" / "mappings" / "biometry_hpo_mappings.yaml"
+       return " ".join(parts)
 
 
 def validate_required_measurements(term_bins: List[TermBin]) -> None:
-    """
-    Validate that all required measurements are present.
+   """
+   Validate that all required measurements are present.
 
-    Args:
-        term_bins:
-            List of created TermBins.
+   Args:
+       term_bins: List of created TermBins
 
-    Raises:
-        ValueError:
-            If any required measurement is missing.
-    """
-    present_measurements = set()
-    for tb in term_bins:
-        # Description format begins with "NAME: ...", e.g., "HC: 250.0 mm ..."
-        name = tb.description.split(":")[0].strip()
-        present_measurements.add(name)
+   Raises:
+       ValueError: If any required measurement is missing
+   """
+   logger.debug(f"Validating {len(term_bins)} TermBins for required measurements")
 
-    missing = REQUIRED_MEASUREMENTS - present_measurements
+   present_measurements = set()
+   for tb in term_bins:
+       # Description format begins with "NAME: ...", e.g., "HC: 250.0 mm ..."
+       name = tb.description.split(":")[0].strip()
+       present_measurements.add(name)
+       logger.debug(f"Found measurement: {name}")
 
-    if missing:
-        error_msg = (
-            f"Missing required biometry measurements: {', '.join(sorted(missing))}. "
-            f"Required measurements are: {', '.join(sorted(REQUIRED_MEASUREMENTS))}"
-        )
-        logger.error(error_msg)
-        raise ValueError(error_msg)
+   logger.debug(f"Present: {present_measurements}")
+   logger.debug(f"Required: {REQUIRED_MEASUREMENTS}")
+
+   missing = REQUIRED_MEASUREMENTS - present_measurements
+
+   if missing:
+       error_msg = (
+           f"Missing required biometry measurements: {', '.join(sorted(missing))}. "
+           f"Required measurements are: {', '.join(sorted(REQUIRED_MEASUREMENTS))}"
+       )
+       logger.error(error_msg)
+       raise ValueError(error_msg)
+
+   logger.debug("All required measurements present")
