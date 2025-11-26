@@ -2,20 +2,21 @@
 Tests for TermBinFactory.
 
 Tests the factory's ability to create TermBin objects from raw measurements
-using existing MeasurementEvaluation infrastructure.
+using existing percentile range and mapping infrastructure.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from prenatalppkt.etl.term_bin_factory import (
     TermBinFactory,
     validate_required_measurements,
 )
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.measurements.percentile_range import PercentileRange
+from prenatalppkt.measurements.term_bin import TermBin
 
 
 class TestTermBinFactory:
@@ -23,8 +24,11 @@ class TestTermBinFactory:
 
     @pytest.fixture
     def mock_mappings(self):
-        """Mock HPO mappings for testing."""
-        # Create mock TermBins for HC
+        """Mock HPO mappings for testing.
+
+        We treat these TermBins as configuration bins, which the factory
+        will use as templates for creating runtime TermBins.
+        """
         hc_bins = [
             TermBin(
                 range=PercentileRange.below_3p(),
@@ -62,11 +66,16 @@ class TestTermBinFactory:
         )
 
         assert term_bin is not None
+
+        # HPO metadata comes from config bin
         assert term_bin.hpo_id == "HP:0000252"
         assert term_bin.hpo_label == "Microcephaly"
         assert term_bin.normal is False
+
+        # Description is runtime, measurement-specific
         assert "180.0 mm" in term_bin.description
         assert "(2.0%)" in term_bin.description
+        assert "27w1d" in term_bin.description
 
     def test_create_term_bin_with_all_fields(self, factory):
         """Test creating TermBin with all optional fields."""
@@ -80,6 +89,8 @@ class TestTermBinFactory:
         )
 
         assert term_bin is not None
+
+        # Description should carry GA, method, and fetus number
         assert "25w1d" in term_bin.description
         assert "(Hadlock)" in term_bin.description
         assert "[Fetus 1]" in term_bin.description
@@ -101,11 +112,8 @@ class TestTermBinFactory:
 
     def test_create_term_bin_percentile_no_bin(self, factory):
         """Test percentile that doesn't match any bin."""
-        term_bin = factory.create_term_bin(
-            name="HC",
-            value_mm=200.0,
-            percentile=5.0,  # Between 3-10, not in mock bins
-        )
+        # Percentile 5.0 lies between 3-10p; our mocks only cover <3p and 10-50p
+        term_bin = factory.create_term_bin(name="HC", value_mm=200.0, percentile=5.0)
 
         assert term_bin is None
 
@@ -182,10 +190,9 @@ class TestTermBinFactoryIntegration:
     )
     def test_create_with_real_mappings(self):
         """Test creating TermBins with real mapping file."""
-
         factory = TermBinFactory()
 
-        # Test microcephaly case
+        # Test microcephaly case (HC below 3rd percentile)
         term_bin = factory.create_term_bin(name="HC", value_mm=180.0, percentile=2.0)
 
         assert term_bin is not None
