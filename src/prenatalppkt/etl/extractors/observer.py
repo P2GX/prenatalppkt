@@ -1,182 +1,220 @@
 """
 Observer JSON biometry extractor.
 
-Extracts fetal biometry measurements from Observer ultrasound system JSON exports.
+Extracts fetal biometry measurements from Observer ultrasound system JSON exports
+and converts them directly to TermBin objects.
+
+Observer JSON Structure:
+   - Consistent field structure across files
+   - All fields reliably present in standard exports
+   - Measurements in "fetuses" -> [fetus] -> "measurements" array
+
+Format Characteristics:
+   - Units: typically "cm" for most measurements, "mm" for Nuchal Fold
+   - Percentiles: provided as floats (0-100 scale)
+   - GA: provided as "calculated_ega" in weeks (float)
+   - Fetus number: in "fetus" -> "fetus_number"
+
+Required Measurements: HC, BPD, AC, Femur (will ERROR if missing)
+Optional Measurements: Nuchal Fold, Cerebellum, OFD, Humerus
 """
 
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from prenatalppkt.etl.extractors.base import BiometryExtractor
-from prenatalppkt.etl.models.biometry import Biometry, BiometryCollection
-from prenatalppkt.etl.constants import OBSERVER_NAME_MAP, BiometryMeasurement
+from prenatalppkt.etl.constants import OBSERVER_NAME_MAP
+from prenatalppkt.etl.term_bin_factory import (
+    TermBinFactory,
+    validate_required_measurements,
+)
 from prenatalppkt.gestational_age import GestationalAge
+from prenatalppkt.measurements.term_bin import TermBin
 
 logger = logging.getLogger(__name__)
 
-# ruff: noqa: PERF203
 
-
-class ObserverExtractor(BiometryExtractor):
+def extract(data: Dict[str, Any], factory: TermBinFactory = None) -> List[TermBin]:
     """
-    Extract biometry measurements from Observer JSON format.
+    Extract biometry measurements from Observer JSON and convert to TermBins.
 
-    Observer JSON structure:
-        {
-            "fetuses": [
-                {
-                    "fetus": {"fetus_number": 1},
-                    "measurements": [
-                        {
-                            "label": "HC",
-                            "value": 25.0,
-                            "unit_of_measure": "cm",
-                            "calculated_percentile": 42.5,
-                            "calculated_ega": 27.1,
-                            ...
-                        },
-                        ...
-                    ]
-                }
-            ]
-        }
+    Args:
+        data: Parsed Observer JSON dictionary
+        factory: TermBinFactory instance (creates new if None)
+
+    Returns:
+        List of TermBin objects
+
+    Raises:
+        ValueError: If JSON structure is invalid or required measurements missing
     """
+    if factory is None:
+        factory = TermBinFactory()
 
-    # Use Observer-specific name mapping
-    FORMAT_NAME_MAP = OBSERVER_NAME_MAP
+    # Validate structure
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected dict, got {type(data)}")
 
-    # Target measurements (canonical names)
-    TARGET_LABELS = BiometryMeasurement.all_values()
+    if "fetuses" not in data:
+        raise ValueError("Missing 'fetuses' key in Observer JSON")
 
-    def extract(self, data: Dict[str, Any]) -> BiometryCollection:
-        """
-        Extract biometry measurements from Observer JSON.
+    fetuses = data["fetuses"]
+    if not fetuses or not isinstance(fetuses, list):
+        raise ValueError("'fetuses' must be non-empty list")
 
-        Args:
-            data: Parsed Observer JSON dictionary
+    # Extract from first fetus (can extend for multiple fetuses)
+    fetus_data = fetuses[0]
+    fetus_number = _get_fetus_number(fetus_data)
 
-        Returns:
-            BiometryCollection with extracted measurements
+    # Parse measurements into TermBins
+    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
 
-        Raises:
-            ValueError: If JSON structure is invalid
-        """
-        if not isinstance(data, dict):
-            raise ValueError(f"Expected dict, got {type(data)}")
+    # Validate required measurements present
+    validate_required_measurements(term_bins)
 
-        if "fetuses" not in data:
-            raise ValueError("Missing 'fetuses' key in Observer JSON")
+    logger.info(f"Extracted {len(term_bins)} TermBins from Observer JSON")
+    return term_bins
 
-        fetuses = data["fetuses"]
-        if not fetuses or not isinstance(fetuses, list):
-            raise ValueError("'fetuses' must be non-empty list")
 
-        # Extract from first fetus (for now - can extend to handle multiple)
-        fetus_data = fetuses[0]
-        fetus_number = self._get_fetus_number(fetus_data)
+def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[TermBin]:
+    """
+    Extract biometry measurements from Observer JSON file.
 
-        measurements = self._extract_measurements(fetus_data, fetus_number)
+    Args:
+        filepath: Path to Observer JSON file
+        factory: TermBinFactory instance (creates new if None)
 
-        logger.info(
-            f"Extracted {len(measurements)} biometries from Observer JSON "
-            f"(fetus {fetus_number})"
-        )
+    Returns:
+        List of TermBin objects
+    """
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-        return BiometryCollection(measurements=measurements, fetus_number=fetus_number)
+    return extract(data, factory)
 
-    def _read_file(self, filepath: Path) -> Dict[str, Any]:
-        """Read Observer JSON file."""
-        with open(filepath, "r", encoding="utf-8") as f:
-            return json.load(f)
 
-    def _get_fetus_number(self, fetus_data: Dict[str, Any]) -> Optional[int]:
-        """Extract fetus number from fetus data."""
-        fetus_section = fetus_data.get("fetus", {})
-        return fetus_section.get("fetus_number")
+def _get_fetus_number(fetus_data: Dict[str, Any]) -> int:
+    """Extract fetus number from fetus data."""
+    fetus_section = fetus_data.get("fetus", {})
+    return fetus_section.get("fetus_number", 1)
 
-    def _extract_measurements(
-        self, fetus_data: Dict[str, Any], fetus_number: Optional[int]
-    ) -> List[Biometry]:
-        """
-        Extract individual biometry measurements.
 
-        Args:
-            fetus_data: Single fetus dictionary from Observer JSON
-            fetus_number: Fetus identifier
+def _parse_measurements(
+    fetus_data: Dict[str, Any], fetus_number: int, factory: TermBinFactory
+) -> List[TermBin]:
+    """
+    Parse measurements and convert to TermBins.
 
-        Returns:
-            List of Biometry objects
-        """
-        if "measurements" not in fetus_data:
-            logger.warning("No 'measurements' key found in fetus data")
-            return []
+    Args:
+        fetus_data: Single fetus dictionary
+        fetus_number: Fetus identifier
+        factory: TermBinFactory instance
 
-        measurements_list = fetus_data["measurements"]
-        if not isinstance(measurements_list, list):
-            raise ValueError("'measurements' must be a list")
+    Returns:
+        List of TermBin objects
+    """
+    if "measurements" not in fetus_data:
+        logger.warning("No 'measurements' key in fetus data")
+        return []
 
-        biometries = []
+    measurements_list = fetus_data["measurements"]
+    if not isinstance(measurements_list, list):
+        raise ValueError("'measurements' must be a list")
 
-        for m in measurements_list:
-            try:
-                biometry = self._parse_measurement(m, fetus_number)
-                if biometry:
-                    biometries.append(biometry)
-            except Exception as e:
-                logger.warning(
-                    f"Failed to parse measurement {m.get('label', 'unknown')}: {e}"
-                )
+    term_bins = []
+    for m in measurements_list:
+        try:
+            term_bin = _parse_single_measurement(m, fetus_number, factory)
+            if term_bin:
+                term_bins.append(term_bin)
+        except Exception as e:  # noqa: PERF203
+            logger.warning(
+                f"Failed to parse measurement {m.get('label', 'unknown')}: {e}"
+            )
 
-        return biometries
+    return term_bins
 
-    def _parse_measurement(
-        self, m: Dict[str, Any], fetus_number: Optional[int]
-    ) -> Optional[Biometry]:
-        """
-        Parse a single measurement dictionary into Biometry object.
 
-        Args:
-            m: Measurement dictionary
-            fetus_number: Fetus identifier
+def _parse_single_measurement(
+    m: Dict[str, Any], fetus_number: int, factory: TermBinFactory
+) -> TermBin:
+    """
+    Parse single measurement into TermBin.
 
-        Returns:
-            Biometry object or None if measurement not in target list
-        """
-        label = m.get("label")
-        if not label:
-            return None
+    Args:
+        m: Measurement dictionary
+        fetus_number: Fetus identifier
+        factory: TermBinFactory instance
 
-        # Check if this is a target measurement
-        if not self._is_target_measurement(label):
-            return None
+    Returns:
+        TermBin object or None if not a target measurement
+    """
+    label = m.get("label")
+    if not label:
+        return None
 
-        # Normalize the label
-        normalized_label = self._normalize_name(label)
+    # Check if target measurement
+    if label not in OBSERVER_NAME_MAP:
+        return None
 
-        # Extract required fields
-        value = m.get("value")
-        if value is None:
-            logger.debug(f"Skipping {label}: no value")
-            return None
+    # Normalize label to canonical name
+    canonical_name = OBSERVER_NAME_MAP[label].value
 
-        unit = m.get("unit_of_measure", "cm")
-        value_mm = self._convert_to_mm(float(value), unit)
+    # Extract required fields
+    value = m.get("value")
+    if value is None:
+        logger.debug(f"Skipping {label}: no value")
+        return None
 
-        # Extract optional fields
-        percentile = m.get("calculated_percentile")
-        ega = m.get("calculated_ega")
+    # Extract optional fields
+    unit = m.get("unit_of_measure", "cm")
+    percentile = m.get("calculated_percentile")
+    ega = m.get("calculated_ega")
 
-        gestational_age = None
-        if ega is not None:
-            gestational_age = GestationalAge.from_weeks(float(ega))
+    # Must have percentile to create TermBin
+    if percentile is None:
+        logger.warning(f"Skipping {label}: no percentile")
+        return None
 
-        return Biometry(
-            name=normalized_label,
-            value_mm=value_mm,
-            percentile=float(percentile) if percentile is not None else None,
-            gestational_age=gestational_age,
-            method=None,  # Observer JSON doesn't include method
-            fetus_number=fetus_number,
-        )
+    # Convert units
+    value_mm = _convert_to_mm(float(value), unit)
+
+    # Parse gestational age
+    gestational_age = None
+    if ega is not None:
+        gestational_age = GestationalAge.from_weeks(float(ega))
+
+    # Create TermBin using factory
+    return factory.create_term_bin(
+        name=canonical_name,
+        value_mm=value_mm,
+        percentile=float(percentile),
+        gestational_age=gestational_age,
+        method=None,  # Observer JSON doesn't include method
+        fetus_number=fetus_number,
+    )
+
+
+def _convert_to_mm(value: float, unit: str) -> float:
+    """
+    Convert measurement to millimeters.
+
+    Args:
+        value: Measurement value
+        unit: Unit of measure
+
+    Returns:
+        Value in millimeters
+
+    Raises:
+        ValueError: If unit not supported
+    """
+    unit_lower = unit.lower().strip()
+
+    if unit_lower in ["mm", "millimeters", "millimeter"]:
+        return value
+    elif unit_lower in ["cm", "centimeters", "centimeter"]:
+        return value * 10.0
+    else:
+        raise ValueError(f"Unsupported unit: {unit}")

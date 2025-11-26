@@ -1,29 +1,22 @@
 """
-ETL module for prenatal phenotype packet extraction, transformation, and loading.
+ETL module for prenatal phenotype packet extraction.
 
-This module provides a streamlined, modular approach to:
-- Extract biometry measurements from Observer JSON, ViewPoint text, and ViewPoint HL7
-- Transform measurements into standardized formats
-- Load data into term bins for HPO mapping
-
-Example:
-   TODO @VarenyaJ
+Provides extractors for Observer JSON, ViewPoint Text, and ViewPoint HL7 formats.
+Each extractor converts biometry measurements directly to TermBin objects.
 """
 
-from prenatalppkt.etl.models.biometry import Biometry, BiometryCollection
-from prenatalppkt.etl.extractors.base import BiometryExtractor
-from prenatalppkt.etl.extractors.observer import ObserverExtractor
-from prenatalppkt.etl.extractors.viewpoint_text import ViewPointTextExtractor
+from prenatalppkt.etl.term_bin_factory import (
+    TermBinFactory,
+    validate_required_measurements,
+)
+from prenatalppkt.etl.extractors import observer, viewpoint_text, viewpoint_hl7
 
 __all__ = [
-    # Data models
-    "Biometry",
-    "BiometryCollection",
-    # Base classes
-    "BiometryExtractor",
-    # Concrete extractors
-    "ObserverExtractor",
-    "ViewPointTextExtractor",
+    "TermBinFactory",
+    "validate_required_measurements",
+    "observer",
+    "viewpoint_text",
+    "viewpoint_hl7",
 ]
 
 __version__ = "0.1.0"

@@ -1,284 +1,295 @@
 """
 ViewPoint text file biometry extractor.
 
-Extracts fetal biometry measurements from ViewPoint ultrasound system text exports.
-Uses divider-based section detection (like ViewpointTextParse) to handle sub-headers.
+Extracts fetal biometry measurements from ViewPoint ultrasound system text exports
+and converts them directly to TermBin objects.
+
+ViewPoint Text Format Characteristics:
+   - **All fields are optional** - any section may be missing
+   - Field presence varies significantly between files
+   - Common sections: Fetal Biometry, Dating, General Evaluation
+   - Rare sections: Maternal Structures, CHKD Referral, Fetal Echocardiogram
+   - Section-based format using "====" dividers
+   - Sub-headers within sections (e.g., "Head / Face / Neck Biometry:")
+
+Biometry Line Format:
+   [name] [value] [unit] [GA_weeks] [GA_days] [percentile] [method]
+   Example: "BPD    63.2    mm    25w 4d    36%    Hadlock"
+   Example: "Nuchal Fold    4.5    mm    25w 3d    10%    Standard"
+
+Required Measurements: HC, BPD, AC, Femur (will ERROR if missing)
+Optional Measurements: Nuchal Fold, Cerebellum, OFD, Humerus
 """
 
 import logging
-from prenatalppkt.gestational_age import GestationalAge
 from pathlib import Path
 from typing import List, Optional
 
-from prenatalppkt.etl.extractors.base import BiometryExtractor
-from prenatalppkt.etl.models.biometry import Biometry, BiometryCollection
-from prenatalppkt.etl.constants import (
-    VIEWPOINT_TEXT_NAME_MAP,
-    BiometryMeasurement,
-    SectionHeader,
+from prenatalppkt.etl.constants import SectionHeader, VIEWPOINT_TEXT_NAME_MAP
+from prenatalppkt.etl.term_bin_factory import (
+    TermBinFactory,
+    validate_required_measurements,
 )
+from prenatalppkt.gestational_age import GestationalAge
+from prenatalppkt.measurements.term_bin import TermBin
 
 logger = logging.getLogger(__name__)
 
-# ruff: noqa: PERF203
 
-
-class ViewPointTextExtractor(BiometryExtractor):
+def extract(data: str, factory: TermBinFactory = None) -> List[TermBin]:
     """
-    Extract biometry measurements from ViewPoint text format.
+    Extract biometry measurements from ViewPoint text and convert to TermBins.
 
-    ViewPoint text structure:
-        Fetal Biometry
-        ============
+    Args:
+        data: ViewPoint text file content as string
+        factory: TermBinFactory instance (creates new if None)
 
-        BPD          63.2          mm          25w 4d          36%          Hadlock
-        OFD          82.9          mm          25w 0d          37%          Nicolaides
-        HC           233.7         mm          25w 1d          36%          Chervenak
-        AC           221.0         mm          26w 4d          67%          Hadlock
-        Femur        48.5          mm          26w 2d          54%          Hadlock
+    Returns:
+        List of TermBin objects
 
-        Head / Face / Neck Biometry:
-        Nuchal Fold  4.5           mm          25w 2d          10%          Standard
-        Cerebellum   30.0          mm          25w 3d          40%          Standard
-
-    Uses divider-based section detection (====) to naturally handle sub-headers.
-    Each line is space-delimited with fields:
-    [name] [value] [unit] [GA_weeks] [GA_days] [percentile] [method]
+    Raises:
+        ValueError: If text format is invalid or required measurements missing
     """
+    if factory is None:
+        factory = TermBinFactory()
 
-    # Use ViewPoint text-specific name mapping
-    FORMAT_NAME_MAP = VIEWPOINT_TEXT_NAME_MAP
+    if not isinstance(data, str):
+        raise ValueError(f"Expected string, got {type(data)}")
 
-    # Section header for biometry data
-    BIOMETRY_HEADER = SectionHeader.FETAL_BIOMETRY.value
+    lines = data.split("\n")
+    biometry_lines = _find_biometry_section(lines)
 
-    # Target measurements (canonical names)
-    TARGET_MEASUREMENTS = BiometryMeasurement.all_values()
+    if not biometry_lines:
+        logger.warning("No 'Fetal Biometry' section found")
+        return []
 
-    def extract(self, data: str) -> BiometryCollection:
-        """
-        Extract biometry measurements from ViewPoint text.
+    term_bins = _parse_biometry_lines(biometry_lines, factory)
 
-        Args:
-            data: ViewPoint text file content as string
+    # Validate required measurements
+    validate_required_measurements(term_bins)
 
-        Returns:
-            BiometryCollection with extracted measurements
+    logger.info(f"Extracted {len(term_bins)} TermBins from ViewPoint text")
+    return term_bins
 
-        Raises:
-            ValueError: If text format is invalid
-        """
-        if not isinstance(data, str):
-            raise ValueError(f"Expected string, got {type(data)}")
 
-        lines = data.split("\n")
-        biometry_lines = self._find_biometry_section(lines)
+def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[TermBin]:
+    """
+    Extract biometry measurements from ViewPoint text file.
 
-        if not biometry_lines:
-            logger.warning("No 'Fetal Biometry' section found")
-            return BiometryCollection(measurements=[], fetus_number=None)
+    Args:
+        filepath: Path to ViewPoint text file
+        factory: TermBinFactory instance (creates new if None)
 
-        measurements = self._parse_biometry_lines(biometry_lines)
+    Returns:
+        List of TermBin objects
+    """
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = f.read()
 
-        logger.info(f"Extracted {len(measurements)} biometries from ViewPoint text")
+    return extract(data, factory)
 
-        return BiometryCollection(
-            measurements=measurements,
+
+def _is_divider(line: str) -> bool:
+    """Check if line is section divider (====)."""
+    stripped = line.strip()
+    return len(stripped) >= 3 and all(c == "=" for c in stripped)
+
+
+def _find_biometry_section(lines: List[str]) -> List[str]:
+    """
+    Find lines in Fetal Biometry section using divider-based detection.
+
+    Uses divider approach from legacy ViewpointTextParse:
+    - Sections delimited by ==== lines
+    - Section header is line BEFORE ====
+    - Content is all lines until NEXT ====
+
+    Args:
+        lines: All lines from text file
+
+    Returns:
+        List of lines in biometry section
+    """
+    divider_indices = [i for i, line in enumerate(lines) if _is_divider(line)]
+
+    if not divider_indices:
+        return []
+
+    # Find Fetal Biometry section
+    biometry_start_idx = None
+    biometry_end_idx = None
+
+    for i, divider_idx in enumerate(divider_indices):
+        if divider_idx > 0:
+            header = lines[divider_idx - 1].strip()
+            if header == SectionHeader.FETAL_BIOMETRY.value:
+                biometry_start_idx = divider_idx + 1
+                # End at next divider or EOF
+                if i + 1 < len(divider_indices):
+                    biometry_end_idx = divider_indices[i + 1] - 1
+                else:
+                    biometry_end_idx = len(lines)
+                break
+
+    if biometry_start_idx is None:
+        return []
+
+    # Extract non-empty, non-divider lines
+    section_lines = []
+    for line in lines[biometry_start_idx:biometry_end_idx]:
+        stripped = line.strip()
+        if stripped and not _is_divider(stripped):
+            section_lines.append(stripped)
+
+    return section_lines
+
+
+def _parse_biometry_lines(lines: List[str], factory: TermBinFactory) -> List[TermBin]:
+    """Parse biometry measurement lines into TermBins."""
+    term_bins = []
+
+    for line in lines:
+        try:
+            term_bin = _parse_biometry_line(line, factory)
+            if term_bin:
+                term_bins.append(term_bin)
+        except Exception as e:  # noqa: PERF203
+            logger.warning(f"Failed to parse line '{line}': {e}")
+
+    return term_bins
+
+
+def _parse_biometry_line(line: str, factory: TermBinFactory) -> Optional[TermBin]:
+    """
+    Parse single biometry line into TermBin.
+
+    Format: [name] [value] [unit] [GA_weeks] [GA_days] [percentile] [method]
+
+    Sub-headers (e.g., "Head / Face / Neck Biometry:") naturally fail
+    parsing and are skipped.
+
+    Args:
+        line: Single line from biometry section
+        factory: TermBinFactory instance
+
+    Returns:
+        TermBin object or None
+    """
+    parts = line.split()
+
+    # Need at least 6 parts for valid measurement
+    if len(parts) < 6:
+        return None
+
+    # Try multi-word names first (e.g., "Nuchal Fold")
+    name = None
+    value_idx = None
+
+    if len(parts) >= 7:
+        two_word_name = f"{parts[0]} {parts[1]}"
+        if two_word_name in VIEWPOINT_TEXT_NAME_MAP:
+            name = VIEWPOINT_TEXT_NAME_MAP[two_word_name].value
+            value_idx = 2
+
+    # Fall back to single-word names
+    if name is None:
+        single_word_name = parts[0]
+        if single_word_name in VIEWPOINT_TEXT_NAME_MAP:
+            name = VIEWPOINT_TEXT_NAME_MAP[single_word_name].value
+            value_idx = 1
+        else:
+            return None
+
+    try:
+        # Parse value and unit
+        value = float(parts[value_idx])
+        unit = parts[value_idx + 1]
+        value_mm = _convert_to_mm(value, unit)
+
+        # Parse gestational age
+        ga_weeks_str = parts[value_idx + 2] if len(parts) > value_idx + 2 else None
+        ga_days_str = parts[value_idx + 3] if len(parts) > value_idx + 3 else None
+        gestational_age = _parse_gestational_age(ga_weeks_str, ga_days_str)
+
+        # Parse percentile
+        percentile_str = None
+        if len(parts) > value_idx + 4 and "%" in parts[value_idx + 4]:
+            percentile_str = parts[value_idx + 4]
+
+        if not percentile_str:
+            logger.debug(f"Skipping {name}: no percentile")
+            return None
+
+        percentile = _parse_percentile(percentile_str)
+
+        # Extract method
+        method = parts[value_idx + 5] if len(parts) > value_idx + 5 else None
+
+        # Create TermBin
+        return factory.create_term_bin(
+            name=name,
+            value_mm=value_mm,
+            percentile=percentile,
+            gestational_age=gestational_age,
+            method=method,
             fetus_number=None,  # ViewPoint text doesn't specify fetus number
         )
 
-    def _read_file(self, filepath: Path) -> str:
-        """Read ViewPoint text file."""
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read()
+    except (ValueError, IndexError) as e:
+        logger.debug(f"Failed to parse values from '{line}': {e}")
+        return None
 
-    def _is_divider(self, line: str) -> bool:
-        """
-        Check if a line is a section divider (====).
 
-        Args:
-            line: Line to check
+def _parse_gestational_age(
+    ga_weeks_str: Optional[str], ga_days_str: Optional[str]
+) -> Optional[GestationalAge]:
+    """Parse gestational age from week/day strings."""
+    if not ga_weeks_str or "w" not in ga_weeks_str:
+        return None
 
-        Returns:
-            True if the line is a divider (3+ consecutive '=' characters)
-        """
-        stripped = line.strip()
-        return len(stripped) >= 3 and all(c == "=" for c in stripped)
+    weeks_int = int(ga_weeks_str.replace("w", "").strip())
+    days_int = 0
 
-    def _find_biometry_section(self, lines: List[str]) -> List[str]:
-        """
-        Find lines in the Fetal Biometry section using divider-based detection.
+    if ga_days_str and "d" in ga_days_str:
+        days_int = int(ga_days_str.replace("d", "").strip())
 
-        Uses the same approach as ViewpointTextParse from the old parser:
-        - Sections are delimited by ==== lines
-        - Section header is the line BEFORE the ====
-        - Content is all lines until the NEXT ==== line
+    return GestationalAge(weeks=weeks_int, days=days_int)
 
-        This naturally handles sub-headers like "Head / Face / Neck Biometry:"
 
-        Args:
-            lines: All lines from the text file
+def _parse_percentile(percentile_str: str) -> float:
+    """
+    Parse percentile string to float.
 
-        Returns:
-            List of lines in the biometry section (until next section or empty line)
-        """
-        # Find all divider line indices
-        divider_indices = [i for i, line in enumerate(lines) if self._is_divider(line)]
+    Handles special cases:
+    - "<1%" -> 0.5
+    - ">99%" -> 99.5
+    - "55%" -> 55.0
 
-        if not divider_indices:
-            logger.debug("No divider lines found in ViewPoint text")
-            return []
+    Args:
+        percentile_str: Percentile as string
 
-        # Find the Fetal Biometry section
-        biometry_start_idx = None
-        biometry_end_idx = None
+    Returns:
+        Percentile as float (0-100 scale)
+    """
+    s = str(percentile_str).strip()
 
-        for i, divider_idx in enumerate(divider_indices):
-            # Check if line before divider is our header
-            if divider_idx > 0:
-                header = lines[divider_idx - 1].strip()
-                if header == self.BIOMETRY_HEADER:
-                    # Found it! Start after the divider
-                    biometry_start_idx = divider_idx + 1
-                    # End at next divider (or end of file)
-                    if i + 1 < len(divider_indices):
-                        biometry_end_idx = divider_indices[i + 1] - 1
-                    else:
-                        biometry_end_idx = len(lines)
-                    break
+    if s.startswith("<"):
+        return 0.5
+    elif s.startswith(">"):
+        return 99.5
 
-        if biometry_start_idx is None:
-            logger.debug(f"'{self.BIOMETRY_HEADER}' section not found")
-            return []
+    # Remove % sign
+    s = s.rstrip("%")
+    return float(s)
 
-        # Extract all non-empty, non-divider lines in this section
-        section_lines = []
-        for line in lines[biometry_start_idx:biometry_end_idx]:
-            stripped = line.strip()
-            if stripped and not self._is_divider(stripped):
-                # Include all lines - parser will filter out sub-headers naturally
-                section_lines.append(stripped)
 
-        logger.debug(f"Found {len(section_lines)} lines in biometry section")
-        return section_lines
+def _convert_to_mm(value: float, unit: str) -> float:
+    """Convert measurement to millimeters."""
+    unit_lower = unit.lower().strip()
 
-    def _parse_biometry_lines(self, lines: List[str]) -> List[Biometry]:
-        """
-        Parse biometry measurement lines.
-
-        Args:
-            lines: Lines from biometry section
-
-        Returns:
-            List of Biometry objects
-        """
-        biometries = []
-
-        for line in lines:
-            try:
-                biometry = self._parse_biometry_line(line)
-                if biometry:
-                    biometries.append(biometry)
-            except Exception as e:
-                logger.warning(f"Failed to parse biometry line '{line}': {e}")
-
-        return biometries
-
-    def _parse_biometry_line(self, line: str) -> Optional[Biometry]:
-        """
-        Parse a single biometry line.
-
-        Format: [name] [value] [unit] [GA_weeks] [GA_days] [percentile] [method]
-        Example: "BPD    63.2    mm    25w 4d    36%    Hadlock"
-        Example: "Nuchal Fold    4.5    mm    25w 3d    10%    Standard"
-
-        Sub-header lines like "Head / Face / Neck Biometry:" will naturally
-        fail parsing (not enough parts) and be skipped.
-
-        Args:
-            line: Single line from biometry section
-
-        Returns:
-            Biometry object or None if parsing fails or not a target measurement
-        """
-        # Split by whitespace (handles variable spacing)
-        parts = line.split()
-
-        # Need at least 6 parts for a valid measurement line
-        # Sub-headers and other lines won't have this many parts
-        if len(parts) < 6:
-            logger.debug(f"Line has fewer than 6 parts, skipping: {line}")
-            return None
-
-        # Try multi-word name first (e.g., "Nuchal Fold")
-        # Check if combining first two parts creates a valid measurement
-        name = None
-        value_idx = None
-
-        if len(parts) >= 7:  # Need extra part for two-word names
-            two_word_name = f"{parts[0]} {parts[1]}"
-            if self._is_target_measurement(two_word_name):
-                name = two_word_name
-                value_idx = 2  # Value starts at index 2 for two-word names
-
-        # Fall back to single-word name
-        if name is None:
-            single_word_name = parts[0]
-            if self._is_target_measurement(single_word_name):
-                name = single_word_name
-                value_idx = 1  # Value starts at index 1 for single-word names
-            else:
-                logger.debug(
-                    f"'{single_word_name}' is not a target measurement, skipping"
-                )
-                return None
-
-        # Normalize the name
-        normalized_name = self._normalize_name(name)
-
-        try:
-            value = float(parts[value_idx])
-            unit = parts[value_idx + 1]
-
-            # Convert to mm if needed
-            value_mm = self._convert_to_mm(value, unit)
-
-            # Parse gestational age (format: "25w" "4d" or "25w" or just weeks)
-            ga_weeks_str = parts[value_idx + 2] if len(parts) > value_idx + 2 else None
-            ga_days_str = parts[value_idx + 3] if len(parts) > value_idx + 3 else None
-
-            gestational_age = None
-            if ga_weeks_str:
-                # Handle combined format like "25w4d" or separate "25w" "4d"
-                if "w" in ga_weeks_str:
-                    weeks_int = int(ga_weeks_str.replace("w", "").strip())
-                    days_int = 0
-                    if ga_days_str and "d" in ga_days_str:
-                        days_int = int(ga_days_str.replace("d", "").strip())
-                    gestational_age = GestationalAge(weeks=weeks_int, days=days_int)
-
-            # Parse percentile (format: "36%" or "<1%" or ">99%")
-            percentile_str = (
-                parts[value_idx + 4]
-                if len(parts) > value_idx + 4 and "%" in parts[value_idx + 4]
-                else None
-            )
-            percentile = (
-                self._parse_percentile(percentile_str) if percentile_str else None
-            )
-
-            # Extract method (everything after percentile)
-            method = parts[value_idx + 5] if len(parts) > value_idx + 5 else None
-
-            return Biometry(
-                name=normalized_name,
-                value_mm=value_mm,
-                percentile=percentile,
-                gestational_age=gestational_age,
-                method=method,
-                fetus_number=None,  # ViewPoint text doesn't specify fetus number
-            )
-
-        except (ValueError, IndexError) as e:
-            logger.debug(f"Failed to parse numeric values from line '{line}': {e}")
-            return None
+    if unit_lower in ["mm", "millimeters", "millimeter"]:
+        return value
+    elif unit_lower in ["cm", "centimeters", "centimeter"]:
+        return value * 10.0
+    else:
+        raise ValueError(f"Unsupported unit: {unit}")

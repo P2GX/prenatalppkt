@@ -1,14 +1,15 @@
 """
 Biometry extractors for different input formats.
 
-Provides Abstract Base Class and concrete implementations for:
-- Observer JSON
-- ViewPoint text files
-- ViewPoint HL7 messages (future)
+Each extractor provides:
+- extract(data, factory) -> List[TermBin]
+- extract_from_file(filepath, factory) -> List[TermBin]
+
+No abstract base class - each extractor is standalone.
 """
 
-from prenatalppkt.etl.extractors.base import BiometryExtractor
-from prenatalppkt.etl.extractors.observer import ObserverExtractor
-from prenatalppkt.etl.extractors.viewpoint_text import ViewPointTextExtractor
+from prenatalppkt.etl.extractors import observer
+from prenatalppkt.etl.extractors import viewpoint_text
+from prenatalppkt.etl.extractors import viewpoint_hl7
 
-__all__ = ["BiometryExtractor", "ObserverExtractor", "ViewPointTextExtractor"]
+__all__ = ["observer", "viewpoint_text", "viewpoint_hl7"]
