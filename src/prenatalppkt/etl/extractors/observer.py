@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from prenatalppkt.etl.extractors.base import BiometryExtractor
 from prenatalppkt.etl.models.biometry import Biometry, BiometryCollection
 from prenatalppkt.etl.constants import OBSERVER_NAME_MAP, BiometryMeasurement
+from prenatalppkt.gestational_age import GestationalAge
 
 logger = logging.getLogger(__name__)
 
@@ -167,10 +168,9 @@ class ObserverExtractor(BiometryExtractor):
         percentile = m.get("calculated_percentile")
         ega = m.get("calculated_ega")
 
-        # Format gestational age if present
         gestational_age = None
         if ega is not None:
-            gestational_age = self._format_gestational_age(ega)
+            gestational_age = GestationalAge.from_weeks(float(ega))
 
         return Biometry(
             name=normalized_label,
@@ -180,17 +180,3 @@ class ObserverExtractor(BiometryExtractor):
             method=None,  # Observer JSON doesn't include method
             fetus_number=fetus_number,
         )
-
-    def _format_gestational_age(self, ega: float) -> str:
-        """
-        Convert EGA in weeks to GA string format.
-
-        Args:
-            ega: Estimated gestational age in weeks (e.g., 27.1)
-
-        Returns:
-            Formatted string (e.g., "G27w0d")
-        """
-        weeks = int(ega)
-        days = int((ega - weeks) * 7)
-        return f"G{weeks}w{days}d"

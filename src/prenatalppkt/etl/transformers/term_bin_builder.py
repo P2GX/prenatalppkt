@@ -12,6 +12,8 @@ from prenatalppkt.etl.models.biometry import Biometry, BiometryCollection
 from prenatalppkt.measurements.percentile_range import PercentileRange
 from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.mapping_loader import BiometryMappingLoader
+from prenatalppkt.hpo.simple_term import SimpleTerm
+from prenatalppkt.gestational_age import GestationalAge
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +88,7 @@ class TermBinBuilder:
             biometry: Single biometry measurement
 
         Returns:
-            TermBin object or None if percentile missing or mapping not found
+            TermBin object or None if cannot be mapped
         """
         # Must have percentile to map to TermBin
         if biometry.percentile is None:
@@ -111,7 +113,6 @@ class TermBinBuilder:
         # Find the TermBin that matches this percentile range
         matching_bin = None
         for tb in configured_bins:
-            # Compare the bin_key of the ranges to find a match
             if tb.range.bin_key == target_range.bin_key:
                 matching_bin = tb
                 break
@@ -123,16 +124,14 @@ class TermBinBuilder:
             )
             return None
 
-        # Create new TermBin with enriched description
+        # Create SimpleTerm from the matched bin
+        term = SimpleTerm(hpo_id=matching_bin.hpo_id, hpo_label=matching_bin.hpo_label)
+
+        # Build description from Biometry data
         description = self._build_description(biometry)
 
-        return TermBin(
-            range=matching_bin.range,
-            hpo_id=matching_bin.hpo_id,
-            hpo_label=matching_bin.hpo_label,
-            normal=matching_bin.normal,
-            description=description,
-        )
+        # Use TermBin.from_term() factory method
+        return TermBin.from_term(range=target_range, term=term, normal=matching_bin.normal, description=description)
 
     def _build_description(self, biometry: Biometry) -> str:
         """
@@ -149,8 +148,10 @@ class TermBinBuilder:
             f"({biometry.percentile}%)",
         ]
 
+        # gestational_age is now a GestationalAge object
         if biometry.gestational_age:
-            parts.append(f"at {biometry.gestational_age}")
+            ga = biometry.gestational_age
+            parts.append(f"at {ga.weeks}w{ga.days}d")
 
         if biometry.method:
             parts.append(f"({biometry.method})")

@@ -11,6 +11,7 @@ Following TDD methodology:
 import pytest
 from prenatalppkt.etl.extractors.observer import ObserverExtractor
 from prenatalppkt.etl.models.biometry import BiometryCollection
+from prenatalppkt.gestational_age import GestationalAge
 
 
 class TestObserverExtractor:
@@ -124,7 +125,10 @@ class TestObserverExtractor:
         assert hc.name == "HC"
         assert hc.value_mm == 250.0  # 25.0 cm -> 250.0 mm
         assert hc.percentile == 42.5
-        assert hc.gestational_age == "G27w0d"  # 27.1 weeks -> 27w0d
+        assert isinstance(hc.gestational_age, GestationalAge)
+        assert hc.gestational_age.weeks == 27
+        assert hc.gestational_age.days == 0
+
         assert hc.fetus_number == 1
 
     def test_extract_all_eight_biometries(self, full_biometry_json):
@@ -207,7 +211,9 @@ class TestObserverExtractor:
 
         hc = collection.get("HC")
         # 27.6 weeks -> 27 weeks + 4 days
-        assert hc.gestational_age == "G27w4d"
+        assert isinstance(hc.gestational_age, GestationalAge)
+        assert hc.gestational_age.weeks == 27
+        assert hc.gestational_age.days == 4
 
     def test_fetus_number_extraction(self, full_biometry_json):
         """Test that fetus number is correctly extracted."""

@@ -7,6 +7,7 @@ Following TDD methodology for ViewPoint text file parsing.
 import pytest
 from prenatalppkt.etl.extractors.viewpoint_text import ViewPointTextExtractor
 from prenatalppkt.etl.models.biometry import BiometryCollection
+from prenatalppkt.gestational_age import GestationalAge
 
 
 class TestViewPointTextExtractor:
@@ -83,7 +84,9 @@ Femur                                                      65.0                 
         assert hc.name == "HC"
         assert hc.value_mm == 233.7
         assert hc.percentile == 36.0
-        assert hc.gestational_age == "G25w1d"
+        assert isinstance(hc.gestational_age, GestationalAge)
+        assert hc.gestational_age.weeks == 25
+        assert hc.gestational_age.days == 1
         assert hc.method == "Chervenak"
 
     def test_extract_all_eight_biometries(self, full_biometry_text):
@@ -145,10 +148,14 @@ Femur                                                      65.0                 
         collection = extractor.extract(full_biometry_text)
 
         bpd = collection.get("BPD")
-        assert bpd.gestational_age == "G25w4d"
+        assert isinstance(bpd.gestational_age, GestationalAge)
+        assert bpd.gestational_age.weeks == 25
+        assert bpd.gestational_age.days == 4
 
         ac = collection.get("AC")
-        assert ac.gestational_age == "G26w4d"
+        assert isinstance(ac.gestational_age, GestationalAge)
+        assert ac.gestational_age.weeks == 26
+        assert ac.gestational_age.days == 4
 
     def test_method_extraction(self, full_biometry_text):
         """Test that measurement method is extracted."""

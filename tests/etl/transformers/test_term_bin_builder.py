@@ -12,6 +12,7 @@ from prenatalppkt.etl.models.biometry import Biometry, BiometryCollection
 from prenatalppkt.etl.transformers.term_bin_builder import TermBinBuilder
 from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.measurements.percentile_range import PercentileRange
+from prenatalppkt.gestational_age import GestationalAge
 
 
 class TestTermBinBuilder:
@@ -65,7 +66,7 @@ class TestTermBinBuilder:
             name="HC",
             value_mm=180.0,
             percentile=2.0,  # Below 3rd percentile
-            gestational_age="G25w0d",
+            gestational_age=GestationalAge(weeks=25, days=0),
             method="Hadlock",
             fetus_number=1,
         )
@@ -79,7 +80,7 @@ class TestTermBinBuilder:
         assert term_bins[0].hpo_label == "Microcephaly"
         assert term_bins[0].normal is False
         assert "180.0 mm" in term_bins[0].description
-        assert "2.0%" in term_bins[0].description
+        assert "(2.0%)" in term_bins[0].description
 
     def test_build_multiple_biometries(self, builder_with_mocks):
         """Test building TermBins from multiple biometries."""
@@ -88,14 +89,14 @@ class TestTermBinBuilder:
                 name="HC",
                 value_mm=180.0,
                 percentile=2.0,
-                gestational_age="G25w0d",
+                gestational_age=GestationalAge(weeks=25, days=0),
                 method="Hadlock",
             ),
             Biometry(
                 name="HC",
                 value_mm=200.0,
                 percentile=30.0,
-                gestational_age="G25w0d",
+                gestational_age=GestationalAge(weeks=25, days=0),
                 method="Hadlock",
             ),
         ]
@@ -113,7 +114,7 @@ class TestTermBinBuilder:
             name="HC",
             value_mm=200.0,
             percentile=None,  # No percentile
-            gestational_age="G25w0d",
+            gestational_age=GestationalAge(weeks=25, days=0),
         )
 
         collection = BiometryCollection(measurements=[biometry])
@@ -127,7 +128,7 @@ class TestTermBinBuilder:
             name="BPD",  # Not in mock mappings
             value_mm=60.0,
             percentile=50.0,
-            gestational_age="G25w0d",
+            gestational_age=GestationalAge(weeks=25, days=0),
         )
 
         collection = BiometryCollection(measurements=[biometry])
@@ -141,7 +142,7 @@ class TestTermBinBuilder:
             name="HC",
             value_mm=200.0,
             percentile=5.0,  # Between 3-10, not in our mock bins
-            gestational_age="G25w0d",
+            gestational_age=GestationalAge(weeks=25, days=0),
         )
 
         collection = BiometryCollection(measurements=[biometry])
@@ -156,7 +157,7 @@ class TestTermBinBuilder:
             name="HC",
             value_mm=233.7,
             percentile=36.0,
-            gestational_age="G25w1d",
+            gestational_age=GestationalAge(weeks=25, days=1),
             method="Hadlock",
             fetus_number=1,
         )
@@ -166,7 +167,7 @@ class TestTermBinBuilder:
         assert term_bin is not None
         assert "HC: 233.7 mm" in term_bin.description
         assert "(36.0%)" in term_bin.description
-        assert "at G25w1d" in term_bin.description
+        assert "at 25w1d" in term_bin.description
         assert "(Hadlock)" in term_bin.description
         assert "[Fetus 1]" in term_bin.description
 
@@ -215,7 +216,7 @@ class TestTermBinBuilder:
         """Test that errors on one biometry don't stop processing others."""
         measurements = [
             Biometry(
-                name="HC", value_mm=180.0, percentile=2.0, gestational_age="G25w0d"
+                name="HC", value_mm=180.0, percentile=2.0, gestational_age=GestationalAge(weeks=25, days=0)
             ),
             Biometry(
                 name="INVALID",  # Will cause error
@@ -223,7 +224,7 @@ class TestTermBinBuilder:
                 percentile=50.0,
             ),
             Biometry(
-                name="HC", value_mm=200.0, percentile=30.0, gestational_age="G25w0d"
+                name="HC", value_mm=200.0, percentile=30.0, gestational_age=GestationalAge(weeks=25, days=0)
             ),
         ]
 
@@ -264,7 +265,7 @@ class TestTermBinBuilderIntegration:
             name="HC",
             value_mm=180.0,
             percentile=2.0,
-            gestational_age="G25w0d",
+            gestational_age=GestationalAge(weeks=25, days=0),
             method="Hadlock",
         )
 
