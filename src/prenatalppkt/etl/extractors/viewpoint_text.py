@@ -6,7 +6,7 @@ Uses divider-based section detection (like ViewpointTextParse) to handle sub-hea
 """
 
 import logging
-import re
+from prenatalppkt.gestational_age import GestationalAge
 from pathlib import Path
 from typing import List, Optional
 
@@ -251,12 +251,11 @@ class ViewPointTextExtractor(BiometryExtractor):
             if ga_weeks_str:
                 # Handle combined format like "25w4d" or separate "25w" "4d"
                 if "w" in ga_weeks_str:
-                    weeks = ga_weeks_str.replace("w", "").strip()
+                    weeks_int = int(ga_weeks_str.replace("w", "").strip())
+                    days_int = 0
                     if ga_days_str and "d" in ga_days_str:
-                        days = ga_days_str.replace("d", "").strip()
-                        gestational_age = f"G{weeks}w{days}d"
-                    else:
-                        gestational_age = f"G{weeks}w0d"
+                        days_int = int(ga_days_str.replace("d", "").strip())
+                    gestational_age = GestationalAge(weeks=weeks_int, days=days_int)
 
             # Parse percentile (format: "36%" or "<1%" or ">99%")
             percentile_str = (
@@ -283,23 +282,3 @@ class ViewPointTextExtractor(BiometryExtractor):
         except (ValueError, IndexError) as e:
             logger.debug(f"Failed to parse numeric values from line '{line}': {e}")
             return None
-
-    def _format_ga(self, weeks_str: str, days_str: str) -> str:
-        """
-        Format gestational age from separate weeks and days strings.
-
-        Args:
-            weeks_str: Weeks string (e.g., "25w")
-            days_str: Days string (e.g., "4d")
-
-        Returns:
-            Formatted GA string (e.g., "G25w4d")
-        """
-        # Extract numbers
-        weeks = re.search(r"(\d+)", weeks_str)
-        days = re.search(r"(\d+)", days_str)
-
-        if not weeks or not days:
-            return f"{weeks_str}{days_str}"  # Fallback
-
-        return f"G{weeks.group(1)}w{days.group(1)}d"

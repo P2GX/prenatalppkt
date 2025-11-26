@@ -216,7 +216,10 @@ class TestTermBinBuilder:
         """Test that errors on one biometry don't stop processing others."""
         measurements = [
             Biometry(
-                name="HC", value_mm=180.0, percentile=2.0, gestational_age=GestationalAge(weeks=25, days=0)
+                name="HC",
+                value_mm=180.0,
+                percentile=2.0,
+                gestational_age=GestationalAge(weeks=25, days=0),
             ),
             Biometry(
                 name="INVALID",  # Will cause error
@@ -224,7 +227,10 @@ class TestTermBinBuilder:
                 percentile=50.0,
             ),
             Biometry(
-                name="HC", value_mm=200.0, percentile=30.0, gestational_age=GestationalAge(weeks=25, days=0)
+                name="HC",
+                value_mm=200.0,
+                percentile=30.0,
+                gestational_age=GestationalAge(weeks=25, days=0),
             ),
         ]
 

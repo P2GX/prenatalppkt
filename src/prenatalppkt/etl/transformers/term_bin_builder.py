@@ -13,7 +13,6 @@ from prenatalppkt.measurements.percentile_range import PercentileRange
 from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.mapping_loader import BiometryMappingLoader
 from prenatalppkt.hpo.simple_term import SimpleTerm
-from prenatalppkt.gestational_age import GestationalAge
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +130,12 @@ class TermBinBuilder:
         description = self._build_description(biometry)
 
         # Use TermBin.from_term() factory method
-        return TermBin.from_term(range=target_range, term=term, normal=matching_bin.normal, description=description)
+        return TermBin.from_term(
+            range=target_range,
+            term=term,
+            normal=matching_bin.normal,
+            description=description,
+        )
 
     def _build_description(self, biometry: Biometry) -> str:
         """

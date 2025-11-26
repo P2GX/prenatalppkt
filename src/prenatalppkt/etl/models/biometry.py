@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, List, Dict
 
 if TYPE_CHECKING:
-    from prenatalppkt.gestational_age import GestationalAge
+    pass
 
 
 @dataclass
