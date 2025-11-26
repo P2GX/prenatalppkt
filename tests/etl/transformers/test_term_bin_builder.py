@@ -33,7 +33,7 @@ class TestTermBinBuilder:
             TermBin(
                 range=PercentileRange.between_10p_50p(),
                 hpo_id="HP:0000240",
-                hpo_label="Normal head size",
+                hpo_label="Abnormality of skull size",
                 normal=True,
                 description="10th-50th percentile",
             ),
