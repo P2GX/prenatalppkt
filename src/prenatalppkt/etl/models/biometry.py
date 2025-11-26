@@ -7,6 +7,8 @@ Represents extracted biometry measurements with standardized naming.
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, List, Dict
 
+from prenatalppkt.gestational_age import GestationalAge
+
 if TYPE_CHECKING:
     pass
 
@@ -23,7 +25,7 @@ class Biometry:
     name: str  # e.g., "HC", "BPD", "AC", "Femur"
     value_mm: float  # Always in millimeters
     percentile: Optional[float] = None  # 0-100 scale
-    Optional["GestationalAge"] = None  # GestationalAge object
+    gestational_age: Optional["GestationalAge"] = None  # GestationalAge object
     method: Optional[str] = None  # e.g., "Hadlock", "Chervenak"
     fetus_number: Optional[int] = None
 
