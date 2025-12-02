@@ -91,10 +91,10 @@ BPD     68.0    mm      26w 0d      55%     Hadlock
         Nuchal Fold     4.5     mm      25w 2d      10%     Standard
         """
         term_bins = viewpoint_text.extract(data)
-    
+
         # TODO(@VarenyaJ): When HPO mapping added, change to 5
         assert len(term_bins) == 4  # Only required measurements
-        
+
         # Don't check for Nuchal Fold yet
         # nf = next(tb for tb in term_bins if "Nuchal Fold" in tb.description)
         # assert nf is not None

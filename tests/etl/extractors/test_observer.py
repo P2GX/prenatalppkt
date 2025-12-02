@@ -196,34 +196,37 @@ class TestObserverExtract:
     def test_extract_optional_measurements(self):
         """Test extraction includes optional measurements when present."""
         data = {
-            "fetuses": [{
-                "fetus": {"fetus_number": 1},
-                "measurements": [
-                    # ... HC, BPD, AC, Femur with percentiles ...
-                    {
-                        "label": "Nuchal Fold",
-                        "value": 4.5,
-                        "unit_of_measure": "mm",
-                        "calculated_percentile": 10.0,  # Has percentile!
-                    },
-                    {
-                        "label": "Cerebellum",
-                        "value": 25.0,
-                        "unit_of_measure": "mm",
-                        "calculated_percentile": 45.0,  # Has percentile!
-                    },
-                ],
-            }]
+            "fetuses": [
+                {
+                    "fetus": {"fetus_number": 1},
+                    "measurements": [
+                        # ... HC, BPD, AC, Femur with percentiles ...
+                        {
+                            "label": "Nuchal Fold",
+                            "value": 4.5,
+                            "unit_of_measure": "mm",
+                            "calculated_percentile": 10.0,  # Has percentile!
+                        },
+                        {
+                            "label": "Cerebellum",
+                            "value": 25.0,
+                            "unit_of_measure": "mm",
+                            "calculated_percentile": 45.0,  # Has percentile!
+                        },
+                    ],
+                }
+            ]
         }
 
         term_bins = observer.extract(data)
-        
+
         # TODO(@VarenyaJ): When HPO mappings added, change to 6
         assert len(term_bins) == 4  # Only required measurements (no HPO for optional)
-        
+
         # Don't check for optional measurements yet
         # labels = [tb.description for tb in term_bins]
         # assert any("Nuchal Fold" in desc for desc in labels)
+
 
 class TestObserverExtractFromFile:
     """Tests for extract_from_file() function."""
@@ -371,12 +374,12 @@ class TestObserverUnitConversion:
         }
 
         term_bins = observer.extract(data)
-        
+
         # TODO(@VarenyaJ): Nuchal Fold has no HPO mapping - won't be in results
         # This test should be updated when HPO mapping is added
         # For now, expect only 4 required measurements
         assert len(term_bins) == 4
-        
+
         # Skip Nuchal Fold assertion until HPO mapping exists
         # nf = next(tb for tb in term_bins if "Nuchal Fold" in tb.description)
         # assert "4.5" in nf.description
