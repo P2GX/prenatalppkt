@@ -227,3 +227,4 @@ viewpoint_*.txt
 *pretty.json
 Discrete*.txt
 tests/data/*pytest-results.txt
+pytest-results.txt
