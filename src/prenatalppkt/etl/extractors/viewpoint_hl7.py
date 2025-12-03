@@ -11,10 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from prenatalppkt.etl.constants import VIEWPOINT_HL7_NAME_MAP
-from prenatalppkt.etl.term_bin_factory import (
-    TermBinFactory,
-    validate_required_measurements,
-)
+from prenatalppkt.etl.term_bin_factory import TermBinFactory
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.term_bin import TermBin
 
@@ -73,11 +70,11 @@ def extract(data: str, factory: TermBinFactory = None) -> List[TermBin]:
     # TODO(@VarenyaJ): Skip validation for first trimester exams (missing BPD)
     # Current sample is first trimester - validation will fail
     # TODO(@VarenyaJ): Add gestational age check for conditional validation
-    #try:
+    # try:
     #    validate_required_measurements(term_bins)
-    #except ValueError as e:
+    # except ValueError as e:
     #    logger.warning(f"Validation failed (expected for first trimester): {e}")
-        # For now, don't raise - just log
+    # For now, don't raise - just log
 
     logger.info(f"Extracted {len(term_bins)} TermBins from ViewPoint HL7")
     return term_bins

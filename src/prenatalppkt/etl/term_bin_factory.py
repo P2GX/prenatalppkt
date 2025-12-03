@@ -199,7 +199,7 @@ class TermBinFactory:
 
         Format: "NAME: value mm (percentile%) at GAw GAd (method) [Fetus N]"
         """
-        parts = [f"{name}: {value_mm} mm ({percentile}%)"]
+        parts = [f"{name}: {value_mm:.1f} mm ({percentile:.1f}%)"]
 
         if gestational_age:
             parts.append(f"at {gestational_age.weeks}w{gestational_age.days}d")
