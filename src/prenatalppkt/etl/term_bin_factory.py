@@ -127,8 +127,12 @@ class TermBinFactory:
                 )
 
         # Evaluate percentile range
+        # using PercentileRange.contains() inside TermBin
         perc_range = PercentileRange.evaluate(percentile)
-        logger.debug(f"Percentile {percentile}% -> range {perc_range.bin_key}")
+        logger.debug(
+            f"Percentile {percentile}% -> {perc_range.bin_key}"
+            f"via evaluate() + contains()"
+        )
 
         # Determine if measurement is normal/abnormal
         is_normal = self._is_normal_range(perc_range)
@@ -143,10 +147,10 @@ class TermBinFactory:
         )
 
         # Create TermBin
-        term_bin = TermBin.from_term(
+        term_bin = TermBin(
             range=perc_range,
-            term_id=hpo_id,
-            term_label=hpo_label,
+            hpo_id=hpo_id,
+            hpo_label=hpo_label,
             normal=is_normal,
             description=description,
         )

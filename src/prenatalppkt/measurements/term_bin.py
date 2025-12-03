@@ -1,4 +1,6 @@
-"""Core data structures for percentile-to-HPO mapping."""
+"""
+Core data structures for percentile-to-HPO mapping.
+"""
 
 from __future__ import annotations
 
@@ -65,17 +67,7 @@ class TermBin:
 
     def fits(self, percentile: float) -> bool:
         """
-        Return True if a percentile value falls within this bin's range.
-
-        Parameters
-        ----------
-        percentile : float
-            Raw percentile value.
-
-        Returns
-        -------
-        bool
-            Whether the percentile is contained in this bin.
+        Use PercentileRange.contains() so bins are correctly matched by numeric percentile rather than bin_key comparison.
         """
         return self.range.contains(percentile)
 

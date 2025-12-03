@@ -199,7 +199,7 @@ def _parse_single_measurement(
         f"value={value_mm}mm, percentile={percentile}%, ga={gestational_age}"
     )
 
-    # Create TermBin using factory
+    # Create TermBin using PercentileRange.contains()
     return factory.create_term_bin(
         name=canonical_name,
         value_mm=value_mm,

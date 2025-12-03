@@ -35,18 +35,9 @@ class SonographicMeasurement:
         """
         Map a percentile value to an HPO term observation.
 
-        This is DATA-DRIVEN - no hardcoded if/elif chains!
-
-        Args:
-            percentile: Percentile value (0-100)
-            gestational_age: Gestational age context
-
-        Returns:
-            TermObservation with appropriate HPO term
-
-        Raises:
-            ValueError: If no bin matches the percentile
+        rely on TermBin.contains() semantics
         """
+
         for term_bin in self.term_bins:
             if term_bin.fits(percentile):
                 return TermObservation(
