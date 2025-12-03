@@ -226,4 +226,4 @@ hp.json
 viewpoint_*.txt
 *pretty.json
 Discrete*.txt
-tests/data/*
+tests/data/*pytest-results.txt
