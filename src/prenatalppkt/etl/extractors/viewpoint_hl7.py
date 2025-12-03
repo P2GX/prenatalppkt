@@ -72,12 +72,12 @@ def extract(data: str, factory: TermBinFactory = None) -> List[TermBin]:
 
     # TODO(@VarenyaJ): Skip validation for first trimester exams (missing BPD)
     # Current sample is first trimester - validation will fail
-    try:
-        validate_required_measurements(term_bins)
-    except ValueError as e:
-        logger.warning(f"Validation failed (expected for first trimester): {e}")
+    # TODO(@VarenyaJ): Add gestational age check for conditional validation
+    #try:
+    #    validate_required_measurements(term_bins)
+    #except ValueError as e:
+    #    logger.warning(f"Validation failed (expected for first trimester): {e}")
         # For now, don't raise - just log
-        # raise
 
     logger.info(f"Extracted {len(term_bins)} TermBins from ViewPoint HL7")
     return term_bins
