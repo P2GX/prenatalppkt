@@ -6,7 +6,7 @@ using existing percentile range and mapping infrastructure.
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -15,49 +15,25 @@ from prenatalppkt.etl.term_bin_factory import (
     validate_required_measurements,
 )
 from prenatalppkt.gestational_age import GestationalAge
-from prenatalppkt.measurements.percentile_range import PercentileRange
-from prenatalppkt.measurements.term_bin import TermBin
+
+
+@pytest.fixture
+def factory():
+    """Create a TermBinFactory instance for testing."""
+    return TermBinFactory()
 
 
 class TestTermBinFactory:
-    """Test suite for TermBinFactory."""
+    """
+    Test suite for TermBinFactory.
 
-    @pytest.fixture
-    def mock_mappings(self):
-        """Mock HPO mappings for testing.
-
-        We treat these TermBins as configuration bins, which the factory
-        will use as templates for creating runtime TermBins.
-        """
-        hc_bins = [
-            TermBin(
-                range=PercentileRange.below_3p(),
-                hpo_id="HP:0000252",
-                hpo_label="Microcephaly",
-                normal=False,
-                description="Below 3rd percentile",
-            ),
-            TermBin(
-                range=PercentileRange.between_10p_50p(),
-                hpo_id="HP:0000240",
-                hpo_label="Abnormality of skull size",
-                normal=True,
-                description="10th-50th percentile",
-            ),
-        ]
-        return {"head_circumference": hc_bins}
-
-    @pytest.fixture
-    def factory(self, mock_mappings):
-        """Create factory with mocked mappings."""
-        with patch(
-            "prenatalppkt.etl.term_bin_factory.BiometryMappingLoader.load"
-        ) as mock_load:
-            mock_load.return_value = mock_mappings
-            return TermBinFactory()
+    Tests the factory using its internal _HPO_MAPPINGS (no mocking needed).
+    """
 
     def test_create_term_bin_basic(self, factory):
-        """Test creating TermBin from basic measurement."""
+        """
+        Test creating TermBin from basic measurement (microcephaly case).
+        """
         term_bin = factory.create_term_bin(
             name="HC",
             value_mm=180.0,
@@ -77,8 +53,26 @@ class TestTermBinFactory:
         assert "(2.0%)" in term_bin.description
         assert "27w1d" in term_bin.description
 
+    def test_create_term_bin_normal_range(self, factory):
+        """
+        Test creating TermBin for normal percentile range.
+        """
+        term_bin = factory.create_term_bin(
+            name="HC",
+            value_mm=250.0,
+            percentile=50.0,
+            gestational_age=GestationalAge(weeks=26, days=0),
+        )
+        assert term_bin is not None
+        assert term_bin.hpo_id == "HP:0000240"
+        assert term_bin.normal is True
+        assert "250.0 mm" in term_bin.description
+        assert "(50.0%)" in term_bin.description
+
     def test_create_term_bin_with_all_fields(self, factory):
-        """Test creating TermBin with all optional fields."""
+        """
+        Test creating TermBin with all optional fields.
+        """
         term_bin = factory.create_term_bin(
             name="HC",
             value_mm=233.7,
@@ -96,39 +90,68 @@ class TestTermBinFactory:
         assert "[Fetus 1]" in term_bin.description
 
     def test_create_term_bin_invalid_percentile(self, factory):
-        """Test that invalid percentile raises error."""
+        """
+        Test that invalid percentile raises error.
+        """
         with pytest.raises(ValueError, match="Percentile must be 0-100"):
             factory.create_term_bin(name="HC", value_mm=200.0, percentile=150.0)
 
-    def test_create_term_bin_no_mapping(self, factory):
-        """Test that unmapped measurement returns None."""
+    def test_create_term_bin_optional_no_mapping(self, factory):
+        """
+        Test that unmapped optional measurement returns None.
+        """
         term_bin = factory.create_term_bin(
-            name="BPD",  # Not in mock mappings
+            name="Nuchal Fold",  # Optional measurement, no HPO mapping yet
             value_mm=60.0,
             percentile=50.0,
         )
 
         assert term_bin is None
 
-    def test_create_term_bin_percentile_no_bin(self, factory):
-        """Test percentile that doesn't match any bin."""
-        # Percentile 5.0 lies between 3-10p; our mocks only cover <3p and 10-50p
-        term_bin = factory.create_term_bin(name="HC", value_mm=200.0, percentile=5.0)
+    def test_create_term_bin_all_required_measurements(self, factory):
+        """
+        Test that all required measurements have HPO mappings.
+        """
+        ga = GestationalAge(weeks=26, days=0)
 
-        assert term_bin is None
+        # All required measurements should produce valid TermBins
+        for name in ["HC", "BPD", "AC", "Femur"]:
+            term_bin = factory.create_term_bin(
+                name=name, value_mm=100.0, percentile=50.0, gestational_age=ga
+            )
+            assert term_bin is not None, f"{name} should have HPO mapping"
+            assert term_bin.hpo_id.startswith("HP:"), f"{name} HPO ID invalid"
 
-    def test_normalize_measurement_type(self, factory):
-        """Test measurement name normalization."""
-        assert factory._normalize_measurement_type("HC") == "head_circumference"
-        assert factory._normalize_measurement_type("BPD") == "biparietal_diameter"
-        assert factory._normalize_measurement_type("Nuchal Fold") == "nuchal_fold"
+    def test_create_term_bin_extreme_percentiles(self, factory):
+        """
+        Test HPO selection for extreme percentiles.
+        """
+        ga = GestationalAge(weeks=26, days=0)
+
+        # Very low percentile -> decreased term
+        low_bin = factory.create_term_bin(
+            name="HC", value_mm=150.0, percentile=1.0, gestational_age=ga
+        )
+        assert low_bin.hpo_id == "HP:0000252"  # Microcephaly
+        assert low_bin.normal is False
+
+        # Very high percentile -> increased term
+        high_bin = factory.create_term_bin(
+            name="HC", value_mm=350.0, percentile=99.0, gestational_age=ga
+        )
+        assert high_bin.hpo_id == "HP:0000256"  # Macrocephaly
+        assert high_bin.normal is False
 
 
 class TestValidateRequiredMeasurements:
-    """Test validation of required measurements."""
+    """
+    Test validation of required measurements.
+    """
 
     def test_all_required_present(self):
-        """Test validation passes with all required measurements."""
+        """
+        Test validation passes with all required measurements.
+        """
         term_bins = [
             MagicMock(description="HC: 250.0 mm (42%)"),
             MagicMock(description="BPD: 63.2 mm (36%)"),
@@ -140,7 +163,9 @@ class TestValidateRequiredMeasurements:
         validate_required_measurements(term_bins)
 
     def test_missing_required_measurement(self):
-        """Test validation fails with missing required measurement."""
+        """
+        Test validation fails with missing required measurement.
+        """
         term_bins = [
             MagicMock(description="HC: 250.0 mm (42%)"),
             MagicMock(description="BPD: 63.2 mm (36%)"),
@@ -151,7 +176,9 @@ class TestValidateRequiredMeasurements:
             validate_required_measurements(term_bins)
 
     def test_error_message_lists_missing(self):
-        """Test error message lists missing measurements."""
+        """
+        Test error message lists missing measurements.
+        """
         term_bins = [MagicMock(description="HC: 250.0 mm (42%)")]
 
         with pytest.raises(ValueError) as exc_info:
@@ -163,7 +190,9 @@ class TestValidateRequiredMeasurements:
         assert "Femur" in error_msg
 
     def test_optional_measurements_not_required(self):
-        """Test that optional measurements don't affect validation."""
+        """
+        Test that optional measurements don't affect validation.
+        """
         term_bins = [
             MagicMock(description="HC: 250.0 mm (42%)"),
             MagicMock(description="BPD: 63.2 mm (36%)"),
@@ -177,7 +206,9 @@ class TestValidateRequiredMeasurements:
 
 
 class TestTermBinFactoryIntegration:
-    """Integration tests with real mappings."""
+    """
+    Integration tests with real mappings.
+    """
 
     @pytest.mark.skipif(
         not (
@@ -189,7 +220,9 @@ class TestTermBinFactoryIntegration:
         reason="Mapping file not found",
     )
     def test_create_with_real_mappings(self):
-        """Test creating TermBins with real mapping file."""
+        """
+        Test creating TermBins with real mapping file.
+        """
         factory = TermBinFactory()
 
         # Test microcephaly case (HC below 3rd percentile)

@@ -5,6 +5,7 @@ Handles mapping of measurement names to HPO terms and percentile ranges.
 """
 
 import logging
+import typing
 from typing import List, Optional, Set
 
 from prenatalppkt.gestational_age import GestationalAge
@@ -41,7 +42,7 @@ class TermBinFactory:
 
     # HPO term mappings for each measurement type
     # Format: measurement_name -> {range_type -> (hpo_id, hpo_label)}
-    _HPO_MAPPINGS = {
+    _HPO_MAPPINGS = typing.ClassVar[dict[str, dict[str, tuple[str, str]]]] = {
         "HC": {
             "increased": ("HP:0000256", "Macrocephaly"),
             "decreased": ("HP:0000252", "Microcephaly"),
