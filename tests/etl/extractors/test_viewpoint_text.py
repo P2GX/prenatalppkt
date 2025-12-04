@@ -289,7 +289,7 @@ HC      175.0
 BPD     68.0    mm      26w 0d      55%     Hadlock
 AC      212.0   mm      25w 5d      48%     Hadlock
 Femur   48.0    mm      26w 1d      52%     Hadlock
-""" # noqa: F841
+"""  # noqa: F841
         # TODO(@VarenyaJ): ensure this works in the main file and then fix this part of the test
         # Should skip HC line and extract others
         # term_bins = viewpoint_text.extract(data)
@@ -305,7 +305,7 @@ HC      invalid mm      25w 3d      50%     Hadlock
 BPD     68.0    mm      26w 0d      55%     Hadlock
 AC      212.0   mm      25w 5d      48%     Hadlock
 Femur   48.0    mm      26w 1d      52%     Hadlock
-""" # noqa: F841
+"""  # noqa: F841
         # TODO(@VarenyaJ): ensure this works in the main file and then fix this part of the test
         # term_bins = viewpoint_text.extract(data)
         # assert len(term_bins) == 3
@@ -323,7 +323,7 @@ HC      175.0   mm      25w 3d      50%     Hadlock
 BPD     68.0    mm      26w 0d              Hadlock
 AC      212.0   mm      25w 5d      48%     Hadlock
 Femur   48.0    mm      26w 1d      52%     Hadlock
-""" # noqa: F841
+"""  # noqa: F841
         # TODO(@VarenyaJ): ensure this works in the main file and then fix this part of the test
         # term_bins = viewpoint_text.extract(data)
         # assert len(term_bins) == 3

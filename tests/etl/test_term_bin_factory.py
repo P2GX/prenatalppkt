@@ -20,7 +20,9 @@ from prenatalppkt.gestational_age import GestationalAge
 @pytest.fixture
 def factory():
     """Create a TermBinFactory instance for testing."""
-    return TermBinFactory()
+    # Uses default path: data/mappings/biometry_hpo_mappings.yaml
+    f = TermBinFactory()
+    return f
 
 
 class TestTermBinFactory:

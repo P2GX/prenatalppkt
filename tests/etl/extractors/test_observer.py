@@ -17,7 +17,7 @@ class TestObserverExtract:
 
     def test_extract_basic(self):
         """Test extraction with minimal valid data."""
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -69,7 +69,7 @@ class TestObserverExtract:
     def test_extract_with_custom_factory(self):
         """Test extraction with custom factory."""
         factory = TermBinFactory()
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -108,14 +108,14 @@ class TestObserverExtract:
 
     def test_extract_missing_fetuses_key(self):
         """Test extraction with missing 'fetuses' key."""
-        data = {"exam": {}, "patient": {}} # noqa: F841
+        data = {"exam": {}, "patient": {}}  # noqa: F841
 
         with pytest.raises(ValueError, match="Missing 'fetuses' key"):
             observer.extract(data)
 
     def test_extract_empty_fetuses(self):
         """Test extraction with empty fetuses list."""
-        data = {"fetuses": []} # noqa: F841
+        data = {"fetuses": []}  # noqa: F841
 
         with pytest.raises(ValueError, match="non-empty list"):
             observer.extract(data)
@@ -127,7 +127,7 @@ class TestObserverExtract:
 
     def test_extract_missing_required_measurements(self):
         """Test extraction fails when required measurements missing."""
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -149,7 +149,7 @@ class TestObserverExtract:
 
     def test_extract_skips_measurements_without_percentile(self):
         """Test that measurements without percentiles are skipped."""
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -198,7 +198,7 @@ class TestObserverExtract:
     )
     def test_extract_optional_measurements(self):
         """Test extraction includes optional measurements when present."""
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -251,7 +251,7 @@ class TestObserverExtractFromFile:
     def test_extract_from_file_success(self, tmp_path):
         """Test successful extraction from file."""
         test_file = tmp_path / "valid.json"
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -295,7 +295,7 @@ class TestObserverUnitConversion:
 
     def test_convert_cm_to_mm(self):
         """Test centimeter to millimeter conversion."""
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
@@ -337,7 +337,7 @@ class TestObserverUnitConversion:
 
     def test_nuchal_fold_mm_no_conversion(self):
         """Test that mm values are not converted."""
-        data = { # noqa: F841
+        data = {  # noqa: F841
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
