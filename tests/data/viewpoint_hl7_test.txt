@@ -60,38 +60,38 @@ OBX|53|ST|ExamStateHistory.StationName^Station name^Station name|3|A1BCDEF6G||||
 OBX|54|TM|ExamStateHistory.Time^Time^Exam state history time|3|145547|||||||||20251230162536
 OBX|55|ST|ExamStateHistory.UserLoginName^User login name^User login name|3|admin|||||||||20251230162536
 OBX|56|ST|Fetus.Identifier^Fetus Identifier^Fetus Identifier|Fetus1|A|||||||||20251230162536
-OBX|57|NM|AbdomenFetus.AbdominalCircumference^AC^Abdominal circumference|Fetus1|56^56.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|57|NM|AbdomenFetus.AbdominalCircumference^AC^Abdominal circumference|Fetus1|67^67.0|mm&millimeters^mm&millimeters||||||||20251230162536
 OBX|58|ST|AbdomenFetus.VP_AbdominalCircumference_Author|Fetus1|Hadlock|||||||||20251230162536
-OBX|59|NM|AbdomenFetus.VP_AbdominalCircumference_GA|Fetus1|87^12w 3d|d&weeks_days^fmt&formatted||||||||20251230162536
-OBX|60|NM|AbdomenFetus.VP_AbdominalCircumference_Deviation|Fetus1|0.6^+0.6SD|sd&standard deviation^fmt&formatted||||||||20251230162536
-OBX|61|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|73^73%|%&percent^fmt&formatted||||||||20251230162536
-OBX|62|NM|AbdomenFetus.VP_AbdominalCircumference_DevRatio|Fetus1|17.2^+17.2%|%&percent^fmt&formatted||||||||20251230162536
+OBX|59|NM|AbdomenFetus.VP_AbdominalCircumference_GA|Fetus1|87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|60|NM|AbdomenFetus.VP_AbdominalCircumference_Deviation|Fetus1|0.7^+0.7SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|61|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|84^84%|%&percent^fmt&formatted||||||||20251230162536
+OBX|62|NM|AbdomenFetus.VP_AbdominalCircumference_DevRatio|Fetus1|18.3^+18.3%|%&percent^fmt&formatted||||||||20251230162536
 OBX|63|ST|HeartFetus.CardiacActivity^Cardiac activity^Fetal cardiac activity|Fetus1|present|||||||||20251230162536
 OBX|64|NM|HeartFetus.FetalHeartRate^FHR^Fetal heart rate|Fetus1|123^123|bpm&beats per minute^bpm&beats per minute||||||||20251230162536
 OBX|65|ST|HeartFetus.VP_FetalHeartRate_Author|Fetus1|Nicolaides|||||||||20251230162536
-OBX|66|NM|HeartFetus.VP_FetalHeartRate_Deviation|Fetus1|-5.8^-5.8SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|66|NM|HeartFetus.VP_FetalHeartRate_Deviation|Fetus1|-6.9^-6.9SD|sd&standard deviation^fmt&formatted||||||||20251230162536
 OBX|67|NM|HeartFetus.VP_FetalHeartRate_Percentile|Fetus1|0^<1%|%&percent^fmt&formatted||||||||20251230162536
-OBX|68|NM|HeartFetus.VP_FetalHeartRate_DevRatio|Fetus1|-24.5^-24.5%|%&percent^fmt&formatted||||||||20251230162536
-OBX|69|NM|EmbryonicStructuresFetus.CrownRumpLength^CRL^Crown rump length|Fetus1|55^55.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|68|NM|HeartFetus.VP_FetalHeartRate_DevRatio|Fetus1|-25.6^-25.6%|%&percent^fmt&formatted||||||||20251230162536
+OBX|69|NM|EmbryonicStructuresFetus.CrownRumpLength^CRL^Crown rump length|Fetus1|67^67.0|mm&millimeters^mm&millimeters||||||||20251230162536
 OBX|70|ST|EmbryonicStructuresFetus.VP_CrownRumpLength_Author|Fetus1|Hadlock|||||||||20251230162536
 OBX|71|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_GA|Fetus1|87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
-OBX|72|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_Deviation|Fetus1|-0.5^-0.5SD|sd&standard deviation^fmt&formatted||||||||20251230162536
-OBX|73|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_Percentile|Fetus1|31^31%|%&percent^fmt&formatted||||||||20251230162536
-OBX|74|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_DevRatio|Fetus1|-5.1^-5.1%|%&percent^fmt&formatted||||||||20251230162536
-OBX|75|NM|ExtremitiesFetus.FemurUndefinedLength^Femur^Femur length|Fetus1|8^8.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|72|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_Deviation|Fetus1|-0.6^-0.6SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|73|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_Percentile|Fetus1|42^42%|%&percent^fmt&formatted||||||||20251230162536
+OBX|74|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_DevRatio|Fetus1|-6.2^-6.2%|%&percent^fmt&formatted||||||||20251230162536
+OBX|75|NM|ExtremitiesFetus.FemurUndefinedLength^Femur^Femur length|Fetus1|9^9.0|mm&millimeters^mm&millimeters||||||||20251230162536
 OBX|76|ST|ExtremitiesFetus.VP_FemurUndefinedLength_Author|Fetus1|Hadlock|||||||||20251230162536
 OBX|77|NM|ExtremitiesFetus.VP_FemurUndefinedLength_GA|Fetus1|87^12w 3d|d&weeks_days^fmt&formatted||||||||20251230162536
 OBX|78|NM|ExtremitiesFetus.VP_FemurUndefinedLength_Deviation|Fetus1|0.1^+0.1SD|sd&standard deviation^fmt&formatted||||||||20251230162536
-OBX|79|NM|ExtremitiesFetus.VP_FemurUndefinedLength_Percentile|Fetus1|53^53%|%&percent^fmt&formatted||||||||20251230162536
+OBX|79|NM|ExtremitiesFetus.VP_FemurUndefinedLength_Percentile|Fetus1|64^64%|%&percent^fmt&formatted||||||||20251230162536
 OBX|80|NM|ExtremitiesFetus.VP_FemurUndefinedLength_DevRatio|Fetus1|5.6^+5.6%|%&percent^fmt&formatted||||||||20251230162536
 OBX|81|NM|NeckSkinFetus.NuchalTranslucency^NT^Nuchal translucency|Fetus1|90^90.00|mm&millimeters^mm&millimeters||||||||20251230162536
 OBX|82|ST|NeckSkinFetus.VP_NuchalTranslucency_Author|Fetus1|Nicolaides|||||||||20251230162536
-OBX|83|NM|SkullFetus.HeadCircumference^HC^Head circumference|Fetus1|66^66.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|83|NM|SkullFetus.HeadCircumference^HC^Head circumference|Fetus1|77^77.0|mm&millimeters^mm&millimeters||||||||20251230162536
 OBX|84|ST|SkullFetus.VP_HeadCircumference_Author|Fetus1|Hadlock|||||||||20251230162536
 OBX|85|NM|SkullFetus.VP_HeadCircumference_GA|Fetus1|88^12w 4d|d&weeks_days^fmt&formatted||||||||20251230162536
-OBX|86|NM|SkullFetus.VP_HeadCircumference_Deviation|Fetus1|-0.4^-0.4SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|86|NM|SkullFetus.VP_HeadCircumference_Deviation|Fetus1|-0.5^-0.5SD|sd&standard deviation^fmt&formatted||||||||20251230162536
 OBX|87|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|34^34%|%&percent^fmt&formatted||||||||20251230162536
-OBX|88|NM|SkullFetus.VP_HeadCircumference_DevRatio|Fetus1|-5.8^-5.8%|%&percent^fmt&formatted||||||||20251230162536
+OBX|88|NM|SkullFetus.VP_HeadCircumference_DevRatio|Fetus1|-6.9^-6.9%|%&percent^fmt&formatted||||||||20251230162536
 OBX|89|ST|UmbilicalCordFetus.CordVessels^Cord vessels^Umbilical cord vessels|Fetus1|3 vessel cord|||||||||20251230162536
 OBX|90|ST|ImagingParameters.ImagingProcedure^Device/Procedure^Device/Procedure||Transabdominal ultrasound examination|||||||||20251230162536
 OBX|91|ST|PatientHistory.Address^Address^Address||Pruder Street, Apt 23 R|||||||||20251230162536
