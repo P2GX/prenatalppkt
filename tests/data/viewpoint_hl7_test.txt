@@ -1,0 +1,129 @@
+MSH|^~\&|GE|ViewPoint|Discrete||20251230145547||ORU^R01|10|P|2.4|||AL|NE||8859/15
+PID|||MRN0000005^^^MRN||Jane^Doe||19951230|M|||Pruder Street, Apt 23 R^^Fargo^ND^50504^USA||0001110101^1112223333|4445554545||S|||123-58-1358
+PV1||O|ED^235^1^EDWEST|||ED^235^1^EDWEST||2222^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician|||||||||||VISIT26535||||||||||||||||||||ED|||||20251130134900
+ZED|456^FirstTrimesterUltrasound^1st Trim.^First Trimester Ultrasound|ordered^^A1BCDEF6G^20251130213344~new_1^admin^A1BCDEF6G^20251230162536~Report_preliminary^admin^A1BCDEF6G^20251230145547|VISIT26535|128^Obstetrics|2222^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician||admin|||VISIT26535|||Default department
+ORC|CN|VISIT26535^^VISIT26535|456|||||||||2222^DOCTOR^ATTENDING||||Poor gal showed up to the ER|||||ED
+OBR|1|VISIT26535|456|IMGABS1^AABBSS^^VISIT31415^First Trimester Ultrasound|||20251230162536||||||Relevant Clinical Info - Scan From Ultrasound Impression Maybe?|||2222^DOCTOR^ATTENDING||Diagnosis: Injured|Placer Comment: Right Leg Injured|||20251230145547|||P||||||^Poor gal showed up to the ER
+OBX|1|NM|Exam.@@Exam^Case ID^Case ID||128|||||||||20251230162536
+OBX|2|NM|Exam.@@ExamType^Exam type^Examination type||36|||||||||20251230162536
+OBX|3|NM|Exam.@@Patient^<@@Patient.ShortLabel>^<@@Patient.LongLabel>||106|||||||||20251230162536
+OBX|4|NM|Exam.@@VPDepartment^Department^Department||1|||||||||20251230162536
+OBX|5|NM|Exam.@@VisitExam^<@@VisitExam.ShortLabel>^<@@VisitExam.LongLabel>||311|||||||||20251230162536
+OBX|6|NM|Exam.@Id^Exam ID^Exam ID||456|||||||||20251230162536
+OBX|7|ST|Exam.AccessNumber^Accession No.^Accession number||VISIT26535|||||||||20251230162536
+OBX|8|TS|Exam.CreatedAt^Created at^Exam creation timestamp||20251130213344|||||||||20251230162536
+OBX|9|DT|Exam.ExamDate^Exam date^Exam date||20251230|||||||||20251230162536
+OBX|10|TM|Exam.ExamTime^Time^Time||162536|||||||||20251230162536
+OBX|11|ST|Exam.Export^<Export.ShortLabel>^<Export.LongLabel>||N|||||||||20251230162536
+OBX|12|NM|Exam.LangID^Language^Language||1033|||||||||20251230162536
+OBX|13|ST|Exam.Role^Role^Role||E|||||||||20251230162536
+OBX|14|ST|EpisodeHistory.AgreedDatingString^Assigned^Assigned dating||based on the LMP, selected on 12/30/2025|||||||||20251230162536
+OBX|15|NM|EpisodeHistory.DefaultLengthofPregnancy^Pregnancy length^Pregnancy length||280^280|d&days^d&days||||||||20251230162536
+OBX|16|DT|EpisodeHistory.EDDAgreed^Assigned EDD^Assigned estimated date of delivery||20260607|||||||||20251230162536
+OBX|17|DT|EpisodeHistory.EDDbyLMP^EDD by LMP^Estimated date of delivery by last menstrual period||20260607|||||||||20251230162536
+OBX|18|DT|EpisodeHistory.EDDbyLMPCorrLongCycle^EDD by LMP, corr. by cycle length^Estimated date of delivery by last menstrual period, corrected by cycle length||20260607|||||||||20251230162536
+OBX|19|DT|EpisodeHistory.LastMenstrualPeriod^LMP on^Last menstrual period||20251001|||||||||20251230162536
+OBX|20|ST|EpisodeHistory.MenstrualCycle^Cycle^Menstrual cycle||regular cycle|||||||||20251230162536
+OBX|21|NM|EpisodeHistory.MenstrualCycleLengthMin^Cycle length^Cycle length min||7^7|d&days^d&days||||||||20251230162536
+OBX|22|ST|EpisodeHistory.NumberOfFetuses^Number of gestational sacs/ fetuses/ babies^Number of gestational sacs/ fetuses/ babies||1|||||||||20251230162536
+OBX|23|ST|EpisodeHistory.TypeOfGestation^Type of gestation^Type of gestation||Singleton pregnancy|||||||||20251230162536
+OBX|24|DT|AntenatalBookingHistory.EDDAgreed^Assigned EDD^Assigned estimated date of delivery||20260607|||||||||20251230162536
+OBX|25|ST|MaternalScreeningTests.Print^Print^Print||Print|||||||||20251230162536
+OBX|26|NM|ExamAddData.AgeatExamDate^Age^Age (at exam date)||30^30|yrs&years calendar^yrs&years calendar||||||||20251230162536
+OBX|27|ST|ExamAddData.ExamIndication^Indication^Indication||Poor gal showed up to the ER|||||||||20251230162536
+OBX|28|ST|ExamAddData.ExamState^Exam status^Exam status||Report preliminary|||||||||20251230162536
+OBX|29|DT|ExamOBDating.DateOfUltrasoundExamination^Ultrasound examination on^Date of Ultrasound examination||20251230|||||||||20251230162536
+OBX|30|DT|ExamOBDating.EDDCurrentUltrasoundFetus1^EDD by U/S^Estimated date of delivery by current Ultrasound (Fetus 1)||20260607|||||||||20251230162536
+OBX|31|NM|ExamOBDating.GestationalAgeDaysAgreed^Assigned GA^Assigned gestational age (days)||87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|32|NM|ExamOBDating.GestationalAgeDaysLMP^GA by LMP^Gestational age (days) by LMP||87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|33|NM|ExamOBDating.GestationalAgeDaysLMPCorrLongCycle^GA by LMP, corr. by cycle length^Gestational age (days) by LMP, corrected by cycle length||87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|34|NM|ExamOBDating.GestationalAgeDaysUltrasoundFetus1^GA by U/S^Gestational age (days) by Ultrasound of fetus 1||87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|35|ST|ExamOBDating.MethodOfDating^Method of dating^Selected method of dating||based on the LMP|||||||||20251230162536
+OBX|36|ST|ExamOBDating.MethodOfDatingUSIncludedParameterFetus1^GA by U/S based upon^Gestational age by ultrasound based upon parameters (Fetus 1)||CRL|||||||||20251230162536
+OBX|37|NM|ExamContact.@@Contact_ref1^<@@Contact_ref1.ShortLabel>^<@@Contact_ref1.LongLabel>|1|1|||||||||20251230162536
+OBX|38|NM|ExamContact.@@Listitem^<@@Listitem.ShortLabel>^<@@Listitem.LongLabel>|1|30048|||||||||20251230162536
+OBX|39|NM|ExamStateHistory.@Id^<@Id.ShortLabel>^<@Id.LongLabel>|1|601|||||||||20251230162536
+OBX|40|DT|ExamStateHistory.Date^Date^Exam state history date|1|20251130|||||||||20251230162536
+OBX|41|ST|ExamStateHistory.NewState^New state^New state|1|Exam ordered|||||||||20251230162536
+OBX|42|ST|ExamStateHistory.StationName^Station name^Station name|1|A1BCDEF6G|||||||||20251230162536
+OBX|43|TM|ExamStateHistory.Time^Time^Exam state history time|1|213344|||||||||20251230162536
+OBX|44|NM|ExamStateHistory.@Id^<@Id.ShortLabel>^<@Id.LongLabel>|2|1101|||||||||20251230162536
+OBX|45|DT|ExamStateHistory.Date^Date^Exam state history date|2|20251230|||||||||20251230162536
+OBX|46|ST|ExamStateHistory.NewState^New state^New state|2|New exam|||||||||20251230162536
+OBX|47|ST|ExamStateHistory.StationName^Station name^Station name|2|A1BCDEF6G|||||||||20251230162536
+OBX|48|TM|ExamStateHistory.Time^Time^Exam state history time|2|162536|||||||||20251230162536
+OBX|49|ST|ExamStateHistory.UserLoginName^User login name^User login name|2|admin|||||||||20251230162536
+OBX|50|NM|ExamStateHistory.@Id^<@Id.ShortLabel>^<@Id.LongLabel>|3|1102|||||||||20251230162536
+OBX|51|DT|ExamStateHistory.Date^Date^Exam state history date|3|20251230|||||||||20251230162536
+OBX|52|ST|ExamStateHistory.NewState^New state^New state|3|Report preliminary|||||||||20251230162536
+OBX|53|ST|ExamStateHistory.StationName^Station name^Station name|3|A1BCDEF6G|||||||||20251230162536
+OBX|54|TM|ExamStateHistory.Time^Time^Exam state history time|3|145547|||||||||20251230162536
+OBX|55|ST|ExamStateHistory.UserLoginName^User login name^User login name|3|admin|||||||||20251230162536
+OBX|56|ST|Fetus.Identifier^Fetus Identifier^Fetus Identifier|Fetus1|A|||||||||20251230162536
+OBX|57|NM|AbdomenFetus.AbdominalCircumference^AC^Abdominal circumference|Fetus1|56^56.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|58|ST|AbdomenFetus.VP_AbdominalCircumference_Author|Fetus1|Hadlock|||||||||20251230162536
+OBX|59|NM|AbdomenFetus.VP_AbdominalCircumference_GA|Fetus1|87^12w 3d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|60|NM|AbdomenFetus.VP_AbdominalCircumference_Deviation|Fetus1|0.6^+0.6SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|61|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|73^73%|%&percent^fmt&formatted||||||||20251230162536
+OBX|62|NM|AbdomenFetus.VP_AbdominalCircumference_DevRatio|Fetus1|17.2^+17.2%|%&percent^fmt&formatted||||||||20251230162536
+OBX|63|ST|HeartFetus.CardiacActivity^Cardiac activity^Fetal cardiac activity|Fetus1|present|||||||||20251230162536
+OBX|64|NM|HeartFetus.FetalHeartRate^FHR^Fetal heart rate|Fetus1|123^123|bpm&beats per minute^bpm&beats per minute||||||||20251230162536
+OBX|65|ST|HeartFetus.VP_FetalHeartRate_Author|Fetus1|Nicolaides|||||||||20251230162536
+OBX|66|NM|HeartFetus.VP_FetalHeartRate_Deviation|Fetus1|-5.8^-5.8SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|67|NM|HeartFetus.VP_FetalHeartRate_Percentile|Fetus1|0^<1%|%&percent^fmt&formatted||||||||20251230162536
+OBX|68|NM|HeartFetus.VP_FetalHeartRate_DevRatio|Fetus1|-24.5^-24.5%|%&percent^fmt&formatted||||||||20251230162536
+OBX|69|NM|EmbryonicStructuresFetus.CrownRumpLength^CRL^Crown rump length|Fetus1|55^55.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|70|ST|EmbryonicStructuresFetus.VP_CrownRumpLength_Author|Fetus1|Hadlock|||||||||20251230162536
+OBX|71|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_GA|Fetus1|87^12w 6d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|72|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_Deviation|Fetus1|-0.5^-0.5SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|73|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_Percentile|Fetus1|31^31%|%&percent^fmt&formatted||||||||20251230162536
+OBX|74|NM|EmbryonicStructuresFetus.VP_CrownRumpLength_DevRatio|Fetus1|-5.1^-5.1%|%&percent^fmt&formatted||||||||20251230162536
+OBX|75|NM|ExtremitiesFetus.FemurUndefinedLength^Femur^Femur length|Fetus1|8^8.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|76|ST|ExtremitiesFetus.VP_FemurUndefinedLength_Author|Fetus1|Hadlock|||||||||20251230162536
+OBX|77|NM|ExtremitiesFetus.VP_FemurUndefinedLength_GA|Fetus1|87^12w 3d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|78|NM|ExtremitiesFetus.VP_FemurUndefinedLength_Deviation|Fetus1|0.1^+0.1SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|79|NM|ExtremitiesFetus.VP_FemurUndefinedLength_Percentile|Fetus1|53^53%|%&percent^fmt&formatted||||||||20251230162536
+OBX|80|NM|ExtremitiesFetus.VP_FemurUndefinedLength_DevRatio|Fetus1|5.6^+5.6%|%&percent^fmt&formatted||||||||20251230162536
+OBX|81|NM|NeckSkinFetus.NuchalTranslucency^NT^Nuchal translucency|Fetus1|90^90.00|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|82|ST|NeckSkinFetus.VP_NuchalTranslucency_Author|Fetus1|Nicolaides|||||||||20251230162536
+OBX|83|NM|SkullFetus.HeadCircumference^HC^Head circumference|Fetus1|66^66.0|mm&millimeters^mm&millimeters||||||||20251230162536
+OBX|84|ST|SkullFetus.VP_HeadCircumference_Author|Fetus1|Hadlock|||||||||20251230162536
+OBX|85|NM|SkullFetus.VP_HeadCircumference_GA|Fetus1|88^12w 4d|d&weeks_days^fmt&formatted||||||||20251230162536
+OBX|86|NM|SkullFetus.VP_HeadCircumference_Deviation|Fetus1|-0.4^-0.4SD|sd&standard deviation^fmt&formatted||||||||20251230162536
+OBX|87|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|34^34%|%&percent^fmt&formatted||||||||20251230162536
+OBX|88|NM|SkullFetus.VP_HeadCircumference_DevRatio|Fetus1|-5.8^-5.8%|%&percent^fmt&formatted||||||||20251230162536
+OBX|89|ST|UmbilicalCordFetus.CordVessels^Cord vessels^Umbilical cord vessels|Fetus1|3 vessel cord|||||||||20251230162536
+OBX|90|ST|ImagingParameters.ImagingProcedure^Device/Procedure^Device/Procedure||Transabdominal ultrasound examination|||||||||20251230162536
+OBX|91|ST|PatientHistory.Address^Address^Address||Pruder Street, Apt 23 R|||||||||20251230162536
+OBX|92|ST|PatientHistory.Country^Country^Country||USA|||||||||20251230162536
+OBX|93|DT|PatientHistory.DOB^DOB^Date of birth||19951230|||||||||20251230162536
+OBX|94|ST|PatientHistory.FirstName^First name^First name||Doe|||||||||20251230162536
+OBX|95|ST|PatientHistory.MaritalStatus^Marital status^Marital status||S|||||||||20251230162536
+OBX|96|ST|PatientHistory.MobilePhone^Cell phone^Cell phone number||1112223333|||||||||20251230162536
+OBX|97|ST|PatientHistory.Name^Last name^Last name||Jane|||||||||20251230162536
+OBX|98|ST|PatientHistory.NationalInsuranceNumber^SSN^Social Security Number||123-58-1358|||||||||20251230162536
+OBX|99|ST|PatientHistory.Postcode^ZIP^ZIP||50504|||||||||20251230162536
+OBX|100|ST|PatientHistory.PrivatePhone^Home phone^Home phone number||0001110101|||||||||20251230162536
+OBX|101|ST|PatientHistory.Sex^Sex^Sex||female^^F|||||||||20251230162536
+OBX|102|ST|PatientHistory.State^State^State||ND|||||||||20251230162536
+OBX|103|ST|PatientHistory.Town^City^City||Fargo|||||||||20251230162536
+OBX|104|ST|PatientHistory.WorkPhone^Work phone^Work phone number||4445554545|||||||||20251230162536
+OBX|105|ST|RequestedProcedure.AdditionalInformation^Other^Order other information|1|Additional Info|||||||||20251230162536
+OBX|106|ST|RequestedProcedure.Diagnosis^Diagnosis^Order initial diagnosis|1|Diagnosis: Injured|||||||||20251230162536
+OBX|107|DT|RequestedProcedure.EnteredDate^Entered date^Order creation date|1|20251130|||||||||20251230162536
+OBX|108|TM|RequestedProcedure.EnteredTime^Order creation time^Order creation time|1|134900|||||||||20251230162536
+OBX|109|ST|RequestedProcedure.Indication^Indication^Order indication|1|Poor gal showed up to the ER|||||||||20251230162536
+OBX|110|ST|RequestedProcedure.OrderingFacility^Ordering facility^Ordering facility|1|ED|||||||||20251230162536
+OBX|111|ST|RequestedProcedure.PlacerComment^Placer comment^Order placer comment|1|Placer Comment: Right Leg Injured|||||||||20251230162536
+OBX|112|ST|RequestedProcedure.PlacerContactFirstName^First name^Order placer first name|1|ATTENDING|||||||||20251230162536
+OBX|113|ST|RequestedProcedure.PlacerContactID^Order placer ID^Order placer ID|1|2222|||||||||20251230162536
+OBX|114|ST|RequestedProcedure.PlacerContactLastName^Surname^Order placer surname|1|DOCTOR|||||||||20251230162536
+OBX|115|ST|RequestedProcedure.PlacerOrderNumber^PON^Placer order number|1|VISIT26535|||||||||20251230162536
+OBX|116|ST|RequestedProcedure.PregnantActualHISValue^Pregnant - HIS^Pregnant at time of order - HIS value|1|Pregnant|||||||||20251230162536
+OBX|117|ST|RequestedProcedure.Priority^Priority^Order priority|1|STAT|||||||||20251230162536
+OBX|118|ST|RequestedProcedure.RelevantClinicalInfo^Relevant clinical info^Relevant clinical information|1|Relevant Clinical Info - Scan From Ultrasound Impression Maybe?|||||||||20251230162536
+OBX|119|DT|RequestedProcedure.RequestedDate^Requested date^Requested date of procedure|1|20251130|||||||||20251230162536
+OBX|120|ST|RequestedProcedure.RequestedProcedureCode^Requested procedure code^Requested procedure code|1|IMGABS1|||||||||20251230162536
+OBX|121|ST|RequestedProcedure.RequestedProcedureID^Requested procedure ID^Requested procedure ID|1|VISIT31415|||||||||20251230162536
+OBX|122|ST|RequestedProcedure.RequestedProcedureName^Requested procedure^Requested procedure name|1|AABBSS|||||||||20251230162536
+OBX|123|TM|RequestedProcedure.RequestedTime^Requested time^Requested time of procedure|1|134900|||||||||20251230162536
