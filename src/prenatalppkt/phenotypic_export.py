@@ -1,4 +1,6 @@
-"""High-level orchestrator for phenotypic exports."""
+"""
+High-level orchestrator for phenotypic exports.
+"""
 
 from pathlib import Path
 from typing import Optional, Dict, Set, List, Any, Tuple, ClassVar
@@ -127,7 +129,9 @@ class PhenotypicExporter:
         if mapper is None:
             raise ValueError(f"No mapper found for {measurement_key}")
 
-        term_obs = mapper.from_percentile(percentile, ga)
+        term_obs = mapper.from_percentile(
+            percentile, ga
+        )  # now uses contains() via TermBin
         return term_obs
 
     def evaluate_and_export(

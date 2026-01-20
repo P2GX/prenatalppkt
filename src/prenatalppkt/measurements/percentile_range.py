@@ -54,6 +54,29 @@ class PercentileRange:
         }
         return mapping.get((self._lower, self._upper), "unknown")
 
+    def contains(self, perc: float) -> bool:
+        """
+        Return True if the numeric percentile belongs inside this PercentileRange.
+
+        Boundaries follow the same semantics as evaluate():
+        - lower bound is inclusive
+        - upper bound is exclusive, except when upper=None (open ended)
+        """
+        if perc < 0 or perc > 100:
+            return False
+
+        # lower bound
+        if self._lower is not None:
+            if perc < self._lower.value_numeric:
+                return False
+
+        # upper bound
+        if self._upper is not None:
+            if perc >= self._upper.value_numeric:
+                return False
+
+        return True
+
     # --- Convenience Static constructors for percentile intervals --- #
 
     @staticmethod
