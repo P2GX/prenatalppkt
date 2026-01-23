@@ -218,6 +218,13 @@ src/*/_version.py
 */*/.DS_Store
 */*/*/.DS_Store
 
-# HPO file
+# HPO and datas file
 data/hp.jsonout.txt
-prenatalppkt-about.txt
+prenatalppkt-about.*
+hp.json
+*.ipynb
+viewpoint_*.txt
+*pretty.json
+Discrete*.txt
+tests/data/*pytest-results.txt
+pytest-results.txt

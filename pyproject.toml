@@ -15,7 +15,6 @@ readme = "README.md"
 # inherited from requirements/requirements.txt and requirements/requirements_test.txt
 dependencies = [
  "click==8.2.1",
- "docling==2.54.0",
  #"hpo-toolkit==0.7.0",
  "hpo-toolkit==0.5.5",
  "ijson==3.4.0",
@@ -23,10 +22,8 @@ dependencies = [
  "openpyxl==3.1.5",
  "orjson==3.11.3",
  "pandas==2.3.2",
- "phenopackets==2.0.2.post4",
+ "phenopackets==2.0.2.post5",
  "protobuf==3.20.3",
- "pydantic==2.11.9",
- "pyphetools==0.9.118",
  "python-calamine==0.5.3",
  "PyYAML==6.0.2",
  "requests==2.32.4",
@@ -40,13 +37,20 @@ dependencies = [
 test = [
  "pytest==8.4.0",
  "ruff==0.12.4",
+ "docling==2.53.0", # lxml version that already has prebuilt binary wheels
 ]
 docs = [
-    'mkdocs-material[imaging]>=9.5.10,<10',
-    'mkdocs-material-extensions>=1.3,<2.0',
-    'mkdocstrings[python]>=0.22,<1.0',
-    'pillow',
-    'cairosvg',
+    "mkdocs>=1.6,<2.0",
+    "mkdocs-material[imaging]>=9.5.10,<10",
+    "mkdocs-material-extensions>=1.3,<2.0",
+    "mkdocstrings[python]>=0.22,<1.0",
+    "mkdocs-autorefs>=1.4,<2.0",
+    "mkdocs-include-markdown-plugin>=7.2.0,<8.0",
+    "mkdocs-mermaid2-plugin>=1.2,<2.0",
+    "mkdocs-gen-files>=0.5.0,<1.0",
+    "pymdown-extensions>=10.0,<11",
+    "pillow",
+    "cairosvg",
 ]
 
 [project.urls]

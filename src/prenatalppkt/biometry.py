@@ -8,17 +8,7 @@ Supports percentile calculation and mapping to ontology terms.
 from dataclasses import dataclass
 from .biometry_type import BiometryType
 from typing import Optional
-from . import constants
 from .biometry_reference import FetalGrowthPercentiles
-
-
-# Mock reference data for demonstration purposes.
-# Only head circumference at 20 weeks is currently supported.
-_MOCK_REFERENCES = {
-    BiometryType.HEAD_CIRCUMFERENCE: {
-        20: {"mean": 175.0, "sd": 10.0}  # millimeters
-    }
-}
 
 
 @dataclass
@@ -46,6 +36,9 @@ class BiometryMeasurement:
         """
         Calculate the percentile and infer an ontology term if abnormal.
 
+        NOTE: This method is deprecated. Use MeasurementEvaluation instead.
+        HPO mapping now handled by the new data-driven architecture.
+
         Parameters
         ----------
         reference : FetalGrowthPercentiles, optional
@@ -71,17 +64,10 @@ class BiometryMeasurement:
             value_mm=self.value_mm,
         )
 
-        # Abnormal thresholds (<=3rd or >=97th percentile) by measurement
-        if self.measurement_type == BiometryType.HEAD_CIRCUMFERENCE:
-            if percentile <= 3:
-                return percentile, constants.HPO_MICROCEPHALY
-            if percentile >= 97:
-                return percentile, constants.HPO_MACROCEPHALY
-
-        if self.measurement_type == BiometryType.FEMUR_LENGTH:
-            if percentile <= 3:
-                return percentile, constants.HPO_SHORT_FEMUR
-            if percentile >= 97:
-                return percentile, constants.HPO_LONG_FEMUR
+        # Simple thresholds for backwards compatibility
+        # For full HPO mapping, use MeasurementEvaluation
+        if percentile <= 3 or percentile >= 97:
+            # Return basic abnormal indicator
+            return percentile, "ABNORMAL"
 
         return percentile, None
