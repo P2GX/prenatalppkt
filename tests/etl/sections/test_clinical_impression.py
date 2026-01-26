@@ -23,7 +23,7 @@ class TestClinicalImpressionObserver:
             }
         )
 
-        result = parse_clinical_impression(data, "observer_json", hpo_parser=hpo_cr)
+        result = parse_clinical_impression(data, "observer_json", hpo_cr=hpo_cr)
 
         assert "Normal fetal anatomy" in result["impression_text"]
         assert result["hpo_terms"] == []
@@ -43,7 +43,7 @@ Fetal growth restriction is suspected.
 Recommend follow-up scan.
 """
 
-        result = parse_clinical_impression(text, "viewpoint_text", hpo_parser=hpo_cr)
+        result = parse_clinical_impression(text, "viewpoint_text", hpo_cr=hpo_cr)
 
         assert "growth restriction" in result["impression_text"].lower()
         assert result["growth_assessment"] == "FGR"
@@ -51,7 +51,7 @@ Recommend follow-up scan.
 
     def test_missing_impression(self, hpo_cr):
         text = "Fetal Biometry\n============\nHC 175 mm"
-        result = parse_clinical_impression(text, "viewpoint_text", hpo_parser=hpo_cr)
+        result = parse_clinical_impression(text, "viewpoint_text", hpo_cr=hpo_cr)
         assert result["impression_text"] == ""
 
 
@@ -64,7 +64,7 @@ class TestClinicalImpressionViewPointHL7:
     def test_basic_hl7_impression(self, hpo_cr):
         hl7 = "OBX||TX|Impression^Impression|1|Appropriate for gestational age\n"
 
-        result = parse_clinical_impression(hl7, "viewpoint_hl7", hpo_parser=hpo_cr)
+        result = parse_clinical_impression(hl7, "viewpoint_hl7", hpo_cr=hpo_cr)
 
         assert "Appropriate" in result["impression_text"]
         assert result["growth_assessment"] == "AGA"
@@ -78,10 +78,8 @@ class TestClinicalImpressionViewPointHL7:
 class TestClinicalImpressionEdgeCases:
     def test_invalid_format(self, hpo_cr):
         with pytest.raises(ValueError):
-            parse_clinical_impression("data", "bad_format", hpo_parser=hpo_cr)
+            parse_clinical_impression("data", "bad_format", hpo_cr=hpo_cr)
 
     def test_non_string_text(self, hpo_cr):
         with pytest.raises(ValueError):
-            parse_clinical_impression(
-                {"bad": "data"}, "viewpoint_text", hpo_parser=hpo_cr
-            )
+            parse_clinical_impression({"bad": "data"}, "viewpoint_text", hpo_cr=hpo_cr)
