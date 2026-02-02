@@ -14,7 +14,7 @@ runs:
           id: get_python_version
           uses: mikefarah/yq@v4.52.2
           with:
-              cmd: yq '.project.requires-python' ${{ inputs.pyproject-file-path }}
+              cmd: yq --input-format toml '.project.requires-python' ${{ inputs.pyproject-file-path }}
 
         -   name: Set up Python
             uses: actions/setup-python@v5.6.0
