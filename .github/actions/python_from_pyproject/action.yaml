@@ -12,7 +12,7 @@ runs:
     steps:
         - name: Get project version with yq
           id: get_python_version
-          uses: mikefarah/yq@v4.46.1
+          uses: mikefarah/yq@v4.52.2
           with:
               cmd: yq '.project.requires-python' ${{ inputs.pyproject-file-path }}
 
