@@ -1,22 +1,29 @@
 name: Install python from pyproject.toml
-description: 'Installs Python from the version found in the pyproject.toml'
+description: Installs Python from the version found in pyproject.toml
 
 inputs:
-  pyproject-file-path:
-      required: False
-      description: "Path to the pyproject.toml including filename"
-      default: "./pyproject.toml"
+ pyproject-file-path:
+   required: false
+   description: Path to the pyproject.toml including filename
+   default: ./pyproject.toml
 
 runs:
-    using: composite
-    steps:
-        - name: Get project version with yq
-          id: get_python_version
-          uses: mikefarah/yq@v4.52.2
-          with:
-              cmd: yq --input-format toml '.project.requires-python' ${{ inputs.pyproject-file-path }}
+ using: composite
+ steps:
+   - name: Read requires-python from pyproject.toml
+     id: get_python_version
+     shell: bash
+     run: |
+       python - <<'EOF'
+       import tomllib
+       from pathlib import Path
 
-        -   name: Set up Python
-            uses: actions/setup-python@v5.6.0
-            with:
-                python-version: ${{ steps.get_python_version.outputs.result }}
+       path = Path("${{ inputs.pyproject-file-path }}")
+       data = tomllib.loads(path.read_text())
+       print(f"result={data['project']['requires-python']}")
+       EOF >> "$GITHUB_OUTPUT"
+
+   - name: Set up Python
+     uses: actions/setup-python@v5.6.0
+     with:
+       python-version: ${{ steps.get_python_version.outputs.result }}
