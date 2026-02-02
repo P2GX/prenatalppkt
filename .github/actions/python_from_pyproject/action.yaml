@@ -14,14 +14,10 @@ runs:
      id: get_python_version
      shell: bash
      run: |
-       python - <<'EOF'
-       import tomllib
-       from pathlib import Path
-
-       path = Path("${{ inputs.pyproject-file-path }}")
-       data = tomllib.loads(path.read_text())
-       print(f"result={data['project']['requires-python']}")
-       EOF >> "$GITHUB_OUTPUT"
+       python -c "import tomllib, pathlib; \
+       p = pathlib.Path('${{ inputs.pyproject-file-path }}'); \
+       req = tomllib.loads(p.read_text())['project']['requires-python']; \
+       print(f'result={req}')" >> \"$GITHUB_OUTPUT\"
 
    - name: Set up Python
      uses: actions/setup-python@v5.6.0
