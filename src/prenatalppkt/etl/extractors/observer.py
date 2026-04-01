@@ -24,7 +24,11 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-def extract(data: Dict[str, Any], factory: TermBinFactory = None) -> List[TermBin]:
+# Module-level singleton — YAML is parsed once when the module is first imported,
+# then reused for every extract() call. Callers can still inject a custom factory
+# (e.g. for testing) via the optional factory parameter.
+_default_factory = TermBinFactory()
+def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     """
     Extract biometry measurements from Observer JSON and convert to TermBins.
 
@@ -39,7 +43,7 @@ def extract(data: Dict[str, Any], factory: TermBinFactory = None) -> List[TermBi
         ValueError: If JSON structure is invalid or required measurements missing
     """
     if factory is None:
-        factory = TermBinFactory()
+        factory = _default_factory   # <-- reuse, no reload
 
     logger.debug("Starting Observer JSON extraction")
 
