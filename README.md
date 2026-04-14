@@ -1148,8 +1148,14 @@ uv sync --extra dev
 uv run python -c "import prenatalppkt; print(prenatalppkt.__version__)"
 ```
 
-`uv sync --extra dev` installs pytest, ruff, ipykernel, pre-commit, and docling in
-addition to the core library. No separate pip steps needed.
+`uv sync --extra dev` installs pytest, ruff, ipykernel, and pre-commit in addition
+to the core library. No separate pip steps needed.
+
+For OCR/PDF ingestion via docling (pulls in torch and CUDA drivers, ~3GB):
+
+```bash
+uv sync --extra dev --extra ocr
+```
 
 **VSCode notebook users:** ipykernel is included in the `dev` extra and will be
 auto-detected by VSCode after `uv sync --extra dev`.

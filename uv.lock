@@ -2344,7 +2344,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "docling" },
     { name = "ipykernel" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -2363,12 +2362,15 @@ docs = [
     { name = "pillow" },
     { name = "pymdown-extensions" },
 ]
+ocr = [
+    { name = "docling" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "cairosvg", marker = "extra == 'docs'" },
     { name = "click", specifier = "==8.2.1" },
-    { name = "docling", marker = "extra == 'dev'", specifier = "==2.53.0" },
+    { name = "docling", marker = "extra == 'ocr'", specifier = "==2.53.0" },
     { name = "hpo-toolkit", specifier = "==0.5.5" },
     { name = "ijson", specifier = "==3.4.0" },
     { name = "ipykernel", marker = "extra == 'dev'" },
@@ -2398,7 +2400,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.12.4" },
     { name = "stairval", specifier = "==0.2.1" },
 ]
-provides-extras = ["dev", "docs"]
+provides-extras = ["dev", "ocr", "docs"]
 
 [[package]]
 name = "prompt-toolkit"

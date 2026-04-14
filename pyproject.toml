@@ -40,9 +40,11 @@ dependencies = [
 dev = [
  "pytest==8.4.0",
  "ruff==0.12.4",
- "docling==2.53.0", # lxml version that already has prebuilt binary wheels
  "ipykernel",
  "pre-commit>=3.7",
+]
+ocr = [
+ "docling==2.53.0", # lxml version that already has prebuilt binary wheels; pulls in torch/CUDA (~3GB)
 ]
 docs = [
     "mkdocs>=1.6,<2.0",
