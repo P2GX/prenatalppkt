@@ -5,7 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "prenatalppkt"
 description = "Prenatal phenopacket library"
-authors = [{ name = "Varenya Jain, Peter Robinson" }]
+authors = [
+  { name = "Varenya Jain" },
+  { name = "Peter N. Robinson" },
+]
 requires-python = ">=3.10"
 # dynamic = ["dependencies", "version"]
 dynamic = ["version"]
@@ -34,10 +37,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+dev = [
  "pytest==8.4.0",
  "ruff==0.12.4",
  "docling==2.53.0", # lxml version that already has prebuilt binary wheels
+ "ipykernel",
+ "pre-commit>=3.7",
 ]
 docs = [
     "mkdocs>=1.6,<2.0",
@@ -62,8 +67,6 @@ bugtracker = "https://github.com/P2GX/prenatalppkt/issues"
 [project.scripts]
 prenatalppkt = "prenatalppkt.cli:main"
 
-[tool.setuptools.dynamic.optional-dependencies]
-test = {file = ["requirements/requirements_test.txt"]}
 
 [tool.setuptools]
 packages.find = { where = ["src"] }

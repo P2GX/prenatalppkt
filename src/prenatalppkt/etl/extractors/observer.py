@@ -28,6 +28,8 @@ logging.basicConfig(level=logging.DEBUG)
 # then reused for every extract() call. Callers can still inject a custom factory
 # (e.g. for testing) via the optional factory parameter.
 _default_factory = TermBinFactory()
+
+
 def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     """
     Extract biometry measurements from Observer JSON and convert to TermBins.
@@ -43,7 +45,7 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
         ValueError: If JSON structure is invalid or required measurements missing
     """
     if factory is None:
-        factory = _default_factory   # <-- reuse, no reload
+        factory = _default_factory  # <-- reuse, no reload
 
     logger.debug("Starting Observer JSON extraction")
 

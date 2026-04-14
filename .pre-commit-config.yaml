@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.4
+    hooks:
+      - id: ruff          # lint + autofix
+        args: [--fix]
+      - id: ruff-format   # formatter
+
+  - repo: local
+    hooks:
+      - id: clean-pycache
+        name: Remove __pycache__, .pyc, and .DS_Store
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        entry: bash -c 'find . -type d -name __pycache__ -not -path "./.git/*" -exec rm -rf {} + 2>/dev/null; find . -name "*.pyc" -not -path "./.git/*" -delete 2>/dev/null; find . -name ".DS_Store" -not -path "./.git/*" -delete 2>/dev/null; true'

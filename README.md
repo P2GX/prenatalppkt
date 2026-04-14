@@ -1128,37 +1128,69 @@ factory = MeasurementEvaluation(
 ### Prerequisites
 
 - Python 3.10 or higher
-- pip package manager
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
 
-### Install from Source
+### Quickstart (uv — recommended)
 
 ```bash
-# Clone the repository
+# Install uv once per machine
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Windows: winget install astral-sh.uv
+
+# Clone and enter the repo
 git clone https://github.com/P2GX/prenatalppkt.git
 cd prenatalppkt
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Create venv, install all runtime deps + dev tools in one step
+uv sync --extra dev
 
-# Install in development mode
-pip install -e ".[test]"
+# Verify installation
+uv run python -c "import prenatalppkt; print(prenatalppkt.__version__)"
+```
+
+`uv sync --extra dev` installs pytest, ruff, ipykernel, pre-commit, and docling in
+addition to the core library. No separate pip steps needed.
+
+**VSCode notebook users:** ipykernel is included in the `dev` extra and will be
+auto-detected by VSCode after `uv sync --extra dev`.
+
+**hp.json:** The repo root contains `hp.json`, a version-pinned HPO ontology snapshot
+used by tests. Do not delete or re-download it unless intentionally updating the
+ontology version — it is pinned for reproducibility.
+
+### Alternative: pip + venv
+
+For users who cannot or prefer not to install uv:
+
+```bash
+# Clone and enter the repo
+git clone https://github.com/P2GX/prenatalppkt.git
+cd prenatalppkt
+
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install in development mode with all dev tools
+pip install -e ".[dev]"
 
 # Verify installation
 python -c "import prenatalppkt; print(prenatalppkt.__version__)"
 ```
 
-### Install Dependencies Only
+### Alternative: conda / mamba
 
 ```bash
-pip install -r requirements/requirements.txt
+conda create -n prenatalppkt python=3.13 -y
+conda activate prenatalppkt
+pip install -e ".[dev]"
 ```
 
 ### Optional: Documentation Build
 
 ```bash
-pip install -e ".[docs]"
-mkdocs serve  # View docs at http://localhost:8000
+uv sync --extra docs
+uv run mkdocs serve  # View docs at http://localhost:8000
 ```
 
 ---
@@ -1520,18 +1552,28 @@ git remote add upstream https://github.com/P2GX/prenatalppkt.git
 git checkout -b feature/add-efw-support
 
 # 3. Install development dependencies
-pip install -e ".[test]"
+uv sync --extra dev   # recommended
 
-# 4. Make changes and test
-pytest -vv
-ruff format .
-ruff check . --fix
+# Without uv: create a venv and use pip directly
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
 
-# 5. Commit with descriptive messages
+# 4. Activate pre-commit hooks (once per clone)
+uv run pre-commit install   # or: pre-commit install
+
+# 5. Make changes and run tests
+uv run pytest -vv   # or: pytest -vv
+
+# 6. Lint and format manually if needed (pre-commit also does this on commit)
+uv run ruff check . --fix   # or: ruff check . --fix
+uv run ruff format .        # or: ruff format .
+
+# 7. Commit — pre-commit runs ruff lint + format automatically
 git add .
 git commit -m "feat: Add estimated fetal weight (EFW) measurement support"
 
-# 6. Push and create pull request
+# 8. Push and create pull request
 git push origin feature/add-efw-support
 ```
 
