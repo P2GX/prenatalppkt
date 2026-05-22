@@ -228,3 +228,4 @@ viewpoint_*.txt
 Discrete*.txt
 tests/data/*pytest-results.txt
 pytest-results.txt
+docs/issues
