@@ -14,3 +14,11 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         entry: bash -c 'find . -type d -name __pycache__ -not -path "./.git/*" -exec rm -rf {} + 2>/dev/null; find . -name "*.pyc" -not -path "./.git/*" -delete 2>/dev/null; find . -name ".DS_Store" -not -path "./.git/*" -delete 2>/dev/null; true'
+
+      - id: regenerate-data-dictionary
+        name: Regenerate prenatalppkt data dictionary (CSV + README)
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^(src/prenatalppkt/scripts/data_dict/|docs/data_dictionary/)
+        entry: bash -c 'uv run python src/prenatalppkt/scripts/data_dict/extract_all.py && uv run python src/prenatalppkt/scripts/data_dict/render_readme.py'
