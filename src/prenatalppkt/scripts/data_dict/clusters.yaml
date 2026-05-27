@@ -1,16 +1,19 @@
-# Cluster mapping for the prenatalppkt data dictionary (Plan 12).
+# Cluster mapping for the prenatalppkt data dictionary.
 #
-# Each entry maps one cluster name to the Observer dot-path prefixes
-# AND the EVMS GE HL7 OBX-3 identifier prefixes that fall under it.
-# A path or identifier matches the first cluster whose prefix list
-# contains a string prefix of that path/identifier. Anything that
-# doesn't match lands in the `_unclustered` bucket so nothing is
-# silently dropped.
+# Each entry maps one cluster name to (a) Observer dot-path
+# prefixes and (b) EVMS GE HL7 OBX-3 identifier prefixes. A path /
+# identifier routes to the FIRST cluster whose prefix list
+# contains a string prefix of it; order matters when prefixes
+# nest. Anything that matches nothing lands in `_unclustered` so
+# nothing is silently dropped.
 
 - cluster: biometry
   observer_prefixes:
+    - fetuses[].measurements[]
     - fetuses[].measurements
+    - fetuses[].ratios[]
     - fetuses[].ratios
+    - fetuses[].efws[]
     - fetuses[].efws
     - fetuses[].firsttrimester
   viewpoint_prefixes:
@@ -32,6 +35,56 @@
     - Fetus.BPD
     - U_FGRData_F_
 
+- cluster: anatomy_brain
+  observer_prefixes:
+    - fetuses[].anatomy[].main.brain
+    - fetuses[].anatomy[].detail[].brain
+  viewpoint_prefixes:
+    - BrainFetus
+
+- cluster: anatomy_face_neck
+  observer_prefixes:
+    - fetuses[].anatomy[].main.face
+    - fetuses[].anatomy[].detail[].face
+    - fetuses[].anatomy[].main.neck
+    - fetuses[].anatomy[].detail[].neck
+  viewpoint_prefixes:
+    - FaceFetus
+
+- cluster: anatomy_chest_gi
+  observer_prefixes:
+    - fetuses[].anatomy[].main.chest
+    - fetuses[].anatomy[].detail[].chest
+    - fetuses[].anatomy[].main.gi
+    - fetuses[].anatomy[].detail[].gi
+  viewpoint_prefixes:
+    - ChestFetus
+    - GastrointestinalTractFetus
+
+- cluster: anatomy_spine
+  observer_prefixes:
+    - fetuses[].anatomy[].main.spine
+    - fetuses[].anatomy[].detail[].spine
+  viewpoint_prefixes:
+    - SpineFetus
+
+- cluster: anatomy_urinary
+  observer_prefixes:
+    - fetuses[].anatomy[].main.gu
+    - fetuses[].anatomy[].detail[].gu
+    - fetuses[].anatomy[].main.kidneys
+    - fetuses[].anatomy[].detail[].kidneys
+  viewpoint_prefixes:
+    - UrinaryTractFetus
+
+- cluster: anatomy_general
+  observer_prefixes:
+    - fetuses[].anatomy[].anomalies
+    - fetuses[].anatomy[].detail
+    - fetuses[].anatomy[].main
+    - fetuses[].anatomy
+  viewpoint_prefixes: []
+
 - cluster: cardiac
   observer_prefixes:
     - fetuses[].fetal_echo_anatomy
@@ -45,17 +98,6 @@
     - ChestFetus.Cardiac
     - ChestFetus.DuctusArteriosus
     - ChestFetus.Thoracic
-
-- cluster: anatomy
-  observer_prefixes:
-    - fetuses[].anatomy[]
-  viewpoint_prefixes:
-    - BrainFetus
-    - FaceFetus
-    - GastrointestinalTractFetus
-    - ChestFetus
-    - SpineFetus
-    - UrinaryTractFetus
 
 - cluster: amniotic_fluid
   observer_prefixes:
@@ -72,21 +114,24 @@
   viewpoint_prefixes:
     - Fetus.UmbilicalCord
     - Fetus.VP_UmbilicalCord
+    - UmbilicalCordFetus
     - Fetus.PlacentaDetails
     - Fetus.PlacentaSite
     - Fetus.VP_PlacentaDetails
-    - UmbilicalCordFetus
+
+- cluster: fetal_procedures
+  observer_prefixes:
+    - fetuses[].amniocentesis
+    - fetuses[].fbscvs
+    - fetuses[].ectopic_preg
+    - fetuses[].otherprocs
+  viewpoint_prefixes: []
 
 - cluster: fetus_core
   observer_prefixes:
     - fetuses[].fetus
     - fetuses[].nst
     - fetuses[].bpp
-    - fetuses[].amniocentesis
-    - fetuses[].fbscvs
-    - fetuses[].ectopic_preg
-    - fetuses[].otherprocs
-    - fetuses[].anatomy
     - fetuses[]
     - fetuses
   viewpoint_prefixes:
@@ -111,6 +156,7 @@
     - ExamCodingIndication
     - ExamAddData.ExamImpression
     - ExamAddData.ExamIndication
+    - ExamAddData.ExamRecommendation
 
 - cluster: dating
   observer_prefixes:
@@ -119,6 +165,7 @@
     - exam.lmp
     - exam.pt_age_at_edd
     - exam.age_at_menopause
+    - fetuses[].fetus.ga_by_sonography
   viewpoint_prefixes:
     - ExamOBDating
     - EpisodeHistory.EDD

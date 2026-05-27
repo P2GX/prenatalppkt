@@ -1,30 +1,38 @@
-"""Tests for `extract_all.py`: type detection, OBX parsing, cluster matching."""
+"""Tests for `extract_all.py`: type detection, label-split walker, OBX parsing,
+clustering, value-class inference, and pairing."""
 
 from __future__ import annotations
-
-from collections import defaultdict
 
 import pytest
 
 from prenatalppkt.scripts.data_dict.extract_all import (
     UNCLUSTERED,
+    Cluster,
+    ObserverField,
+    ViewpointField,
     classify_observer,
     classify_viewpoint,
+    compatible_classes,
     coverage,
-    detect_hl7_string_type,
-    detect_json_type,
-    format_sample,
-    format_types,
-    hl7_value_primary,
+    display_hl7_value,
+    hl7_observed_type,
+    hl7_value_class,
+    joined,
+    json_type,
+    normalize_token,
+    observer_match_tokens,
+    pair_fields,
     parse_obx_line,
-    primary_identifier,
+    sample_text,
+    value_class,
+    viewpoint_match_tokens,
     viewpoint_type_signature,
     walk_observer,
 )
 
 
 # -----------------------
-# Type detection
+# json_type
 # -----------------------
 
 
@@ -37,40 +45,52 @@ from prenatalppkt.scripts.data_dict.extract_all import (
         (1, "int"),
         (0, "int"),
         (3.14, "float"),
-        ([], "list"),
-        ([1, 2], "list"),
-        ({}, "dict"),
-        ({"a": 1}, "dict"),
         ("hello", "str"),
-        ("45%", "percentile_str"),
-        ("-3.5%", "percentile_str"),
-        ("<5%", "percentile_str"),
-        (">95%", "percentile_str"),
-        ("20w 3d", "weeks_days_str"),
-        ("0w 0d", "weeks_days_str"),
+        ("45%", "str"),
+        ("20w 3d", "str"),
     ],
 )
-def test_detect_json_type(value, expected):
-    """All canonical JSON value shapes classify into the right token."""
-    assert detect_json_type(value) == expected
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        ("", "null"),
-        ("Normal", "str"),
-        ("45%", "percentile_str"),
-        ("20w 3d", "weeks_days_str"),
-    ],
-)
-def test_detect_hl7_string_type(value, expected):
-    """Empty HL7 strings classify as null, non-empty fall through to JSON detector."""
-    assert detect_hl7_string_type(value) == expected
+def test_json_type_canonical_shapes(value, expected):
+    """All canonical JSON value shapes classify into the right raw token."""
+    assert json_type(value) == expected
 
 
 # -----------------------
-# Cluster matching
+# value_class (semantic)
+# -----------------------
+
+
+@pytest.mark.parametrize(
+    ("value", "path", "expected"),
+    [
+        (None, "", "empty"),
+        ("", "", "empty"),
+        (True, "", "boolean"),
+        (12, "", "integer"),
+        (12.5, "", "decimal"),
+        ("56%", "", "percentile"),
+        ("<5%", "", "percentile"),
+        (">95%", "", "percentile"),
+        ("24w 0d", "", "weeks_days"),
+        ("20250923", "Exam.ExamDate", "date"),
+        ("2025-09-23", "", "date"),
+        ("normal", "", "coded_text"),
+        ("123456", "exam.exm_time", "time"),
+    ],
+)
+def test_value_class_covers_common_shapes(value, path, expected):
+    """Semantic classifier picks up percentiles, weeks+days, dates, integers, etc."""
+    assert value_class(value, path) == expected
+
+
+def test_value_class_long_string_is_free_text():
+    """Strings longer than the coded-text cutoff fall into free_text."""
+    long_text = "x" * 81
+    assert value_class(long_text) == "free_text"
+
+
+# -----------------------
+# Cluster classification
 # -----------------------
 
 
@@ -78,23 +98,20 @@ def test_detect_hl7_string_type(value, expected):
 def clusters():
     """Two-cluster fixture exercising first-match-wins and the unclustered fallback."""
     return [
-        {
-            "cluster": "biometry",
-            "observer_prefixes": ["fetuses[].measurements"],
-            "viewpoint_prefixes": ["SkullFetus"],
-        },
-        {
-            "cluster": "anatomy",
-            "observer_prefixes": ["fetuses[].anatomy[]"],
-            "viewpoint_prefixes": ["BrainFetus", "FaceFetus"],
-        },
+        Cluster("first", observer_prefixes=["fetuses[]"]),
+        Cluster("second", observer_prefixes=["fetuses[].measurements[]"]),
+        Cluster("vp", viewpoint_prefixes=["SkullFetus"]),
+        Cluster(
+            "anatomy",
+            observer_prefixes=["fetuses[].anatomy[]"],
+            viewpoint_prefixes=["BrainFetus", "FaceFetus"],
+        ),
     ]
 
 
 def test_classify_observer_first_match_wins(clusters):
-    """The first cluster whose prefix list contains a hit wins."""
-    assert classify_observer("fetuses[].measurements[].value", clusters) == "biometry"
-    assert classify_observer("fetuses[].anatomy[].brain.choroid", clusters) == "anatomy"
+    """The first cluster whose prefix list contains a string-prefix hit wins."""
+    assert classify_observer("fetuses[].measurements[].value", clusters) == "first"
 
 
 def test_classify_observer_unmatched_path_is_unclustered(clusters):
@@ -104,21 +121,97 @@ def test_classify_observer_unmatched_path_is_unclustered(clusters):
 
 def test_classify_viewpoint_matches_prefix(clusters):
     """HL7 identifiers route through the same first-match-wins logic."""
-    assert classify_viewpoint("SkullFetus.BPD", clusters) == "biometry"
+    assert classify_viewpoint("SkullFetus.BPD", clusters) == "vp"
     assert classify_viewpoint("FaceFetus.Profile", clusters) == "anatomy"
     assert classify_viewpoint("WarningMessage", clusters) == UNCLUSTERED
 
 
 # -----------------------
-# HL7 parsing
+# Observer walker (label-split)
 # -----------------------
 
 
-def test_parse_obx_line_well_formed():
-    """A canonical OBX line decomposes into (type, identifier, value)."""
-    line = "OBX|1|NM|SkullFetus.BPD^BPD^Biparietal diameter|Fetus1|45.2^45.2||||F\r\n"
-    result = parse_obx_line(line)
-    assert result == ("NM", "SkullFetus.BPD^BPD^Biparietal diameter", "45.2^45.2")
+def test_walk_observer_records_scalar_leaves_and_labels():
+    """The walker records each scalar leaf keyed by (path, inherited-label)."""
+    fields: dict[tuple[str, str], ObserverField] = {}
+    walk_observer(
+        {"fetuses": [{"measurements": [{"label": "BPD", "value": 6.1}]}]},
+        "",
+        "case.json",
+        fields,
+    )
+    assert ("fetuses[].measurements[].value", "BPD") in fields
+    record = fields[("fetuses[].measurements[].value", "BPD")]
+    assert record.label == "BPD"
+    assert "float" in record.types
+    assert "decimal" in record.value_classes
+    assert record.files == {"case.json"}
+
+
+def test_walk_observer_splits_measurements_by_label():
+    """Two measurements with different labels become two distinct records."""
+    fields: dict[tuple[str, str], ObserverField] = {}
+    walk_observer(
+        {
+            "fetuses": [
+                {
+                    "measurements": [
+                        {"label": "BPD", "value": 45.2},
+                        {"label": "AC", "value": 163.0},
+                    ]
+                }
+            ]
+        },
+        "",
+        "case.json",
+        fields,
+    )
+    assert ("fetuses[].measurements[].value", "BPD") in fields
+    assert ("fetuses[].measurements[].value", "AC") in fields
+    assert fields[("fetuses[].measurements[].value", "BPD")].label == "BPD"
+    assert fields[("fetuses[].measurements[].value", "AC")].label == "AC"
+
+
+def test_walk_observer_dedupes_samples_across_files():
+    """A repeated value should not appear twice in the sample list."""
+    fields: dict[tuple[str, str], ObserverField] = {}
+    walk_observer({"k": "v"}, "", "a.json", fields)
+    walk_observer({"k": "v"}, "", "b.json", fields)
+    record = fields[("k", "")]
+    assert record.samples == ["v"]
+    assert record.files == {"a.json", "b.json"}
+
+
+def test_walk_observer_dict_dives_into_children():
+    """Dict containers do not become leaf records; their scalar children do."""
+    fields: dict[tuple[str, str], ObserverField] = {}
+    walk_observer(
+        {"exam": {"fetus_count": 1, "site_name": "CUIMC"}}, "", "file1.json", fields
+    )
+    assert ("exam.fetus_count", "") in fields
+    assert ("exam.site_name", "") in fields
+    assert ("exam", "") not in fields
+    assert ("fetuses", "") not in fields
+
+
+# -----------------------
+# OBX parsing
+# -----------------------
+
+
+def test_parse_obx_keeps_identifier_short_long_and_value():
+    """A canonical OBX-3 splits into (type, identifier, short_label, long_label, value)."""
+    parsed = parse_obx_line(
+        "OBX|1|NM|SkullFetus.BiparietalDiameter^BPD^Biparietal diameter"
+        "|Fetus1|62.1^62.1|mm&millimeters||||||||20250923"
+    )
+    assert parsed == (
+        "NM",
+        "SkullFetus.BiparietalDiameter",
+        "BPD",
+        "Biparietal diameter",
+        "62.1^62.1",
+    )
 
 
 def test_parse_obx_line_non_obx_returns_none():
@@ -132,47 +225,129 @@ def test_parse_obx_line_too_short_returns_none():
     assert parse_obx_line("OBX|1|NM|FOO\r\n") is None
 
 
-def test_primary_identifier_strips_caret_tail():
-    """Only the first `^` segment of OBX-3 is the canonical identifier."""
-    assert primary_identifier("SkullFetus.BPD^BPD^Biparietal") == "SkullFetus.BPD"
-    assert primary_identifier("PlainIdentifier") == "PlainIdentifier"
+def test_display_hl7_value_renders_secondary_when_distinct():
+    """If the second caret-segment carries unit context, render `primary (secondary)`."""
+    assert display_hl7_value("163^24w 0d") == "163 (24w 0d)"
+    assert display_hl7_value("0^<1%") == "0 (<1%)"
+    assert display_hl7_value("") == ""
 
 
-def test_hl7_value_primary_unwraps_doubled_numeric():
-    """HL7 NM values are stored as `value^value`; sample on the leading half."""
-    assert hl7_value_primary("45.2^45.2") == "45.2"
-    assert hl7_value_primary("") == ""
-    assert hl7_value_primary("just text") == "just text"
+def test_display_hl7_value_unwraps_doubled_numeric():
+    """When primary == secondary (typical NM), the display collapses to the primary."""
+    assert display_hl7_value("45.2^45.2") == "45.2"
+    assert display_hl7_value("just text") == "just text"
 
 
 # -----------------------
-# Observer walker
+# HL7 type / value-class inference
 # -----------------------
 
 
-def test_walk_observer_records_types_and_samples():
-    """The walker fans out by key, dedupes samples, and remembers value types."""
-    acc: dict[str, dict] = defaultdict(dict)
-    doc = {
-        "exam": {"fetus_count": 1, "site_name": "CUIMC"},
-        "fetuses": [{"measurements": [{"label": "BPD", "value": 45.2}]}],
+@pytest.mark.parametrize(
+    ("raw_value", "obx_type", "expected"),
+    [
+        ("", "ST", "null"),
+        ("45.2^45.2", "NM", "float"),
+        ("62^62", "NM", "int"),
+        ("Normal", "ST", "str"),
+    ],
+)
+def test_hl7_observed_type(raw_value, obx_type, expected):
+    """OBX-5 value + OBX-2 declared type map to a JSON-shape token."""
+    assert hl7_observed_type(raw_value, obx_type) == expected
+
+
+def test_hl7_value_class_uses_display_percentile():
+    """Percentile and weeks_days fire from the second caret-segment / identifier hints."""
+    assert hl7_value_class("0^<1%", "Fetus.VP_Field_Percentile", "NM") == "percentile"
+    assert (
+        hl7_value_class("168^24w 0d", "ExamOBDating.GestationalAgeDaysAgreed", "NM")
+        == "weeks_days"
+    )
+
+
+def test_hl7_value_class_numeric_split():
+    """An NM value with a decimal point reads as decimal, otherwise integer."""
+    assert hl7_value_class("45.2^45.2", "SkullFetus.BPD", "NM") == "decimal"
+    assert hl7_value_class("45^45", "SkullFetus.BPD", "NM") == "integer"
+
+
+# -----------------------
+# Pairing
+# -----------------------
+
+
+def test_normalize_token_camel_and_punct():
+    """CamelCase splits at boundaries and punctuation collapses to underscores."""
+    assert normalize_token("BiparietalDiameter") == "biparietal_diameter"
+    assert normalize_token("Crown-Rump Length") == "crown_rump_length"
+
+
+def test_observer_match_tokens_includes_label_unconditionally():
+    """When a label is set, it is added to the observer's matchable token set."""
+    record = ObserverField("fetuses[].measurements[].value", label="BPD")
+    tokens = observer_match_tokens(record)
+    assert "bpd" in tokens
+    assert "value" in tokens
+
+
+def test_viewpoint_match_tokens_includes_leaf_short_long():
+    """Viewpoint tokens cover identifier leaf, short_label, and long_label."""
+    record = ViewpointField(
+        "SkullFetus.BiparietalDiameter",
+        short_label="BPD",
+        long_label="Biparietal diameter",
+    )
+    tokens = viewpoint_match_tokens(record)
+    assert "biparietal_diameter" in tokens
+    assert "bpd" in tokens
+
+
+def test_compatible_classes_treats_numeric_as_inter_compatible():
+    """integer / decimal / percentile pair across the numeric family even with no exact overlap."""
+    assert compatible_classes({"integer"}, {"decimal"})
+    assert compatible_classes({"percentile"}, {"decimal"})
+    assert not compatible_classes({"coded_text"}, {"decimal"})
+
+
+def test_pairing_is_conservative():
+    """A label-matched observer pairs with the corresponding viewpoint; the rest stay unpaired."""
+    observer = ObserverField(
+        "fetuses[].measurements[].value", value_classes={"decimal"}, label="BPD"
+    )
+    viewpoint = ViewpointField(
+        "SkullFetus.BiparietalDiameter", short_label="BPD", value_classes={"decimal"}
+    )
+    unrelated = ViewpointField(
+        "SkullFetus.HeadCircumference", short_label="HC", value_classes={"decimal"}
+    )
+    pairs = pair_fields([observer], [unrelated, viewpoint])
+    assert pairs[0] == (observer, viewpoint)
+    assert pairs[1] == (None, unrelated)
+
+
+def test_pairing_label_split_pairs_each_measurement():
+    """The label-split walker output lets BPD and AC each pair independently."""
+    obs_bpd = ObserverField(
+        "fetuses[].measurements[].value", value_classes={"decimal"}, label="BPD"
+    )
+    obs_ac = ObserverField(
+        "fetuses[].measurements[].value", value_classes={"decimal"}, label="AC"
+    )
+    vp_bpd = ViewpointField(
+        "SkullFetus.BiparietalDiameter", short_label="BPD", value_classes={"decimal"}
+    )
+    vp_ac = ViewpointField(
+        "AbdomenFetus.AbdominalCircumference",
+        short_label="AC",
+        value_classes={"decimal"},
+    )
+    pairs = pair_fields([obs_bpd, obs_ac], [vp_ac, vp_bpd])
+    matched = {(obs.label, vp.identifier) for obs, vp in pairs if obs and vp}
+    assert matched == {
+        ("BPD", "SkullFetus.BiparietalDiameter"),
+        ("AC", "AbdomenFetus.AbdominalCircumference"),
     }
-    walk_observer(doc, "", "file1.json", acc)
-    assert "exam.fetus_count" in acc
-    assert "int" in acc["exam.fetus_count"]["observed_types"]
-    assert 1 in acc["exam.fetus_count"]["value_set_sample"]
-    assert "str" in acc["exam.site_name"]["observed_types"]
-    assert "float" in acc["fetuses[].measurements[].value"]["observed_types"]
-    assert acc["fetuses[].measurements[].label"]["files_present"] == {"file1.json"}
-
-
-def test_walk_observer_dedupes_samples_across_files():
-    """A repeated value should not appear twice in the sample list."""
-    acc: dict[str, dict] = defaultdict(dict)
-    walk_observer({"k": "v"}, "", "a.json", acc)
-    walk_observer({"k": "v"}, "", "b.json", acc)
-    assert acc["k"]["value_set_sample"] == ["v"]
-    assert acc["k"]["files_present"] == {"a.json", "b.json"}
 
 
 # -----------------------
@@ -180,36 +355,30 @@ def test_walk_observer_dedupes_samples_across_files():
 # -----------------------
 
 
-def test_format_types_joins_sorted():
-    """Observed-type tokens render pipe-joined in sorted order."""
-    record = {"observed_types": {"int", "float", "null"}}
-    assert format_types(record) == "float|int|null"
+def test_joined_sorted_pipe_separated():
+    """A set renders pipe-joined in deterministic sorted order."""
+    assert joined({"int", "float", "null"}) == "float|int|null"
 
 
-def test_format_sample_appends_overflow_marker():
-    """A truncated value-set shows `...` so downstream readers know about it."""
-    record = {"value_set_sample": ["a", "b"], "value_overflow": True}
-    assert format_sample(record) == "a|b|..."
-
-
-def test_format_sample_empty_returns_empty_string():
-    """No samples means an empty CSV cell, not `None` or `[]`."""
-    assert format_sample({}) == ""
+def test_sample_text_appends_overflow_marker():
+    """A truncated sample list shows the trailing `|...` marker."""
+    assert sample_text(["a", "b"], overflow=True) == "a|b|..."
+    assert sample_text(["a"], overflow=False) == "a"
+    assert sample_text([], overflow=False) == ""
 
 
 def test_viewpoint_type_signature_combines_observed_and_obx_declared():
     """Viewpoint cells embed the declared OBX-2 type in parens."""
-    record = {"observed_types": {"float", "null"}, "hl7_obx_types": {"NM"}}
+    record = ViewpointField("X", types={"float", "null"}, obx_types={"NM"})
     assert viewpoint_type_signature(record) == "float|null (NM)"
 
 
 def test_viewpoint_type_signature_no_obx_falls_back_to_observed():
     """If no OBX-2 types were ever seen, only observed types render."""
-    record = {"observed_types": {"str"}}
+    record = ViewpointField("X", types={"str"})
     assert viewpoint_type_signature(record) == "str"
 
 
 def test_coverage_formats_present_over_total():
     """File coverage renders as `present/total`."""
-    record = {"files_present": {"a.json", "b.json", "c.json"}}
-    assert coverage(record, 5) == "3/5"
+    assert coverage({"a.json", "b.json", "c.json"}, 5) == "3/5"

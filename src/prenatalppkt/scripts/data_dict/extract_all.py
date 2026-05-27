@@ -2,25 +2,20 @@
 extract_all.py
 
 Walk both source corpora (CUIMC Observer JSON + EVMS GE HL7 v2.4),
-classify every leaf path / OBX identifier into a cluster defined by
-`clusters.yaml`, and emit one cross-source dictionary CSV at
+attach a per-row semantic value class, propagate Observer list
+labels (so `fetuses[].measurements[].value` splits into one row per
+label: BPD / AC / HC / Femur / ...), pair Observer rows with HL7
+rows that share a label token and a compatible value class, and
+emit one cross-source dictionary CSV at
 `docs/data_dictionary/comparison.csv`.
 
-One row per Observer leaf path; one row per HL7 OBX-3 identifier.
-Cluster grouping comes from prefix matching against the curated
-clusters.yaml; first match wins. Anything unmatched lands in the
-`_unclustered` bucket.
-
-Input:
-prenatal-site-data/observer/center/CUIMC/pretty_print/*_pretty.json
-prenatal-site-data/viewpoint/center/evms/GE_export_of_EVMS_test_cases/phenotype_*.txt
-src/prenatalppkt/scripts/data_dict/clusters.yaml
+Inputs:
+    prenatal-site-data/observer/center/CUIMC/pretty_print/*_pretty.json
+    prenatal-site-data/viewpoint/center/evms/GE_export_of_EVMS_test_cases/phenotype_*.txt
+    src/prenatalppkt/scripts/data_dict/clusters.yaml
 
 Output:
-prenatalppkt/docs/data_dictionary/comparison.csv
-
-Dependencies:
-PyYAML (already a prenatalppkt dep).
+    prenatalppkt/docs/data_dictionary/comparison.csv (15 columns)
 """
 
 from __future__ import annotations
@@ -30,6 +25,7 @@ import json
 import logging
 import re
 from collections import defaultdict
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -79,120 +75,213 @@ OUT_CSV = PPKT_ROOT / "docs" / "data_dictionary" / "comparison.csv"
 CSV_COLUMNS = [
     "cluster",
     "observer_path",
+    "observer_label_values",
     "observer_type",
+    "observer_value_class",
     "observer_sample",
     "observer_n_files",
     "viewpoint_path",
+    "viewpoint_short_label",
+    "viewpoint_long_label",
     "viewpoint_type",
+    "viewpoint_value_class",
     "viewpoint_sample",
     "viewpoint_n_files",
     "notes",
 ]
 
-PERCENTILE_RE = re.compile(r"^(?:-?\d+(?:\.\d+)?%|[<>]\d+%)$")
-WEEKS_DAYS_RE = re.compile(r"^\d+w \d+d$")
 SAMPLE_LIMIT = 10
 UNCLUSTERED = "_unclustered"
 
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$|^\d{8}$")
+TIME_RE = re.compile(r"^\d{6}$")
+TIMESTAMP_RE = re.compile(r"^\d{14}$")
+DECIMAL_RE = re.compile(r"^-?\d+\.\d+$")
+INTEGER_RE = re.compile(r"^-?\d+$")
+PERCENTILE_RE = re.compile(r"^(?:-?\d+(?:\.\d+)?%|[<>]\d+%)$")
+WEEKS_DAYS_RE = re.compile(r"^\d+w \d+d$")
+
 
 # -----------------------
-# Type detection
+# Dataclasses
 # -----------------------
 
 
-def detect_json_type(v: Any) -> str:
-    """Classify one JSON value into a data-dictionary type token."""
-    if v is None:
+@dataclass
+class Cluster:
+    """One named cluster + its observer / viewpoint prefix lists."""
+
+    name: str
+    observer_prefixes: list[str] = field(default_factory=list)
+    viewpoint_prefixes: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ObserverField:
+    """One Observer leaf, keyed by (path, single inherited label)."""
+
+    path: str
+    label: str = ""
+    types: set[str] = field(default_factory=set)
+    value_classes: set[str] = field(default_factory=set)
+    samples: list[str] = field(default_factory=list)
+    files: set[str] = field(default_factory=set)
+    overflow: bool = False
+
+
+@dataclass
+class ViewpointField:
+    """One HL7 OBX-3 primary identifier + its short/long labels."""
+
+    identifier: str
+    short_label: str = ""
+    long_label: str = ""
+    types: set[str] = field(default_factory=set)
+    value_classes: set[str] = field(default_factory=set)
+    obx_types: set[str] = field(default_factory=set)
+    samples: list[str] = field(default_factory=list)
+    files: set[str] = field(default_factory=set)
+    overflow: bool = False
+
+
+# -----------------------
+# Cluster loading + matching
+# -----------------------
+
+
+def load_clusters(path: Path = CLUSTERS_YAML) -> list[Cluster]:
+    """Parse clusters.yaml into a list of `Cluster` dataclasses."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, list):
+        raise ValueError(f"{path} must be a YAML list of cluster entries")
+    out: list[Cluster] = []
+    for entry in data:
+        out.append(
+            Cluster(
+                name=entry["cluster"],
+                observer_prefixes=list(entry.get("observer_prefixes", []) or []),
+                viewpoint_prefixes=list(entry.get("viewpoint_prefixes", []) or []),
+            )
+        )
+    return out
+
+
+def classify_observer(path: str, clusters: list[Cluster]) -> str:
+    """First cluster whose observer_prefixes contains a string prefix of `path`."""
+    for cluster in clusters:
+        if any(path.startswith(prefix) for prefix in cluster.observer_prefixes):
+            return cluster.name
+    return UNCLUSTERED
+
+
+def classify_viewpoint(identifier: str, clusters: list[Cluster]) -> str:
+    """First cluster whose viewpoint_prefixes contains a string prefix of `identifier`."""
+    for cluster in clusters:
+        if any(identifier.startswith(prefix) for prefix in cluster.viewpoint_prefixes):
+            return cluster.name
+    return UNCLUSTERED
+
+
+# -----------------------
+# Type + value-class detection
+# -----------------------
+
+
+def json_type(value: Any) -> str:
+    """Raw JSON shape token: null / bool / int / float / str."""
+    if value is None:
         return "null"
-    if isinstance(v, bool):
+    if isinstance(value, bool):
         return "bool"
-    if isinstance(v, int):
+    if isinstance(value, int):
         return "int"
-    if isinstance(v, float):
+    if isinstance(value, float):
         return "float"
-    if isinstance(v, list):
-        return "list"
-    if isinstance(v, dict):
-        return "dict"
-    if isinstance(v, str):
-        if PERCENTILE_RE.match(v):
-            return "percentile_str"
-        if WEEKS_DAYS_RE.match(v):
-            return "weeks_days_str"
-        return "str"
     return "str"
 
 
-def detect_hl7_string_type(v: str) -> str:
-    """Classify an HL7 OBX-5 string after the `^`-doubled normalization."""
-    if v == "":
-        return "null"
-    return detect_json_type(v)
+def value_class(value: Any, path: str = "") -> str:  # noqa: C901
+    """Semantic class with path-name hints (percentile, weeks_days, date, ...)."""
+    if value is None or value == "":
+        return "empty"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "decimal"
+    text = str(value).strip()
+    lower_path = path.lower()
+    if PERCENTILE_RE.match(text) or "percentile" in lower_path:
+        return "percentile"
+    if WEEKS_DAYS_RE.match(text) or "gestationalage" in lower_path:
+        return "weeks_days"
+    if DATE_RE.match(text) or lower_path.endswith("date") or "date" in lower_path:
+        return "date"
+    if TIME_RE.match(text) or TIMESTAMP_RE.match(text) or "time" in lower_path:
+        return "time"
+    if DECIMAL_RE.match(text):
+        return "decimal"
+    if INTEGER_RE.match(text):
+        return "integer"
+    if len(text) > 80 or "\\.br\\" in text or "\n" in text:
+        return "free_text"
+    return "coded_text"
 
 
 # -----------------------
-# Cluster matching
+# Observer walker (label-split)
 # -----------------------
 
 
-def load_clusters(path: Path) -> list[dict[str, Any]]:
-    """Parse the clusters.yaml file into the list of cluster entries."""
-    data = yaml.safe_load(path.read_text())
-    if not isinstance(data, list):
-        raise ValueError(f"{path} must be a YAML list of cluster entries")
-    return data
+def _next_label(value: Any, current: str) -> str:
+    """Pick up `label` field on a dict node; otherwise inherit `current`."""
+    if isinstance(value, dict):
+        lbl = value.get("label")
+        if isinstance(lbl, (str, int, float)) and str(lbl):
+            return str(lbl)
+    return current
 
 
-def classify_observer(path: str, clusters: list[dict[str, Any]]) -> str:
-    """Return the cluster name for an Observer dotted path; first prefix match wins."""
-    for entry in clusters:
-        for prefix in entry.get("observer_prefixes", []):
-            if path.startswith(prefix):
-                return entry["cluster"]
-    return UNCLUSTERED
-
-
-def classify_viewpoint(identifier: str, clusters: list[dict[str, Any]]) -> str:
-    """Return the cluster name for an HL7 OBX-3 primary identifier."""
-    for entry in clusters:
-        for prefix in entry.get("viewpoint_prefixes", []):
-            if identifier.startswith(prefix):
-                return entry["cluster"]
-    return UNCLUSTERED
-
-
-# -----------------------
-# Observer walker
-# -----------------------
+def add_sample(samples: list[str], value: str, record: Any) -> None:
+    """Append `value` to `samples` (deduped, capped at SAMPLE_LIMIT, overflow flag)."""
+    if value == "":
+        return
+    if value not in samples and len(samples) < SAMPLE_LIMIT:
+        samples.append(value)
+    elif value not in samples:
+        record.overflow = True
 
 
 def walk_observer(
-    value: Any, path: str, file_id: str, acc: dict[str, dict[str, Any]]
+    value: Any,
+    path: str,
+    file_name: str,
+    fields: dict[tuple[str, str], ObserverField],
+    label_ctx: str = "",
 ) -> None:
-    """Recursive descent over a JSON value; record per-path observations."""
-    if path:
-        record = acc[path]
-        record.setdefault("observed_types", set()).add(detect_json_type(value))
-        record.setdefault("files_present", set()).add(file_id)
-        if value is not None and not isinstance(value, (list, dict)):
-            samples: list[Any] = record.setdefault("value_set_sample", [])
-            if value not in samples and len(samples) < SAMPLE_LIMIT:
-                samples.append(value)
-            elif value not in samples:
-                record["value_overflow"] = True
+    """Recursive descent; one record per (path, inherited-label) at each leaf."""
+    next_ctx = _next_label(value, label_ctx)
     if isinstance(value, dict):
-        for k, v in value.items():
-            child = f"{path}.{k}" if path else k
-            walk_observer(v, child, file_id, acc)
-    elif isinstance(value, list):
-        child = (path + "[]") if path else "[]"
-        for elem in value:
-            walk_observer(elem, child, file_id, acc)
+        for key in sorted(value):
+            child = f"{path}.{key}" if path else key
+            walk_observer(value[key], child, file_name, fields, next_ctx)
+        return
+    if isinstance(value, list):
+        child = f"{path}[]" if path else "[]"
+        for item in value:
+            walk_observer(item, child, file_name, fields, next_ctx)
+        return
 
-
-def iter_observer_files() -> list[Path]:
-    """Return sorted Observer JSON files in the corpus."""
-    return sorted(OBSERVER_DIR.glob(OBSERVER_GLOB))
+    if not path:
+        return
+    key = (path, label_ctx)
+    record = fields.setdefault(key, ObserverField(path=path, label=label_ctx))
+    record.types.add(json_type(value))
+    record.value_classes.add(value_class(value, path))
+    record.files.add(file_name)
+    if value is not None:
+        add_sample(record.samples, str(value), record)
 
 
 # -----------------------
@@ -200,56 +289,154 @@ def iter_observer_files() -> list[Path]:
 # -----------------------
 
 
-def primary_identifier(obx3: str) -> str:
-    """First `^`-segment of an OBX-3 identifier triple."""
-    return obx3.split("^", 1)[0]
-
-
-def hl7_value_primary(obx5: str) -> str:
-    """HL7 NM values are `^`-doubled; return the leading segment for sampling."""
-    return obx5.split("^", 1)[0] if obx5 else obx5
-
-
-def parse_obx_line(line: str) -> tuple[str, str, str] | None:
-    """Pipe-split an `OBX|` line; return (obx_type, identifier, value) or None."""
+def parse_obx_line(line: str) -> tuple[str, str, str, str, str] | None:
+    """Pipe-split one OBX line into (type, identifier, short, long, value) or None."""
     if not line.startswith("OBX|"):
         return None
     parts = line.rstrip("\r\n").split("|")
     if len(parts) < 6:
         return None
-    return parts[2], parts[3], parts[5]
+    obx_type = parts[2]
+    id_parts = parts[3].split("^")
+    identifier = id_parts[0]
+    short_label = id_parts[1] if len(id_parts) > 1 else ""
+    long_label = id_parts[2] if len(id_parts) > 2 else ""
+    return obx_type, identifier, short_label, long_label, parts[5]
 
 
-def walk_hl7_file(file_path: Path, acc: dict[str, dict[str, Any]]) -> int:
+def display_hl7_value(raw_value: str) -> str:
+    """Render `primary (secondary)` when the second caret-segment differs."""
+    if not raw_value:
+        return ""
+    parts = raw_value.split("^")
+    if len(parts) >= 2 and parts[1] and parts[1] != parts[0]:
+        return f"{parts[0]} ({parts[1]})"
+    return parts[0]
+
+
+def hl7_observed_type(raw_value: str, obx_type: str) -> str:
+    """JSON-shape-equivalent token for an HL7 OBX-5 value."""
+    primary = raw_value.split("^", 1)[0] if raw_value else ""
+    if primary == "":
+        return "null"
+    if obx_type == "NM":
+        return "float" if "." in primary else "int"
+    return "str"
+
+
+def hl7_value_class(raw_value: str, identifier: str, obx_type: str) -> str:
+    """Semantic class for an HL7 OBX value with identifier + OBX-2 hints."""
+    parts = [part for part in raw_value.split("^") if part]
+    search = " ".join(parts)
+    if (
+        any(PERCENTILE_RE.match(part) for part in parts)
+        or "percentile" in identifier.lower()
+    ):
+        return "percentile"
+    if any(WEEKS_DAYS_RE.match(part) for part in parts):
+        return "weeks_days"
+    if obx_type == "DT":
+        return "date"
+    if obx_type == "TM":
+        return "time"
+    if obx_type == "TS":
+        return "timestamp"
+    if obx_type == "NM":
+        return "decimal" if "." in search else "integer"
+    return value_class(search, identifier)
+
+
+def walk_hl7_file(path: Path, fields: dict[str, ViewpointField]) -> int:
     """Parse one HL7 file; return the count of OBX rows seen."""
     count = 0
-    with file_path.open(encoding="utf-8", errors="replace") as fh:
-        for line in fh:
+    with path.open(encoding="utf-8", errors="replace") as handle:
+        for line in handle:
             parsed = parse_obx_line(line)
             if parsed is None:
                 continue
-            obx_type, obx_identifier, obx_value = parsed
-            primary = primary_identifier(obx_identifier)
-            record = acc[primary]
-            record.setdefault("hl7_obx_types", set()).add(obx_type)
-            record.setdefault("observed_types", set()).add(
-                detect_hl7_string_type(obx_value)
+            obx_type, identifier, short_label, long_label, raw_value = parsed
+            record = fields.setdefault(
+                identifier, ViewpointField(identifier=identifier)
             )
-            record.setdefault("files_present", set()).add(file_path.name)
-            sample_value = hl7_value_primary(obx_value)
-            if sample_value:
-                samples: list[str] = record.setdefault("value_set_sample", [])
-                if sample_value not in samples and len(samples) < SAMPLE_LIMIT:
-                    samples.append(sample_value)
-                elif sample_value not in samples:
-                    record["value_overflow"] = True
+            record.short_label = record.short_label or short_label
+            record.long_label = record.long_label or long_label
+            record.obx_types.add(obx_type)
+            record.types.add(hl7_observed_type(raw_value, obx_type))
+            record.value_classes.add(hl7_value_class(raw_value, identifier, obx_type))
+            record.files.add(path.name)
+            add_sample(record.samples, display_hl7_value(raw_value), record)
             count += 1
     return count
 
 
-def iter_hl7_files() -> list[Path]:
-    """Return sorted EVMS GE HL7 files in the corpus."""
-    return sorted(HL7_DIR.glob(HL7_GLOB))
+# -----------------------
+# Pairing
+# -----------------------
+
+
+def normalize_token(text: str) -> str:
+    """Collapse a name into a lower-snake-case token for matching."""
+    text = re.sub(r"(?<=[a-z])(?=[A-Z])", "_", text)
+    text = re.sub(r"[^a-zA-Z0-9]+", "_", text).lower()
+    return re.sub(r"_+", "_", text).strip("_")
+
+
+def observer_match_tokens(record: ObserverField) -> set[str]:
+    """Tokens from path leaf + inherited label (label always included if set)."""
+    tokens = {normalize_token(record.path.rsplit(".", 1)[-1])}
+    if record.label:
+        tokens.add(normalize_token(record.label))
+    return {t for t in tokens if t}
+
+
+def viewpoint_match_tokens(record: ViewpointField) -> set[str]:
+    """Tokens from identifier leaf + short_label + long_label."""
+    pieces = [
+        record.identifier.rsplit(".", 1)[-1],
+        record.short_label,
+        record.long_label,
+    ]
+    return {t for t in (normalize_token(p) for p in pieces) if t}
+
+
+def compatible_classes(left: set[str], right: set[str]) -> bool:
+    """Either a direct class overlap, or both sides have any numeric class."""
+    if left & right:
+        return True
+    numeric = {"integer", "decimal", "percentile"}
+    return bool(left & numeric and right & numeric)
+
+
+def pair_fields(
+    observers: list[ObserverField], viewpoints: list[ViewpointField]
+) -> list[tuple[ObserverField | None, ViewpointField | None]]:
+    """Greedy first-fit pairing keyed on token overlap + compatible value classes."""
+    remaining = list(viewpoints)
+    pairs: list[tuple[ObserverField | None, ViewpointField | None]] = []
+    for observer in observers:
+        observer_tokens = observer_match_tokens(observer)
+        candidates: list[tuple[int, str, ViewpointField]] = []
+        for viewpoint in remaining:
+            shared = observer_tokens & viewpoint_match_tokens(viewpoint)
+            if not shared:
+                continue
+            if not compatible_classes(observer.value_classes, viewpoint.value_classes):
+                continue
+            score = len(shared)
+            if observer.label and normalize_token(observer.label) in shared:
+                score += 3
+            if normalize_token(observer.path.rsplit(".", 1)[-1]) in shared:
+                score += 1
+            candidates.append((score, viewpoint.identifier, viewpoint))
+        if candidates:
+            candidates.sort(key=lambda item: (-item[0], item[1]))
+            match = candidates[0][2]
+            remaining.remove(match)
+            pairs.append((observer, match))
+        else:
+            pairs.append((observer, None))
+    pairs.extend((None, viewpoint) for viewpoint in remaining)
+    return pairs
 
 
 # -----------------------
@@ -257,126 +444,128 @@ def iter_hl7_files() -> list[Path]:
 # -----------------------
 
 
-def format_types(record: dict[str, Any]) -> str:
-    """Pipe-join the observed-type tokens in sorted order."""
-    return "|".join(sorted(record.get("observed_types", set())))
+def joined(values: set[str]) -> str:
+    """Pipe-join a set in deterministic sorted order."""
+    return "|".join(sorted(values))
 
 
-def format_sample(record: dict[str, Any]) -> str:
-    """Pipe-join up to SAMPLE_LIMIT distinct values; append `|...` if overflow."""
-    samples = record.get("value_set_sample", [])
-    if not samples:
-        return ""
-    formatted = "|".join(str(s) for s in samples)
-    if record.get("value_overflow"):
-        formatted += "|..."
-    return formatted
+def sample_text(samples: list[str], overflow: bool) -> str:
+    """Pipe-join samples, appending `|...` when capped."""
+    text = "|".join(samples)
+    return f"{text}|..." if overflow and text else text
 
 
-def viewpoint_type_signature(record: dict[str, Any]) -> str:
-    """Observed types annotated with the OBX-2 declared types in parens."""
-    obs = format_types(record)
-    hl7 = "|".join(sorted(record.get("hl7_obx_types", set())))
-    if not hl7:
-        return obs
-    return f"{obs} ({hl7})" if obs else f"({hl7})"
+def coverage(files: set[str], total: int) -> str:
+    """Format file coverage as `present/total`."""
+    return f"{len(files)}/{total}"
 
 
-def coverage(record: dict[str, Any], total: int) -> str:
-    """Format the n_files_present cell as `present/total`."""
-    return f"{len(record.get('files_present', set()))}/{total}"
+def viewpoint_type_signature(record: ViewpointField) -> str:
+    """`observed (declared)` for HL7 cells; observed alone if no OBX-2 seen."""
+    observed = joined(record.types)
+    declared = joined(record.obx_types)
+    return f"{observed} ({declared})" if declared else observed
 
 
 # -----------------------
-# Main
+# Build + write
 # -----------------------
+
+
+def build_rows(
+    observer_fields: dict[tuple[str, str], ObserverField],
+    viewpoint_fields: dict[str, ViewpointField],
+    clusters: list[Cluster],
+    observer_total: int,
+    viewpoint_total: int,
+) -> list[list[str]]:
+    """Iterate clusters in YAML order; pair-match within each cluster; emit rows."""
+    by_cluster_obs: dict[str, list[ObserverField]] = defaultdict(list)
+    by_cluster_vp: dict[str, list[ViewpointField]] = defaultdict(list)
+    cluster_names = [c.name for c in clusters] + [UNCLUSTERED]
+
+    for record in observer_fields.values():
+        by_cluster_obs[classify_observer(record.path, clusters)].append(record)
+    for record in viewpoint_fields.values():
+        by_cluster_vp[classify_viewpoint(record.identifier, clusters)].append(record)
+
+    rows: list[list[str]] = []
+    for cluster in cluster_names:
+        obs_sorted = sorted(by_cluster_obs[cluster], key=lambda r: (r.path, r.label))
+        vp_sorted = sorted(by_cluster_vp[cluster], key=lambda r: r.identifier)
+        for obs, vp in pair_fields(obs_sorted, vp_sorted):
+            rows.append(
+                [
+                    cluster,
+                    obs.path if obs else "",
+                    obs.label if obs else "",
+                    joined(obs.types) if obs else "",
+                    joined(obs.value_classes) if obs else "",
+                    sample_text(obs.samples, obs.overflow) if obs else "",
+                    coverage(obs.files, observer_total) if obs else "",
+                    f"OBX {vp.identifier}" if vp else "",
+                    vp.short_label if vp else "",
+                    vp.long_label if vp else "",
+                    viewpoint_type_signature(vp) if vp else "",
+                    joined(vp.value_classes) if vp else "",
+                    sample_text(vp.samples, vp.overflow) if vp else "",
+                    coverage(vp.files, viewpoint_total) if vp else "",
+                    "",
+                ]
+            )
+    return rows
 
 
 def main() -> None:
-    """Walk both corpora, classify, and emit comparison.csv."""
-    clusters = load_clusters(CLUSTERS_YAML)
-    observer_files = iter_observer_files()
-    hl7_files = iter_hl7_files()
-    if not observer_files:
+    """Walk both corpora, classify + pair, write comparison.csv."""
+    clusters = load_clusters()
+    observer_paths = sorted(OBSERVER_DIR.glob(OBSERVER_GLOB))
+    hl7_paths = sorted(HL7_DIR.glob(HL7_GLOB))
+    if not observer_paths:
         logger.error("No Observer JSONs at %s/%s", OBSERVER_DIR, OBSERVER_GLOB)
         raise SystemExit(1)
-    if not hl7_files:
+    if not hl7_paths:
         logger.error("No HL7 files at %s/%s", HL7_DIR, HL7_GLOB)
         raise SystemExit(1)
 
-    observer_acc: dict[str, dict[str, Any]] = defaultdict(dict)
-    for f in observer_files:
-        walk_observer(json.loads(f.read_text()), "", f.name, observer_acc)
-        logger.info("Walked Observer file %s", f.name)
-
-    hl7_acc: dict[str, dict[str, Any]] = defaultdict(dict)
-    total_obx_rows = 0
-    for f in hl7_files:
-        total_obx_rows += walk_hl7_file(f, hl7_acc)
-        logger.info("Walked HL7 file %s", f.name)
-
-    rows: list[tuple[str, str, list[str]]] = []
-    for path, rec in observer_acc.items():
-        cluster = classify_observer(path, clusters)
-        rows.append(
-            (
-                cluster,
-                "obs",
-                [
-                    cluster,
-                    path,
-                    format_types(rec),
-                    format_sample(rec),
-                    coverage(rec, len(observer_files)),
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                ],
-            )
+    observer_fields: dict[tuple[str, str], ObserverField] = {}
+    for path in observer_paths:
+        walk_observer(
+            json.loads(path.read_text(encoding="utf-8")), "", path.name, observer_fields
         )
-    for ident, rec in hl7_acc.items():
-        cluster = classify_viewpoint(ident, clusters)
-        rows.append(
-            (
-                cluster,
-                "vp",
-                [
-                    cluster,
-                    "",
-                    "",
-                    "",
-                    "",
-                    f"OBX {ident}",
-                    viewpoint_type_signature(rec),
-                    format_sample(rec),
-                    coverage(rec, len(hl7_files)),
-                    "",
-                ],
-            )
-        )
+        logger.info("Walked Observer file %s", path.name)
 
-    rows.sort(key=lambda r: (r[0], r[1], r[2][1] or r[2][5]))
+    viewpoint_fields: dict[str, ViewpointField] = {}
+    obx_count = 0
+    for path in hl7_paths:
+        obx_count += walk_hl7_file(path, viewpoint_fields)
+        logger.info("Walked HL7 file %s", path.name)
+
+    rows = build_rows(
+        observer_fields, viewpoint_fields, clusters, len(observer_paths), len(hl7_paths)
+    )
 
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    with OUT_CSV.open("w", newline="") as fh:
-        writer = csv.writer(fh)
+    with OUT_CSV.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
         writer.writerow(CSV_COLUMNS)
-        for _cluster, _side, row in rows:
-            writer.writerow(row)
+        writer.writerows(rows)
 
     cluster_counts: dict[str, int] = defaultdict(int)
-    for cluster, _side, _row in rows:
-        cluster_counts[cluster] += 1
+    paired = 0
+    for row in rows:
+        cluster_counts[row[0]] += 1
+        if row[1] and row[7]:
+            paired += 1
 
     logger.info("\n=== Parse Summary ===")
-    logger.info("Observer files     : %d", len(observer_files))
-    logger.info("HL7 files          : %d", len(hl7_files))
-    logger.info("OBX rows parsed    : %d", total_obx_rows)
-    logger.info("Observer leaf paths: %d", len(observer_acc))
-    logger.info("HL7 identifiers    : %d", len(hl7_acc))
+    logger.info("Observer files     : %d", len(observer_paths))
+    logger.info("HL7 files          : %d", len(hl7_paths))
+    logger.info("OBX rows parsed    : %d", obx_count)
+    logger.info("Observer records   : %d", len(observer_fields))
+    logger.info("HL7 identifiers    : %d", len(viewpoint_fields))
     logger.info("Rows written       : %d", len(rows))
+    logger.info("Paired cross-source: %d", paired)
     logger.info("Output             : %s", OUT_CSV)
     logger.info("\n=== Cluster Counts ===")
     for cluster in sorted(cluster_counts):
