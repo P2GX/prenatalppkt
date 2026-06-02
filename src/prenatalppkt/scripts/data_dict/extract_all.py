@@ -15,7 +15,9 @@ Inputs:
     src/prenatalppkt/scripts/data_dict/clusters.yaml
 
 Output:
-    prenatalppkt/docs/data_dictionary/comparison.csv (15 columns)
+    prenatalppkt/docs/data_dictionary/comparison.csv (16 columns;
+    the first column is `concept_key`, populated by looking up each
+    row against `concept_aliases.yaml`).
 """
 
 from __future__ import annotations
@@ -65,6 +67,7 @@ HL7_DIR = (
 )
 HL7_GLOB = "phenotype_*.txt"
 CLUSTERS_YAML = SCRIPT_DIR / "clusters.yaml"
+CONCEPT_ALIASES_YAML = SCRIPT_DIR / "concept_aliases.yaml"
 OUT_CSV = PPKT_ROOT / "docs" / "data_dictionary" / "comparison.csv"
 
 
@@ -73,6 +76,7 @@ OUT_CSV = PPKT_ROOT / "docs" / "data_dictionary" / "comparison.csv"
 # -----------------------
 
 CSV_COLUMNS = [
+    "concept_key",
     "cluster",
     "observer_path",
     "observer_label_values",
@@ -180,6 +184,34 @@ def classify_viewpoint(identifier: str, clusters: list[Cluster]) -> str:
         if any(identifier.startswith(prefix) for prefix in cluster.viewpoint_prefixes):
             return cluster.name
     return UNCLUSTERED
+
+
+# -----------------------
+# Concept aliases
+# -----------------------
+
+
+def load_concept_aliases(
+    path: Path = CONCEPT_ALIASES_YAML,
+) -> tuple[dict[tuple[str, str], str], dict[str, str]]:
+    """Parse concept_aliases.yaml into (observer, viewpoint) lookup tables.
+
+    Returns a 2-tuple: the first dict maps `(observer_path, label)` to
+    concept_key; the second maps OBX-3 identifier to concept_key. An
+    Observer entry with no label gets `label=""`.
+    """
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must be a YAML mapping of concept -> entry")
+    observer_lookup: dict[tuple[str, str], str] = {}
+    viewpoint_lookup: dict[str, str] = {}
+    for concept_key, entry in data.items():
+        for obs in entry.get("observer") or []:
+            key = (obs["path"], obs.get("label", "") or "")
+            observer_lookup[key] = concept_key
+        for vp in entry.get("viewpoint") or []:
+            viewpoint_lookup[vp] = concept_key
+    return observer_lookup, viewpoint_lookup
 
 
 # -----------------------
@@ -478,8 +510,17 @@ def build_rows(
     clusters: list[Cluster],
     observer_total: int,
     viewpoint_total: int,
+    observer_concepts: dict[tuple[str, str], str] | None = None,
+    viewpoint_concepts: dict[str, str] | None = None,
 ) -> list[list[str]]:
-    """Iterate clusters in YAML order; pair-match within each cluster; emit rows."""
+    """Iterate clusters in YAML order; pair-match within each cluster; emit rows.
+
+    When `observer_concepts` / `viewpoint_concepts` lookups are provided,
+    each row's `concept_key` is populated from them (observer side wins;
+    viewpoint-only rows pick up the viewpoint concept).
+    """
+    observer_concepts = observer_concepts or {}
+    viewpoint_concepts = viewpoint_concepts or {}
     by_cluster_obs: dict[str, list[ObserverField]] = defaultdict(list)
     by_cluster_vp: dict[str, list[ViewpointField]] = defaultdict(list)
     cluster_names = [c.name for c in clusters] + [UNCLUSTERED]
@@ -494,8 +535,14 @@ def build_rows(
         obs_sorted = sorted(by_cluster_obs[cluster], key=lambda r: (r.path, r.label))
         vp_sorted = sorted(by_cluster_vp[cluster], key=lambda r: r.identifier)
         for obs, vp in pair_fields(obs_sorted, vp_sorted):
+            obs_concept = (
+                observer_concepts.get((obs.path, obs.label), "") if obs else ""
+            )
+            vp_concept = viewpoint_concepts.get(vp.identifier, "") if vp else ""
+            concept_key = obs_concept or vp_concept
             rows.append(
                 [
+                    concept_key,
                     cluster,
                     obs.path if obs else "",
                     obs.label if obs else "",
@@ -519,6 +566,12 @@ def build_rows(
 def main() -> None:
     """Walk both corpora, classify + pair, write comparison.csv."""
     clusters = load_clusters()
+    observer_concepts, viewpoint_concepts = load_concept_aliases()
+    logger.info(
+        "Loaded concept aliases (%d Observer keys, %d HL7 keys)",
+        len(observer_concepts),
+        len(viewpoint_concepts),
+    )
     observer_paths = sorted(OBSERVER_DIR.glob(OBSERVER_GLOB))
     hl7_paths = sorted(HL7_DIR.glob(HL7_GLOB))
     if not observer_paths:
@@ -542,7 +595,13 @@ def main() -> None:
         logger.info("Walked HL7 file %s", path.name)
 
     rows = build_rows(
-        observer_fields, viewpoint_fields, clusters, len(observer_paths), len(hl7_paths)
+        observer_fields,
+        viewpoint_fields,
+        clusters,
+        len(observer_paths),
+        len(hl7_paths),
+        observer_concepts,
+        viewpoint_concepts,
     )
 
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
@@ -552,10 +611,13 @@ def main() -> None:
         writer.writerows(rows)
 
     cluster_counts: dict[str, int] = defaultdict(int)
+    concept_tagged = 0
     paired = 0
     for row in rows:
-        cluster_counts[row[0]] += 1
-        if row[1] and row[7]:
+        cluster_counts[row[1]] += 1
+        if row[0]:
+            concept_tagged += 1
+        if row[2] and row[8]:
             paired += 1
 
     logger.info("\n=== Parse Summary ===")
@@ -566,6 +628,7 @@ def main() -> None:
     logger.info("HL7 identifiers    : %d", len(viewpoint_fields))
     logger.info("Rows written       : %d", len(rows))
     logger.info("Paired cross-source: %d", paired)
+    logger.info("Concept-tagged rows: %d", concept_tagged)
     logger.info("Output             : %s", OUT_CSV)
     logger.info("\n=== Cluster Counts ===")
     for cluster in sorted(cluster_counts):

@@ -1,7 +1,10 @@
 """Tests for `extract_all.py`: type detection, label-split walker, OBX parsing,
-clustering, value-class inference, and pairing."""
+clustering, value-class inference, pairing, and concept_key lookup."""
 
 from __future__ import annotations
+
+import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +13,7 @@ from prenatalppkt.scripts.data_dict.extract_all import (
     Cluster,
     ObserverField,
     ViewpointField,
+    build_rows,
     classify_observer,
     classify_viewpoint,
     compatible_classes,
@@ -19,6 +23,7 @@ from prenatalppkt.scripts.data_dict.extract_all import (
     hl7_value_class,
     joined,
     json_type,
+    load_concept_aliases,
     normalize_token,
     observer_match_tokens,
     pair_fields,
@@ -382,3 +387,139 @@ def test_viewpoint_type_signature_no_obx_falls_back_to_observed():
 def test_coverage_formats_present_over_total():
     """File coverage renders as `present/total`."""
     assert coverage({"a.json", "b.json", "c.json"}, 5) == "3/5"
+
+
+# -----------------------
+# Concept aliases (Plan 13)
+# -----------------------
+
+
+@pytest.fixture
+def aliases_yaml(tmp_path: Path) -> Path:
+    """Minimal concept_aliases.yaml fixture covering an Observer+HL7 concept."""
+    content = textwrap.dedent(
+        """\
+        biometry.bpd.measurement_mm:
+          description: Biparietal diameter, raw mm
+          observer:
+            - path: fetuses[].measurements[].value
+              label: BPD
+          viewpoint:
+            - SkullFetus.BiparietalDiameter
+
+        biometry.bpd.percentile:
+          description: BPD percentile
+          observer:
+            - path: fetuses[].measurements[].calculated_percentile
+              label: BPD
+
+        fetus.gender:
+          description: Fetal sex
+          observer:
+            - path: fetuses[].fetus.gender
+              label: ""
+          viewpoint:
+            - BabyPatientData.Gender
+        """
+    )
+    path = tmp_path / "concept_aliases.yaml"
+    path.write_text(content, encoding="utf-8")
+    return path
+
+
+def test_load_concept_aliases_builds_both_lookup_tables(aliases_yaml: Path):
+    """Both observer and viewpoint lookups are populated from one YAML file."""
+    obs, vp = load_concept_aliases(aliases_yaml)
+    assert (
+        obs[("fetuses[].measurements[].value", "BPD")] == "biometry.bpd.measurement_mm"
+    )
+    assert (
+        obs[("fetuses[].measurements[].calculated_percentile", "BPD")]
+        == "biometry.bpd.percentile"
+    )
+    assert obs[("fetuses[].fetus.gender", "")] == "fetus.gender"
+    assert vp["SkullFetus.BiparietalDiameter"] == "biometry.bpd.measurement_mm"
+    assert vp["BabyPatientData.Gender"] == "fetus.gender"
+
+
+def test_load_concept_aliases_missing_label_defaults_to_empty(aliases_yaml: Path):
+    """An entry with label: \"\" lands under the empty-label key, not under None."""
+    obs, _ = load_concept_aliases(aliases_yaml)
+    assert ("fetuses[].fetus.gender", "") in obs
+    assert ("fetuses[].fetus.gender", None) not in obs
+
+
+def test_build_rows_stamps_concept_key_on_observer_row():
+    """Observer side hits the alias map; row's concept_key matches."""
+    clusters = [Cluster("biometry", observer_prefixes=["fetuses[].measurements[]"])]
+    observer = ObserverField(
+        "fetuses[].measurements[].value",
+        label="BPD",
+        types={"float"},
+        value_classes={"decimal"},
+        files={"a.json"},
+    )
+    rows = build_rows(
+        {("fetuses[].measurements[].value", "BPD"): observer},
+        {},
+        clusters,
+        1,
+        0,
+        observer_concepts={
+            ("fetuses[].measurements[].value", "BPD"): "biometry.bpd.measurement_mm"
+        },
+        viewpoint_concepts={},
+    )
+    assert len(rows) == 1
+    assert rows[0][0] == "biometry.bpd.measurement_mm"
+
+
+def test_build_rows_stamps_concept_key_from_viewpoint_when_observer_unmapped():
+    """When only the HL7 side is in the alias map, the row picks up its concept_key."""
+    clusters = [Cluster("biometry", viewpoint_prefixes=["SkullFetus"])]
+    viewpoint = ViewpointField(
+        "SkullFetus.BiparietalDiameter",
+        short_label="BPD",
+        types={"float"},
+        value_classes={"decimal"},
+        files={"phenotype_1.txt"},
+    )
+    rows = build_rows(
+        {},
+        {"SkullFetus.BiparietalDiameter": viewpoint},
+        clusters,
+        0,
+        1,
+        observer_concepts={},
+        viewpoint_concepts={
+            "SkullFetus.BiparietalDiameter": "biometry.bpd.measurement_mm"
+        },
+    )
+    assert len(rows) == 1
+    assert rows[0][0] == "biometry.bpd.measurement_mm"
+
+
+def test_build_rows_empty_concept_key_when_unmapped():
+    """A row whose Observer leaf and HL7 identifier are both unmapped gets `""`."""
+    clusters = [Cluster("biometry", observer_prefixes=["fetuses[].measurements[]"])]
+    observer = ObserverField(
+        "fetuses[].measurements[].value",
+        label="Mystery",
+        types={"float"},
+        value_classes={"decimal"},
+        files={"a.json"},
+    )
+    rows = build_rows(
+        {("fetuses[].measurements[].value", "Mystery"): observer}, {}, clusters, 1, 0
+    )
+    assert len(rows) == 1
+    assert rows[0][0] == ""
+
+
+def test_csv_columns_lead_with_concept_key():
+    """The 16-column CSV puts concept_key first."""
+    from prenatalppkt.scripts.data_dict.extract_all import CSV_COLUMNS
+
+    assert CSV_COLUMNS[0] == "concept_key"
+    assert CSV_COLUMNS[1] == "cluster"
+    assert len(CSV_COLUMNS) == 16
