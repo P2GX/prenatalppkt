@@ -330,9 +330,7 @@ def render_clinician_overview(
     lines: list[str] = ["## For clinicians: cross-source field map", ""]
     lines.append(
         "This section is a plain-language map of the data this pipeline "
-        "ingests. It is meant for clinicians designing a "
-        "[RIFGC-style XLSX template](../../../cerebro/docs/plans/01-rifgc-phenoxtract-style-refactor-python.md) "
-        "for other prenatal-imaging centers to collect data through. "
+        "ingests, written for clinicians. "
         "The technical schema starts at `## Regenerate` below; you can "
         "stop reading after this section if you only need the field-level "
         "vocabulary."
@@ -454,7 +452,7 @@ def render_clinician_overview(
         )
     lines.append("")
 
-    lines.append("### Designing an RIFGC-style XLSX template from this dictionary")
+    lines.append("### Designing an XLSX template from this dictionary")
     lines.append("")
     lines.append(
         "- **One row per `concept_key`.** Each row of `concept_aliases.yaml` "
@@ -483,9 +481,9 @@ def render_clinician_overview(
         "free-text cells should be wide-column."
     )
     lines.append(
-        "- **The XLSX is upstream of the ETL.** Once it exists, the "
-        "PhenoXtract-style YAML config (see Plan 01) wraps it back into "
-        "Phenopackets via the same data dictionary you're reading now."
+        "- **The XLSX is upstream of the ETL.** Once it exists, a "
+        "PhenoXtract-style YAML config wraps it back into Phenopackets "
+        "via the same data dictionary you're reading now."
     )
     lines.append("")
     return lines

@@ -6,7 +6,7 @@ Cross-source field inventory for the prenatalppkt ETL. Every leaf path in the CU
 
 ## For clinicians: cross-source field map
 
-This section is a plain-language map of the data this pipeline ingests. It is meant for clinicians designing a [RIFGC-style XLSX template](../../../cerebro/docs/plans/01-rifgc-phenoxtract-style-refactor-python.md) for other prenatal-imaging centers to collect data through. The technical schema starts at `## Regenerate` below; you can stop reading after this section if you only need the field-level vocabulary.
+This section is a plain-language map of the data this pipeline ingests, written for clinicians. The technical schema starts at `## Regenerate` below; you can stop reading after this section if you only need the field-level vocabulary.
 
 ### What the two sources are
 
@@ -69,13 +69,13 @@ For each clinical area, how many fields each source has and what that means for 
 | encounter | 21 | 33 | 0 | Exam-level metadata: date, location, signing, exam type, referring provider, accession. ViewPoint has structured `Exam.*` + `ExamAddData.*`; Observer scatters this under `exam.*` keys. The XLSX should pre-define encounter metadata as a header block. |
 | non_fetal_gyn | 224 | 3 | 1 | Mostly Observer-only gynecologic findings (adnexa, cervix, uterine artery, gyn procedures). Cervix funneling is the one concept paired across sources. The XLSX should provide a free-text gyn-findings block plus discrete cervix-length / funneling columns. |
 
-### Designing an RIFGC-style XLSX template from this dictionary
+### Designing an XLSX template from this dictionary
 
 - **One row per `concept_key`.** Each row of `concept_aliases.yaml` is one entry in the XLSX. The `concept_key` (e.g. `biometry.bpd.measurement_mm`) is a stable identifier across template versions; the human-readable description goes in the next column over.
 - **Seed columns from the concepts that already pair.** The 22 concepts in the table above are the safest seed because both source systems already capture them. An XLSX collecting them will accept data from both CUIMC-style and EVMS-style centers without ETL-side guesswork.
 - **Add a `source coverage` column** marking each row as `both`, `observer-only`, or `viewpoint-only`. This tells the receiving center which fields their existing system already produces vs which need manual entry.
 - **Drive cell format from the type column** (number, percentile, coded, free text, weeks+days). Numeric cells should be unformatted; percentile cells should accept `45%` or `0.45`; free-text cells should be wide-column.
-- **The XLSX is upstream of the ETL.** Once it exists, the PhenoXtract-style YAML config (see Plan 01) wraps it back into Phenopackets via the same data dictionary you're reading now.
+- **The XLSX is upstream of the ETL.** Once it exists, a PhenoXtract-style YAML config wraps it back into Phenopackets via the same data dictionary you're reading now.
 
 ## Regenerate
 
