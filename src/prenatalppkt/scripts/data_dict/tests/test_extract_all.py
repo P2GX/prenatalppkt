@@ -8,31 +8,41 @@ from pathlib import Path
 
 import pytest
 
-from prenatalppkt.scripts.data_dict.extract_all import (
-    UNCLUSTERED,
-    Cluster,
-    ObserverField,
-    ViewpointField,
+from prenatalppkt.scripts.data_dict.extract.build import (
     build_rows,
+    coverage,
+    joined,
+    sample_text,
+    viewpoint_type_signature,
+)
+from prenatalppkt.scripts.data_dict.extract.clusters import (
+    UNCLUSTERED,
     classify_observer,
     classify_viewpoint,
-    compatible_classes,
-    coverage,
+)
+from prenatalppkt.scripts.data_dict.extract.concept_aliases import load_concept_aliases
+from prenatalppkt.scripts.data_dict.extract.hl7 import (
     display_hl7_value,
     hl7_observed_type,
     hl7_value_class,
-    joined,
+    parse_obx_line,
+)
+from prenatalppkt.scripts.data_dict.extract.models import (
+    Cluster,
+    ObserverField,
+    ViewpointField,
+)
+from prenatalppkt.scripts.data_dict.extract.observer import (
     json_type,
-    load_concept_aliases,
+    value_class,
+    walk_observer,
+)
+from prenatalppkt.scripts.data_dict.extract.pairing import (
+    compatible_classes,
     normalize_token,
     observer_match_tokens,
     pair_fields,
-    parse_obx_line,
-    sample_text,
-    value_class,
     viewpoint_match_tokens,
-    viewpoint_type_signature,
-    walk_observer,
 )
 
 
