@@ -42,6 +42,17 @@ def _validate_structure(data: Any) -> List[Dict[str, Any]]:
     return fetuses
 
 
+def _validate_fetus_count(fetuses: List[Dict[str, Any]], declared_count: Any) -> None:
+    """Warn (do not raise) if exam.fetus_count disagrees with len(fetuses)."""
+    actual = len(fetuses)
+    if declared_count is not None and declared_count != actual:
+        logger.warning(
+            "exam.fetus_count=%s but %d fetuses present in array",
+            declared_count,
+            actual,
+        )
+
+
 def _extract_one_fetus(
     fetus_data: Dict[str, Any], factory: TermBinFactory
 ) -> List[TermBin]:
