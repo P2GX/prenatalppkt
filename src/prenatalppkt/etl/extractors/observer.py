@@ -70,8 +70,16 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     if factory is None:
         factory = _default_factory  # <-- reuse, no reload
 
-    logger.debug("Starting Observer JSON extraction")
+    logger.debug("Starting Observer JSON extraction (single-fetus)")
     fetuses = _validate_structure(data)
+
+    if len(fetuses) > 1:
+        logger.warning(
+            "Observer JSON has %d fetuses; extract() returns only the first. "
+            "Use extract_all_fetuses() for multi-fetus support.",
+            len(fetuses),
+        )
+
     term_bins = _extract_one_fetus(fetuses[0], factory)
     logger.info(f"Extracted {len(term_bins)} TermBins from Observer JSON")
     return term_bins
