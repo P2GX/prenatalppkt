@@ -42,6 +42,17 @@ def _validate_structure(data: Any) -> List[Dict[str, Any]]:
     return fetuses
 
 
+def _extract_one_fetus(
+    fetus_data: Dict[str, Any], factory: TermBinFactory
+) -> List[TermBin]:
+    """Extract TermBins from one fetus dict; raises if required biometry missing."""
+    fetus_number = _get_fetus_number(fetus_data)
+    logger.debug(f"Processing fetus {fetus_number}")
+    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
+    validate_required_measurements(term_bins)
+    return term_bins
+
+
 def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     """
     Extract biometry measurements from Observer JSON and convert to TermBins.
@@ -60,21 +71,8 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
         factory = _default_factory  # <-- reuse, no reload
 
     logger.debug("Starting Observer JSON extraction")
-
     fetuses = _validate_structure(data)
-
-    # Extract from first fetus (can extend for multiple fetuses)
-    fetus_data = fetuses[0]
-    fetus_number = _get_fetus_number(fetus_data)
-
-    logger.debug(f"Processing fetus {fetus_number}")
-
-    # Parse measurements into TermBins
-    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
-
-    # Validate required measurements present
-    validate_required_measurements(term_bins)
-
+    term_bins = _extract_one_fetus(fetuses[0], factory)
     logger.info(f"Extracted {len(term_bins)} TermBins from Observer JSON")
     return term_bins
 
