@@ -159,6 +159,15 @@ def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[Te
     return extract(data, factory)
 
 
+def extract_all_fetuses_from_file(
+    filepath: Path, factory: TermBinFactory | None = None
+) -> Dict[int, List[TermBin]]:
+    """Multi-fetus equivalent of `extract_from_file`."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return extract_all_fetuses(data, factory)
+
+
 def _get_fetus_number(fetus_data: Dict[str, Any]) -> int:
     """Extract fetus number from fetus data."""
     fetus_section = fetus_data.get("fetus", {})
