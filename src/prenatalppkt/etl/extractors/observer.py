@@ -96,6 +96,53 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     return term_bins
 
 
+def extract_all_fetuses(
+    data: dict, factory: TermBinFactory | None = None
+) -> Dict[int, List[TermBin]]:
+    """
+    Extract biometry from every fetus in an Observer JSON.
+
+    Per-fetus extraction errors (e.g. missing biometry on a T1-only twin) are
+    logged and surface as an empty list for that `fetus_number` key, rather
+    than aborting the whole extraction. Top-level structural errors still
+    raise.
+
+    Args:
+        data: Parsed Observer JSON dictionary
+        factory: TermBinFactory instance (uses module singleton if None)
+
+    Returns:
+        Dict keyed by `fetus_number`; values are lists of TermBins for that
+        fetus (empty list when extraction failed for that fetus).
+
+    Raises:
+        ValueError: If the JSON structure itself is malformed (missing
+            `fetuses` key, wrong type, empty list).
+    """
+    if factory is None:
+        factory = _default_factory
+
+    logger.debug("Starting Observer JSON extraction (multi-fetus)")
+    fetuses = _validate_structure(data)
+    _validate_fetus_count(fetuses, data.get("exam", {}).get("fetus_count"))
+
+    result: Dict[int, List[TermBin]] = {}
+    for fetus_data in fetuses:
+        fetus_number = _get_fetus_number(fetus_data)
+        try:
+            result[fetus_number] = _extract_one_fetus(fetus_data, factory)
+        except ValueError as e:
+            logger.warning("Fetus %d skipped: %s", fetus_number, e)
+            result[fetus_number] = []
+
+    logger.info(
+        "Extracted %d total TermBins across %d fetuses",
+        sum(len(tbs) for tbs in result.values()),
+        len(result),
+    )
+    return result
+
+
 def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[TermBin]:
     """
     Extract biometry measurements from Observer JSON file.

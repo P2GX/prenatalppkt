@@ -87,3 +87,58 @@ def test_validate_fetus_count_silent_when_no_declared_count(caplog):
         observer._validate_fetus_count(fetuses, declared_count=None)
 
     assert not any("fetus_count" in record.message for record in caplog.records)
+
+
+def test_extract_all_fetuses_singleton():
+    """Singleton case returns a dict with one key."""
+    data = {"exam": {"fetus_count": 1}, "fetuses": [_fetus_with_full_biometry(1)]}
+
+    result = observer.extract_all_fetuses(data)
+
+    assert set(result.keys()) == {1}
+    assert len(result[1]) == 4
+
+
+def test_extract_all_fetuses_twins():
+    """Twins case returns a dict keyed by both fetus_numbers."""
+    data = {
+        "exam": {"fetus_count": 2},
+        "fetuses": [_fetus_with_full_biometry(1), _fetus_with_full_biometry(2)],
+    }
+
+    result = observer.extract_all_fetuses(data)
+
+    assert set(result.keys()) == {1, 2}
+    assert len(result[1]) == 4
+    assert len(result[2]) == 4
+
+
+def test_extract_all_fetuses_discordant_twins(caplog):
+    """If one twin is missing biometry, its slot is empty but the other survives."""
+    data = {
+        "exam": {"fetus_count": 2},
+        "fetuses": [
+            _fetus_with_full_biometry(1),
+            {
+                "fetus": {"fetus_number": 2},
+                "measurements": [
+                    {
+                        "label": "CRL",
+                        "value": 5.5,
+                        "unit_of_measure": "cm",
+                        "calculated_percentile": 50.0,
+                    }
+                ],
+            },
+        ],
+    }
+
+    with caplog.at_level(
+        logging.WARNING, logger="prenatalppkt.etl.extractors.observer"
+    ):
+        result = observer.extract_all_fetuses(data)
+
+    assert set(result.keys()) == {1, 2}
+    assert len(result[1]) == 4
+    assert result[2] == []
+    assert any("Fetus 2 skipped" in record.message for record in caplog.records)
