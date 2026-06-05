@@ -30,6 +30,18 @@ logging.basicConfig(level=logging.DEBUG)
 _default_factory = TermBinFactory()
 
 
+def _validate_structure(data: Any) -> List[Dict[str, Any]]:
+    """Raise on top-level structural issues; return the fetuses list."""
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected dict, got {type(data)}")
+    if "fetuses" not in data:
+        raise ValueError("Missing 'fetuses' key in Observer JSON")
+    fetuses = data["fetuses"]
+    if not fetuses or not isinstance(fetuses, list):
+        raise ValueError("'fetuses' must be non-empty list")
+    return fetuses
+
+
 def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     """
     Extract biometry measurements from Observer JSON and convert to TermBins.
@@ -49,16 +61,7 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
 
     logger.debug("Starting Observer JSON extraction")
 
-    # Validate structure
-    if not isinstance(data, dict):
-        raise ValueError(f"Expected dict, got {type(data)}")
-
-    if "fetuses" not in data:
-        raise ValueError("Missing 'fetuses' key in Observer JSON")
-
-    fetuses = data["fetuses"]
-    if not fetuses or not isinstance(fetuses, list):
-        raise ValueError("'fetuses' must be non-empty list")
+    fetuses = _validate_structure(data)
 
     # Extract from first fetus (can extend for multiple fetuses)
     fetus_data = fetuses[0]
