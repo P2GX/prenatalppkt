@@ -14,6 +14,7 @@ from prenatalppkt.biometry_type import BiometryType
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurement_eval import MeasurementEvaluation
 from prenatalppkt.measurements.percentile_range import PercentileRange
+from prenatalppkt.measurements.term_bin import TermBin
 from prenatalppkt.term_observation import TermObservation
 
 logger = logging.getLogger(__name__)
@@ -222,7 +223,10 @@ class PhenotypicExporter:
         return results
 
     def to_json(
-        self, term_observations: List[TermObservation], pretty: bool = False
+        self,
+        term_observations: List[TermObservation],
+        pretty: bool = False,
+        term_bins: Optional[List[TermBin]] = None,
     ) -> str:
         """
         Convert TermObservations to Phenopacket JSON string.
@@ -230,13 +234,16 @@ class PhenotypicExporter:
         Args:
             term_observations: List of TermObservation objects
             pretty: Whether to pretty-print the JSON
+            term_bins: Optional list of TermBins carrying LOINC + raw values;
+                when supplied, a `measurements` array is added alongside
+                `phenotypicFeatures` (bins without LOINC/value are skipped).
 
         Returns:
             JSON string
         """
         features = [obs.to_phenotypic_feature() for obs in term_observations]
 
-        phenopacket = {
+        phenopacket: Dict[str, Any] = {
             "phenotypicFeatures": features,
             "metaData": {
                 "created": "2025-01-01T00:00:00Z",
@@ -250,6 +257,15 @@ class PhenotypicExporter:
                 ],
             },
         }
+
+        if term_bins:
+            measurements = [
+                msmt
+                for tb in term_bins
+                if (msmt := tb.to_measurement_dict()) is not None
+            ]
+            if measurements:
+                phenopacket["measurements"] = measurements
 
         if pretty:
             return json.dumps(phenopacket, indent=2)
