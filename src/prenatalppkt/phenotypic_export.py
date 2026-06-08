@@ -73,7 +73,8 @@ class PhenotypicExporter:
         """Convert new YAML format to old format for backward compatibility."""
         result: Dict[str, Any] = {}
 
-        for meas_type, range_list in raw.items():
+        for meas_type, entry in raw.items():
+            range_list = entry["bins"] if isinstance(entry, dict) else entry
             result[meas_type] = {
                 "bins": {},
                 "normal_bins": [],
