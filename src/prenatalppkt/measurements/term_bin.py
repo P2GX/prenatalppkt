@@ -103,6 +103,26 @@ class TermBin:
             return "upper_term"
         return "upper_extreme_term"
 
+    def to_measurement_dict(self) -> dict | None:
+        """Return the Phenopacket v2 `Measurement` JSON shape, or None.
+
+        Returns None when either `loinc_code` or `value_mm` is missing
+        (the measurement can't be expressed as a LOINC-assayed quantity).
+        Unit is fixed to UO:0000016 (millimeter); biometry mm conversion
+        happens upstream in the Observer extractor.
+        """
+        if self.loinc_code is None or self.value_mm is None:
+            return None
+        return {
+            "assay": {"id": self.loinc_code, "label": self.loinc_label},
+            "value": {
+                "quantity": {
+                    "unit": {"id": "UO:0000016", "label": "millimeter"},
+                    "value": self.value_mm,
+                }
+            },
+        }
+
     def __repr__(self) -> str:
         return (
             f"TermBin(range={self.range!r}, "
