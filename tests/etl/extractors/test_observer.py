@@ -144,7 +144,7 @@ class TestObserverExtract:
             ]
         }
 
-        with pytest.raises(ValueError, match="Missing required biometry measurements"):
+        with pytest.raises(ValueError, match="Unrecognised scan type"):
             observer.extract(data)
 
     def test_extract_skips_measurements_without_percentile(self):
