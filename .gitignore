@@ -208,6 +208,7 @@ data/real*.json
 out/
 output/
 outputs/
+notebook_outputs/
 
 # PKG version
 src/*/_version.py
