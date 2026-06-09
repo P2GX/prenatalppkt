@@ -11,6 +11,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from prenatalppkt.etl.constants import OBSERVER_NAME_MAP
+from prenatalppkt.etl.scan_type import (
+    ScanType,
+    UnsupportedScanTypeError,
+    detect_scan_type,
+)
 from prenatalppkt.etl.term_bin_factory import (
     TermBinFactory,
     validate_required_measurements,
@@ -89,6 +94,18 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
             "Observer JSON has %d fetuses; extract() returns only the first. "
             "Use extract_all_fetuses() for multi-fetus support.",
             len(fetuses),
+        )
+
+    # Classify the scan up front so callers get a typed error for shapes the
+    # T2/T3 biometry path can't handle (first-trimester, partial, or unrecognised).
+    scan_type = detect_scan_type(data)
+    if scan_type is ScanType.FIRST_TRIMESTER:
+        raise UnsupportedScanTypeError(
+            "First trimester scan (CRL/NT only); T2/T3 ETL path required"
+        )
+    if scan_type is ScanType.UNKNOWN:
+        raise UnsupportedScanTypeError(
+            "Unrecognised scan type; missing the full HC/BPD/AC/Femur biometry set"
         )
 
     term_bins = _extract_one_fetus(fetuses[0], factory)
