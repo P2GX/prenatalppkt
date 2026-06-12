@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 from prenatalppkt.etl.constants import OBSERVER_NAME_MAP
 from prenatalppkt.etl.scan_type import (
     ScanType,
+    T1_LABELS,
     UnsupportedScanTypeError,
     detect_scan_type,
 )
@@ -96,19 +97,32 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
             len(fetuses),
         )
 
-    # Classify the scan up front so callers get a typed error for shapes the
-    # T2/T3 biometry path can't handle (first-trimester, partial, or unrecognised).
+    # Classify the scan and dispatch internally. One entry point covers every
+    # Observer JSON shape (T1, T2/T3, unrecognised); the per-trimester logic
+    # lives in the helpers below.
     scan_type = detect_scan_type(data)
+    fetus_data = fetuses[0]
+    fetus_number = _get_fetus_number(fetus_data)
+
+    logger.debug(f"Processing fetus {fetus_number}, scan_type={scan_type.value}")
+
     if scan_type is ScanType.FIRST_TRIMESTER:
-        raise UnsupportedScanTypeError(
-            "First trimester scan (CRL/NT only); T2/T3 ETL path required"
-        )
+        term_bins = _parse_t1_measurements(fetus_data, fetus_number, factory)
+        if not term_bins:
+            raise UnsupportedScanTypeError(
+                "First-trimester scan classified but no CRL or NT measurement parsed"
+            )
+        logger.info(f"Extracted {len(term_bins)} T1 TermBins from Observer JSON")
+        return term_bins
+
     if scan_type is ScanType.UNKNOWN:
         raise UnsupportedScanTypeError(
             "Unrecognised scan type; missing the full HC/BPD/AC/Femur biometry set"
         )
 
-    term_bins = _extract_one_fetus(fetuses[0], factory)
+    # T2/T3 path: existing behaviour.
+    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
+    validate_required_measurements(term_bins)
     logger.info(f"Extracted {len(term_bins)} TermBins from Observer JSON")
     return term_bins
 
@@ -307,6 +321,60 @@ def _parse_single_measurement(
         method=None,  # Observer JSON doesn't include method
         fetus_number=fetus_number,
     )
+
+
+def _parse_t1_measurements(
+    fetus_data: Dict[str, Any], fetus_number: int, factory: TermBinFactory
+) -> List[TermBin]:
+    """Parse first-trimester measurements (CRL, NT) into TermBins.
+
+    T1 scans have no "required" set; either CRL or NT (or both) is sufficient.
+    Anything outside T1_LABELS is skipped silently - extractor stays single-purpose.
+    """
+    measurements_list = fetus_data.get("measurements") or []
+    if not isinstance(measurements_list, list):
+        raise ValueError("'measurements' must be a list")
+
+    term_bins: List[TermBin] = []
+    for m in measurements_list:
+        label = m.get("label")
+        if label not in T1_LABELS:
+            continue
+
+        value = m.get("value")
+        if value is None:
+            logger.debug(f"Skipping {label}: no value")
+            continue
+
+        percentile = m.get("calculated_percentile")
+        if percentile is None:
+            logger.debug(f"Skipping {label}: no percentile")
+            continue
+        if isinstance(percentile, (int, float)) and percentile < 0:
+            logger.warning(f"Skipping {label}: invalid percentile {percentile}")
+            continue
+
+        unit = m.get("unit_of_measure", "mm")
+        value_mm = _convert_to_mm(float(value), unit)
+
+        ega = m.get("calculated_ega")
+        gestational_age = (
+            GestationalAge.from_weeks(float(ega)) if ega is not None else None
+        )
+
+        canonical_name = OBSERVER_NAME_MAP[label].value
+        term_bin = factory.create_term_bin(
+            name=canonical_name,
+            value_mm=value_mm,
+            percentile=float(percentile),
+            gestational_age=gestational_age,
+            method=None,
+            fetus_number=fetus_number,
+        )
+        if term_bin is not None:
+            term_bins.append(term_bin)
+
+    return term_bins
 
 
 def _convert_to_mm(value: float, unit: str) -> float:
