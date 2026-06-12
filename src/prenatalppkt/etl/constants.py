@@ -23,6 +23,8 @@ class BiometryMeasurement(Enum):
     CEREBELLUM = "Cerebellum"
     OCCIPITOFRONTAL_DIAMETER = "OFD"
     HUMERUS_LENGTH = "Humerus"
+    CROWN_RUMP_LENGTH = "CRL"
+    NUCHAL_TRANSLUCENCY = "NT"
 
     @classmethod
     def from_string(cls, s: str) -> "BiometryMeasurement":
@@ -107,6 +109,8 @@ OBSERVER_NAME_MAP: Dict[str, BiometryMeasurement] = {
     "Cerebellum": BiometryMeasurement.CEREBELLUM,
     "OFD": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
     "Humerus": BiometryMeasurement.HUMERUS_LENGTH,
+    "CRL": BiometryMeasurement.CROWN_RUMP_LENGTH,
+    "NT": BiometryMeasurement.NUCHAL_TRANSLUCENCY,
 }
 
 VIEWPOINT_TEXT_NAME_MAP: Dict[str, BiometryMeasurement] = {

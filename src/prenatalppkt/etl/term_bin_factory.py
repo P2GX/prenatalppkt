@@ -54,6 +54,8 @@ class TermBinFactory:
         "AC": "abdominal_circumference",
         "Femur": "femur_length",
         "OFD": "occipitofrontal_diameter",
+        "CRL": "crown_rump_length",
+        "NT": "nuchal_translucency",
     }
 
     def __init__(self, mappings_path: Optional[Path] = None) -> None:
