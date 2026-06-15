@@ -226,6 +226,8 @@ hp.json
 *.ipynb
 viewpoint_*.txt
 *pretty.json
+# tests/data/ holds synthetic CUIMC dummy fixtures (no PHI) - keep tracked.
+!tests/data/*_Sally_pretty.json
 Discrete*.txt
 tests/data/*pytest-results.txt
 pytest-results.txt
