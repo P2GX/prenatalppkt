@@ -4,12 +4,15 @@ Tests for Observer JSON extractor.
 
 import json
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
 from prenatalppkt.etl.extractors import observer
 from prenatalppkt.etl.term_bin_factory import TermBinFactory
 from prenatalppkt.measurements.term_bin import TermBin
+
+DATA_DIR = Path(__file__).resolve().parents[3] / "tests" / "data"
 
 
 class TestObserverExtract:
@@ -471,3 +474,27 @@ class TestObserverT1:
         assert crl_bin is not None
         assert crl_bin.hpo_id == "HP:0001511"
         assert crl_bin.normal is False
+
+
+class TestObserverCorpus:
+    """extract_from_file() end-to-end over every shipped Observer fixture.
+
+    Keyed on bin count + the set of measurements flagged abnormal, not on
+    specific HPO IDs, so scaffold T1 mappings can be finalised without churn.
+    """
+
+    EXPECTED: ClassVar[dict[str, tuple[int, set[str]]]] = {
+        "Apple_Sally_pretty.json": (4, set()),
+        "Blue_Sally_pretty.json": (4, {"HC"}),
+        "Charm_Sally_pretty.json": (4, {"BPD"}),
+        "Eclair_Sally_pretty.json": (4, set()),
+        "Diva_Sally_pretty.json": (1, {"CRL"}),
+    }
+
+    @pytest.mark.parametrize("fixture_name", sorted(EXPECTED))
+    def test_corpus_extraction(self, fixture_name):
+        n_bins, abnormal = self.EXPECTED[fixture_name]
+        bins = observer.extract_from_file(DATA_DIR / fixture_name)
+        assert len(bins) == n_bins
+        got = {b.description.split(":")[0].strip() for b in bins if not b.normal}
+        assert got == abnormal
