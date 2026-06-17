@@ -121,6 +121,10 @@ class TestNormalizeMeasurementName:
         result = normalize_measurement_name("Femur", OBSERVER_NAME_MAP)
         assert result == "Femur"
 
+        # Real Observer 7 exports emit "FL"; normalize to the canonical "Femur".
+        result = normalize_measurement_name("FL", OBSERVER_NAME_MAP)
+        assert result == "Femur"
+
     def test_normalize_invalid_name(self):
         """Test that invalid names raise ValueError."""
         with pytest.raises(ValueError, match="Cannot normalize"):
@@ -156,11 +160,12 @@ class TestNameMaps:
 
     def test_observer_map_completeness(self):
         """Test that Observer map has all measurements."""
-        # 8 T2/T3 + 2 T1 (CRL, NT)
-        assert len(OBSERVER_NAME_MAP) == 10
+        # 8 T2/T3 + 2 T1 (CRL, NT) + "FL" alias for Femur
+        assert len(OBSERVER_NAME_MAP) == 11
         assert "HC" in OBSERVER_NAME_MAP
         assert "BPD" in OBSERVER_NAME_MAP
         assert "Femur" in OBSERVER_NAME_MAP
+        assert "FL" in OBSERVER_NAME_MAP
         assert "CRL" in OBSERVER_NAME_MAP
         assert "NT" in OBSERVER_NAME_MAP
 
