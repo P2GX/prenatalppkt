@@ -17,8 +17,29 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
+from prenatalppkt.etl.constants import OBSERVER_NAME_MAP
+
+# Canonical measurement names (BiometryMeasurement values). Raw Observer labels
+# are normalized through OBSERVER_NAME_MAP before comparison, so wire-label
+# variants like "FL" (femur) classify the same as "Femur".
 T1_LABELS = frozenset({"CRL", "NT"})
 T2T3_REQUIRED_LABELS = frozenset({"AC", "BPD", "HC", "Femur"})
+
+
+def _canonical_labels(measurements: list[dict[str, Any]]) -> set[str]:
+    """Collect canonical measurement names from a fetus's measurement list.
+
+    Each raw label/name is mapped through OBSERVER_NAME_MAP when known; unknown
+    labels are kept as-is so they simply fail to match the canonical sets.
+    """
+    canonical: set[str] = set()
+    for m in measurements:
+        raw = m.get("label") or m.get("name")
+        if raw is None:
+            continue
+        member = OBSERVER_NAME_MAP.get(raw)
+        canonical.add(member.value if member is not None else raw)
+    return canonical
 
 
 class ScanType(Enum):
@@ -48,8 +69,7 @@ def detect_scan_type(observer_json: dict[str, Any]) -> ScanType:
     if not fetuses:
         return ScanType.UNKNOWN
     measurements = fetuses[0].get("measurements") or []
-    labels = {m.get("label") or m.get("name") for m in measurements}
-    labels.discard(None)
+    labels = _canonical_labels(measurements)
 
     has_t2t3 = T2T3_REQUIRED_LABELS.issubset(labels)
     if has_t2t3:

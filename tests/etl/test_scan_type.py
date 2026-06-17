@@ -43,6 +43,19 @@ class TestDetectScanType:
             == ScanType.T2_T3_BIOMETRY
         )
 
+    def test_fl_label_is_t2_t3(self):
+        """Real Observer 7 exports label the femur 'FL'; it must classify as T2/T3."""
+        assert (
+            detect_scan_type(_fetus(["AC", "BPD", "HC", "FL"]))
+            == ScanType.T2_T3_BIOMETRY
+        )
+
+    def test_fl_label_plus_extras_is_t2_t3(self):
+        assert (
+            detect_scan_type(_fetus(["AC", "BPD", "HC", "FL", "OFD", "Cerebellum"]))
+            == ScanType.T2_T3_BIOMETRY
+        )
+
     def test_crl_only_is_first_trimester(self):
         assert detect_scan_type(_fetus(["CRL"])) == ScanType.FIRST_TRIMESTER
 
