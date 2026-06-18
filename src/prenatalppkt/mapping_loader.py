@@ -42,7 +42,8 @@ class BiometryMappingLoader:
 
         processed: Dict[str, List[TermBin]] = {}
 
-        for measurement_type, range_list in raw_mappings.items():
+        for measurement_type, entry in raw_mappings.items():
+            range_list, loinc_code, loinc_label = _split_entry(entry)
             bins: List[TermBin] = []
 
             for range_dict in range_list:
@@ -55,6 +56,8 @@ class BiometryMappingLoader:
                     hpo_id=range_dict["id"],
                     hpo_label=range_dict["label"],
                     normal=range_dict["normal"],
+                    loinc_code=loinc_code,
+                    loinc_label=loinc_label,
                 )
                 bins.append(term_bin)
 
@@ -64,3 +67,17 @@ class BiometryMappingLoader:
             logger.debug("Loaded %d bins for %s", len(bins), measurement_type)
 
         return processed
+
+
+def _split_entry(entry):
+    """Return (bins_list, loinc_code, loinc_label) for a YAML entry.
+
+    Accepts both legacy shape (list of bin dicts) and current shape
+    (dict with `bins:` and optional `loinc: {id, label}`).
+    """
+    if isinstance(entry, list):
+        return entry, None, None
+
+    bins_list = entry.get("bins", [])
+    loinc_block = entry.get("loinc") or {}
+    return bins_list, loinc_block.get("id"), loinc_block.get("label")

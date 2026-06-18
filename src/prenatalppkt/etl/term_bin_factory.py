@@ -139,6 +139,10 @@ class TermBinFactory:
             name, value_mm, percentile, gestational_age, method, fetus_number
         )
 
+        ga_weeks_float: Optional[float] = None
+        if gestational_age is not None:
+            ga_weeks_float = gestational_age.weeks + gestational_age.days / 7
+
         # Create new TermBin with runtime description
         term_bin = TermBin(
             range=matching_bin.range,
@@ -146,6 +150,10 @@ class TermBinFactory:
             hpo_label=matching_bin.hpo_label,
             normal=matching_bin.normal,
             description=description,
+            loinc_code=matching_bin.loinc_code,
+            loinc_label=matching_bin.loinc_label,
+            value_mm=value_mm,
+            gestational_age_weeks=ga_weeks_float,
         )
 
         logger.debug(

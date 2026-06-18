@@ -38,3 +38,106 @@ class TestTermBin:
         prange = PercentileRange.above_97p()
         assert prange.upper is None
         assert prange.lower == Percentile.Ninetyseventh
+
+    def test_loinc_and_value_fields_default_to_none(self):
+        """LOINC + raw-value fields default to None for back-compat."""
+        bin = TermBin(
+            range=PercentileRange.between_10p_50p(),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+        )
+
+        assert bin.loinc_code is None
+        assert bin.loinc_label is None
+        assert bin.value_mm is None
+        assert bin.gestational_age_weeks is None
+
+    def test_loinc_and_value_fields_round_trip(self):
+        """Optional LOINC + raw-value fields are stored and equality-relevant."""
+        prange = PercentileRange.between_50p_90p()
+        bin_a = TermBin(
+            range=prange,
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+            loinc_code="LOINC:11984-2",
+            loinc_label="Fetal Head Circumference US",
+            value_mm=175.0,
+            gestational_age_weeks=20.3,
+        )
+        bin_b = TermBin(
+            range=prange,
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+            loinc_code="LOINC:11984-2",
+            loinc_label="Fetal Head Circumference US",
+            value_mm=175.0,
+            gestational_age_weeks=20.3,
+        )
+        bin_c = TermBin(
+            range=prange,
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+            loinc_code="LOINC:11984-2",
+            loinc_label="Fetal Head Circumference US",
+            value_mm=180.0,
+            gestational_age_weeks=20.3,
+        )
+
+        assert bin_a.loinc_code == "LOINC:11984-2"
+        assert bin_a.value_mm == 175.0
+        assert bin_a.gestational_age_weeks == 20.3
+        assert bin_a == bin_b
+        assert bin_a != bin_c
+
+    def test_to_measurement_dict_shape(self):
+        """to_measurement_dict() emits Phenopacket v2 Measurement JSON."""
+        bin = TermBin(
+            range=PercentileRange.between_50p_90p(),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+            loinc_code="LOINC:11984-2",
+            loinc_label="Fetal Head Circumference US",
+            value_mm=175.0,
+        )
+
+        msmt = bin.to_measurement_dict()
+
+        assert msmt == {
+            "assay": {"id": "LOINC:11984-2", "label": "Fetal Head Circumference US"},
+            "value": {
+                "quantity": {
+                    "unit": {"id": "UO:0000016", "label": "millimeter"},
+                    "value": 175.0,
+                }
+            },
+        }
+
+    def test_to_measurement_dict_none_without_loinc(self):
+        """Missing LOINC suppresses the Measurement entirely."""
+        bin = TermBin(
+            range=PercentileRange.between_50p_90p(),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+            value_mm=175.0,
+        )
+
+        assert bin.to_measurement_dict() is None
+
+    def test_to_measurement_dict_none_without_value(self):
+        """Missing value_mm suppresses the Measurement entirely."""
+        bin = TermBin(
+            range=PercentileRange.between_50p_90p(),
+            hpo_id="HP:0000240",
+            hpo_label="Abnormality of skull size",
+            normal=True,
+            loinc_code="LOINC:11984-2",
+            loinc_label="Fetal Head Circumference US",
+        )
+
+        assert bin.to_measurement_dict() is None

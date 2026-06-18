@@ -98,6 +98,49 @@ class TestTermBinFactory:
         with pytest.raises(ValueError, match="Percentile must be 0-100"):
             factory.create_term_bin(name="HC", value_mm=200.0, percentile=150.0)
 
+    def test_create_term_bin_threads_loinc_and_raw_value(self, factory):
+        """Runtime TermBin carries LOINC, value_mm, and fractional GA weeks."""
+        term_bin = factory.create_term_bin(
+            name="HC",
+            value_mm=233.7,
+            percentile=50.0,
+            gestational_age=GestationalAge(weeks=25, days=1),
+        )
+
+        assert term_bin is not None
+        assert term_bin.loinc_code == "LOINC:11984-2"
+        assert term_bin.loinc_label == "Fetal Head Circumference US"
+        assert term_bin.value_mm == 233.7
+        assert term_bin.gestational_age_weeks == pytest.approx(25 + 1 / 7)
+
+    def test_create_term_bin_no_ga_leaves_ga_weeks_none(self, factory):
+        """When gestational_age is omitted, the GA float field stays None."""
+        term_bin = factory.create_term_bin(name="HC", value_mm=233.7, percentile=50.0)
+
+        assert term_bin is not None
+        assert term_bin.gestational_age_weeks is None
+        assert term_bin.value_mm == 233.7
+
+    def test_create_term_bin_loinc_codes_per_measurement(self, factory):
+        """All four core biometry measurements carry their verified LOINC code."""
+        cases = {
+            "HC": "LOINC:11984-2",
+            "BPD": "LOINC:11820-8",
+            "AC": "LOINC:11979-2",
+            "Femur": "LOINC:11963-6",
+        }
+        for name, expected in cases.items():
+            term_bin = factory.create_term_bin(
+                name=name,
+                value_mm=50.0,
+                percentile=50.0,
+                gestational_age=GestationalAge(weeks=20, days=0),
+            )
+            assert term_bin is not None, f"{name} bin not created"
+            assert term_bin.loinc_code == expected, (
+                f"{name}: expected {expected}, got {term_bin.loinc_code}"
+            )
+
     def test_create_term_bin_optional_no_mapping(self, factory):
         """
         Test that unmapped optional measurement returns None.
