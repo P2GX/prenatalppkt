@@ -11,10 +11,12 @@ from __future__ import annotations
 
 import gzip
 import re
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 
 _GZIP_MAGIC = b"\x1f\x8b"
+_VCF_SUFFIXES = (".vcf", ".vcf.gz")
 
 # The eight fixed VCF columns. Everything after INFO (FORMAT + per-sample
 # genotype columns) is dropped on read - those columns can carry PHI.
@@ -105,3 +107,24 @@ def scan_vcf_file(
     """
     text = _decode_vcf_bytes(Path(path).read_bytes())
     return scan_vcf_text(text, genome_assembly)
+
+
+def scan_vcf_archive(
+    path: Path | str, genome_assembly: str = "unknown"
+) -> dict[str, list[VcfVariant]]:
+    """Scan every VCF member of a tar / tar.gz bundle, keyed by member name.
+
+    Compression of the archive (`r:*`) and of individual `.vcf.gz` members is
+    handled transparently. Non-VCF members are ignored.
+    """
+    result: dict[str, list[VcfVariant]] = {}
+    with tarfile.open(path, "r:*") as tar:
+        for member in tar.getmembers():
+            if not member.isfile() or not member.name.endswith(_VCF_SUFFIXES):
+                continue
+            handle = tar.extractfile(member)
+            if handle is None:
+                continue
+            text = _decode_vcf_bytes(handle.read())
+            result[member.name] = scan_vcf_text(text, genome_assembly)
+    return result

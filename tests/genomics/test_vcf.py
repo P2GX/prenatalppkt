@@ -7,8 +7,15 @@ import dataclasses
 import pytest
 
 import gzip
+import io
+import tarfile
 
-from prenatalppkt.genomics.vcf import VcfVariant, scan_vcf_file, scan_vcf_text
+from prenatalppkt.genomics.vcf import (
+    VcfVariant,
+    scan_vcf_archive,
+    scan_vcf_file,
+    scan_vcf_text,
+)
 
 _HEADER = "\n".join(
     [
@@ -108,3 +115,32 @@ class TestScanVcfFile:
         gz.write_bytes(gzip.compress(text.encode("utf-8")))
         assert scan_vcf_file(gz) == scan_vcf_file(plain)
         assert len(scan_vcf_file(gz)) == 2
+
+
+def _make_targz(path, members: dict[str, bytes]) -> None:
+    with tarfile.open(path, "w:gz") as tar:
+        for name, data in members.items():
+            info = tarfile.TarInfo(name=name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+
+
+class TestScanVcfArchive:
+    def test_scans_vcf_members_and_skips_others(self, tmp_path):
+        vcf_a = _vcf("chr1\t100\t.\tA\tT\t.\t.\t.").encode("utf-8")
+        vcf_b_gz = gzip.compress(
+            _vcf("chr2\t200\t.\tG\tC\t.\t.\t.\tGT\t0/1").encode("utf-8")
+        )
+        bundle = tmp_path / "twins.vcf.tar.gz"
+        _make_targz(
+            bundle,
+            {
+                "fetus_1.vcf": vcf_a,
+                "fetus_2.vcf.gz": vcf_b_gz,
+                "README.txt": b"not a vcf",
+            },
+        )
+        result = scan_vcf_archive(bundle)
+        assert set(result) == {"fetus_1.vcf", "fetus_2.vcf.gz"}
+        assert result["fetus_1.vcf"][0].chrom == "chr1"
+        assert result["fetus_2.vcf.gz"][0].pos == 200
