@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from google.protobuf.json_format import MessageToJson, Parse
+from phenopackets import AcmgPathogenicityClassification, Interpretation, Phenopacket
+
 from prenatalppkt.genomics.genomic import (
+    build_genomic_interpretation,
     build_vcf_file_entry,
     to_variation_descriptor,
     to_vcf_record,
@@ -64,3 +68,53 @@ class TestBuildVcfFileEntry:
         )
         assert f.file_attributes["genomeAssembly"] == "GRCh38"
         assert f.file_attributes["fileFormat"] == "VCF"
+
+
+class TestBuildGenomicInterpretation:
+    def test_one_genomic_interpretation_per_variant(self):
+        variants = [_variant(), _variant(pos=300, alt="G")]
+        interp = build_genomic_interpretation(
+            variants, subject_id="fetus-1", interpretation_id="interp-1"
+        )
+        gis = interp.diagnosis.genomic_interpretations
+        assert len(gis) == 2
+        assert gis[0].subject_or_biosample_id == "fetus-1"
+
+    def test_inert_markers(self):
+        interp = build_genomic_interpretation(
+            [_variant()], subject_id="fetus-1", interpretation_id="interp-1"
+        )
+        assert interp.progress_status == Interpretation.ProgressStatus.UNKNOWN_PROGRESS
+        gi = interp.diagnosis.genomic_interpretations[0]
+        assert gi.interpretation_status == gi.InterpretationStatus.CANDIDATE
+        vi = gi.variant_interpretation
+        assert (
+            vi.acmg_pathogenicity_classification
+            == AcmgPathogenicityClassification.NOT_PROVIDED
+        )
+
+    def test_disease_unset_without_argument(self):
+        interp = build_genomic_interpretation(
+            [_variant()], subject_id="fetus-1", interpretation_id="interp-1"
+        )
+        assert not interp.diagnosis.HasField("disease")
+
+    def test_round_trips_through_json_on_a_phenopacket(self):
+        """File + Interpretation survive MessageToJson -> Parse on a Phenopacket."""
+        variant = _variant()
+        pp = Phenopacket(id="demo")
+        pp.files.append(build_vcf_file_entry("file:///demo.vcf"))
+        pp.interpretations.append(
+            build_genomic_interpretation(
+                [variant], subject_id="fetus-1", interpretation_id="interp-1"
+            )
+        )
+        reloaded = Parse(MessageToJson(pp), Phenopacket())
+        assert reloaded.files[0].uri == "file:///demo.vcf"
+        rec = (
+            reloaded.interpretations[0]
+            .diagnosis.genomic_interpretations[0]
+            .variant_interpretation.variation_descriptor.vcf_record
+        )
+        assert rec.chrom == variant.chrom
+        assert rec.pos == variant.pos
