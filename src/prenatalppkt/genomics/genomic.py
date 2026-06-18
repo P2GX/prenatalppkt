@@ -8,7 +8,7 @@ ACMG / pathogenicity calls. The inert markers make that explicit downstream.
 
 from __future__ import annotations
 
-from phenopackets import VcfRecord
+from phenopackets import VariationDescriptor, VcfRecord
 
 from prenatalppkt.genomics.vcf import VcfVariant
 
@@ -25,4 +25,19 @@ def to_vcf_record(variant: VcfVariant) -> VcfRecord:
         qual=variant.qual,
         filter=variant.filter,
         info=variant.info,
+    )
+
+
+def to_variation_descriptor(
+    variant: VcfVariant, descriptor_id: str
+) -> VariationDescriptor:
+    """Wrap a `VcfVariant` as a `VariationDescriptor` (vcf_record + label).
+
+    Inert scaffold: the VRS `variation` field is left empty - only the
+    `vcf_record` and a human-readable `label` are populated.
+    """
+    return VariationDescriptor(
+        id=descriptor_id,
+        label=f"{variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}",
+        vcf_record=to_vcf_record(variant),
     )

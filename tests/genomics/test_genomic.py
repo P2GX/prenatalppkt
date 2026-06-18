@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prenatalppkt.genomics.genomic import to_vcf_record
+from prenatalppkt.genomics.genomic import to_variation_descriptor, to_vcf_record
 from prenatalppkt.genomics.vcf import VcfVariant
 
 
@@ -33,3 +33,16 @@ class TestToVcfRecord:
         assert rec.alt == "T"
         assert rec.filter == "PASS"
         assert rec.info == "DP=45"
+
+
+class TestToVariationDescriptor:
+    def test_sets_id_label_and_vcf_record(self):
+        vd = to_variation_descriptor(_variant(), descriptor_id="var-1")
+        assert vd.id == "var-1"
+        assert vd.label == "chr7:200000 C>T"
+        assert vd.vcf_record.chrom == "chr7"
+
+    def test_variation_left_empty(self):
+        """Inert scaffold: no VRS variation is populated."""
+        vd = to_variation_descriptor(_variant(), descriptor_id="var-1")
+        assert not vd.HasField("variation")
