@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import dataclasses
-
-import pytest
-
 import gzip
 import io
 import tarfile
+from pathlib import Path
+
+import pytest
 
 from prenatalppkt.genomics.vcf import (
     VcfVariant,
@@ -144,3 +144,22 @@ class TestScanVcfArchive:
         assert set(result) == {"fetus_1.vcf", "fetus_2.vcf.gz"}
         assert result["fetus_1.vcf"][0].chrom == "chr1"
         assert result["fetus_2.vcf.gz"][0].pos == 200
+
+
+_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+
+
+class TestCommittedFixtures:
+    """The synthetic *.vcf fixtures parse and leak no sample genotypes."""
+
+    def test_apple_sally(self):
+        variants = scan_vcf_file(_DATA_DIR / "Apple_Sally.vcf")
+        assert len(variants) == 3
+        assert all(v.genome_assembly == "GRCh38" for v in variants)
+        for v in variants:
+            assert "0/1" not in v.info and "1/1" not in v.info
+
+    def test_blue_sally(self):
+        variants = scan_vcf_file(_DATA_DIR / "Blue_Sally.vcf")
+        assert len(variants) == 2
+        assert variants[1].ref == "G" and variants[1].alt == "GA"
