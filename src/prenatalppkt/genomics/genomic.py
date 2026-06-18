@@ -8,7 +8,7 @@ ACMG / pathogenicity calls. The inert markers make that explicit downstream.
 
 from __future__ import annotations
 
-from phenopackets import VariationDescriptor, VcfRecord
+from phenopackets import File, VariationDescriptor, VcfRecord
 
 from prenatalppkt.genomics.vcf import VcfVariant
 
@@ -41,3 +41,15 @@ def to_variation_descriptor(
         label=f"{variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}",
         vcf_record=to_vcf_record(variant),
     )
+
+
+def build_vcf_file_entry(uri: str, attributes: dict[str, str] | None = None) -> File:
+    """Build a Phenopacket `File` entry referencing a VCF by URI.
+
+    Always tags `fileFormat=VCF`; caller-supplied `attributes` (e.g.
+    `genomeAssembly`) are merged in.
+    """
+    file_attributes = {"fileFormat": "VCF"}
+    if attributes:
+        file_attributes.update(attributes)
+    return File(uri=uri, file_attributes=file_attributes)

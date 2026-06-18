@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from prenatalppkt.genomics.genomic import to_variation_descriptor, to_vcf_record
+from prenatalppkt.genomics.genomic import (
+    build_vcf_file_entry,
+    to_variation_descriptor,
+    to_vcf_record,
+)
 from prenatalppkt.genomics.vcf import VcfVariant
 
 
@@ -46,3 +50,17 @@ class TestToVariationDescriptor:
         """Inert scaffold: no VRS variation is populated."""
         vd = to_variation_descriptor(_variant(), descriptor_id="var-1")
         assert not vd.HasField("variation")
+
+
+class TestBuildVcfFileEntry:
+    def test_sets_uri_and_default_format(self):
+        f = build_vcf_file_entry("file:///data/Apple_Sally.vcf")
+        assert f.uri == "file:///data/Apple_Sally.vcf"
+        assert f.file_attributes["fileFormat"] == "VCF"
+
+    def test_merges_extra_attributes(self):
+        f = build_vcf_file_entry(
+            "file:///x.vcf", attributes={"genomeAssembly": "GRCh38"}
+        )
+        assert f.file_attributes["genomeAssembly"] == "GRCh38"
+        assert f.file_attributes["fileFormat"] == "VCF"
