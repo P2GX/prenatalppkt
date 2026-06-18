@@ -6,7 +6,9 @@ import dataclasses
 
 import pytest
 
-from prenatalppkt.genomics.vcf import VcfVariant, scan_vcf_text
+import gzip
+
+from prenatalppkt.genomics.vcf import VcfVariant, scan_vcf_file, scan_vcf_text
 
 _HEADER = "\n".join(
     [
@@ -84,3 +86,25 @@ class TestScanVcfText:
     def test_skips_blank_and_short_lines(self):
         text = _vcf("", "chr1\t100\t.\tA", "chr1\t200\t.\tA\tT\t.\t.\t.")
         assert len(scan_vcf_text(text)) == 1
+
+
+class TestScanVcfFile:
+    def test_plaintext_file(self, tmp_path):
+        text = _vcf("chr1\t100\trs1\tA\tT\t.\tPASS\t.")
+        path = tmp_path / "sample.vcf"
+        path.write_text(text)
+        variants = scan_vcf_file(path)
+        assert len(variants) == 1
+        assert variants[0].genome_assembly == "GRCh38"
+
+    def test_gzip_file_matches_plaintext(self, tmp_path):
+        text = _vcf(
+            "chr1\t100\trs1\tA\tT\t.\tPASS\t.\tGT\t0/1",
+            "chr3\t300\t.\tC\tG\t.\t.\t.\tGT\t1/1",
+        )
+        plain = tmp_path / "sample.vcf"
+        plain.write_text(text)
+        gz = tmp_path / "sample.vcf.gz"
+        gz.write_bytes(gzip.compress(text.encode("utf-8")))
+        assert scan_vcf_file(gz) == scan_vcf_file(plain)
+        assert len(scan_vcf_file(gz)) == 2

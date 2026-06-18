@@ -9,8 +9,12 @@ proof the input parsed (parse, don't validate).
 
 from __future__ import annotations
 
+import gzip
 import re
 from dataclasses import dataclass
+from pathlib import Path
+
+_GZIP_MAGIC = b"\x1f\x8b"
 
 # The eight fixed VCF columns. Everything after INFO (FORMAT + per-sample
 # genotype columns) is dropped on read - those columns can carry PHI.
@@ -83,3 +87,21 @@ def scan_vcf_text(text: str, genome_assembly: str = "unknown") -> list[VcfVarian
             )
         )
     return variants
+
+
+def _decode_vcf_bytes(raw: bytes) -> str:
+    """Decode VCF bytes, transparently gunzipping when gzip-framed."""
+    if raw[:2] == _GZIP_MAGIC:
+        raw = gzip.decompress(raw)
+    return raw.decode("utf-8")
+
+
+def scan_vcf_file(
+    path: Path | str, genome_assembly: str = "unknown"
+) -> list[VcfVariant]:
+    """Scan a VCF file, transparently handling gzip-compressed inputs.
+
+    Compression is detected from the gzip magic bytes, not the file extension.
+    """
+    text = _decode_vcf_bytes(Path(path).read_bytes())
+    return scan_vcf_text(text, genome_assembly)
