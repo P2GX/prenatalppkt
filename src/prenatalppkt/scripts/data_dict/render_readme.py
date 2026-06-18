@@ -1,13 +1,14 @@
 """
 render_readme.py
 
-Read `docs/data_dictionary/comparison.csv` and emit the matching
-`docs/data_dictionary/README.md`. One section per cluster (in
-YAML-curated clinical reading order), each with a single paired
-Observer + EVMS GE HL7 table.
+Read `docs/data_dictionary/comparison.csv` and emit three docs:
 
-The README is fully generated; edit `render_readme.py`,
-`extract_all.py`, or `clusters.yaml`, never the README itself.
+- `README.md` - clinician-facing field map + Regenerate + cross-links
+- `schema.md` - CSV schema + value-class tokens + pairing methodology
+- `clusters.md` - 17 per-cluster field tables
+
+The docs are fully generated; edit `render_readme.py`, `extract_all.py`,
+`clusters.yaml`, or `concept_aliases.yaml`, never the generated docs.
 """
 
 from __future__ import annotations
@@ -35,14 +36,15 @@ logging.basicConfig(
 SCRIPT_DIR = Path(__file__).resolve().parent
 PPKT_ROOT = SCRIPT_DIR.parents[3]
 IN_CSV = PPKT_ROOT / "docs" / "data_dictionary" / "comparison.csv"
-OUT_MD = PPKT_ROOT / "docs" / "data_dictionary" / "README.md"
+README_MD = PPKT_ROOT / "docs" / "data_dictionary" / "README.md"
+SCHEMA_MD = PPKT_ROOT / "docs" / "data_dictionary" / "schema.md"
+CLUSTERS_MD = PPKT_ROOT / "docs" / "data_dictionary" / "clusters.md"
 CLUSTERS_YAML = SCRIPT_DIR / "clusters.yaml"
 CONCEPT_ALIASES_YAML = SCRIPT_DIR / "concept_aliases.yaml"
 
 
-def render(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
-    """Build the full README content as one Markdown string."""
-    grouped = group_by_cluster(rows)
+def render_readme(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
+    """README.md: title + intro + clinician map + Regenerate + cross-links."""
     total_rows = len(rows)
     obs_rows = sum(1 for r in rows if r["observer_path"])
     vp_rows = sum(1 for r in rows if r["viewpoint_path"])
@@ -64,9 +66,9 @@ def render(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
         f"`{IN_CSV.relative_to(PPKT_ROOT)}` is the canonical artifact "
         f"({total_rows} rows: {obs_rows} carry an Observer field, "
         f"{vp_rows} carry an HL7 field, {paired} pair both on one "
-        "row). This README is generated from it; edit "
-        "`render_readme.py`, `extract_all.py`, or `clusters.yaml`, "
-        "never this file."
+        "row). These docs are generated from it; edit "
+        "`render_readme.py`, `extract_all.py`, `clusters.yaml`, or "
+        "`concept_aliases.yaml`, never the generated docs themselves."
     )
     lines.append("")
     lines.extend(render_clinician_overview(rows, cluster_order, CONCEPT_ALIASES_YAML))
@@ -76,6 +78,30 @@ def render(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
     lines.append("uv run python src/prenatalppkt/scripts/data_dict/extract_all.py")
     lines.append("uv run python src/prenatalppkt/scripts/data_dict/render_readme.py")
     lines.append("```")
+    lines.append("")
+    lines.append("## More detail")
+    lines.append("")
+    lines.append(
+        "- [schema.md](schema.md) - CSV column schema, value-class "
+        "tokens, pairing methodology"
+    )
+    lines.append("- [clusters.md](clusters.md) - 17 per-cluster field tables")
+    lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_schema(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
+    """schema.md: CSV schema + value-class tokens + pairing methodology."""
+    lines: list[str] = []
+    lines.append("# Schema and pairing")
+    lines.append("")
+    lines.append(
+        "Companion to [README.md](README.md). The clinician-facing "
+        "field map lives there; this file documents the CSV column "
+        "schema, value-class vocabulary, and the cluster-scoped "
+        "pairing algorithm."
+    )
     lines.append("")
     lines.append("## Schema")
     lines.append("")
@@ -109,14 +135,29 @@ def render(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
     )
     lines.append("")
     lines.extend(render_pairing_section(rows, cluster_order))
-    lines.append("## Clusters")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_clusters(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
+    """clusters.md: 17 per-cluster field tables."""
+    grouped = group_by_cluster(rows)
+    lines: list[str] = []
+    lines.append("# Clusters")
+    lines.append("")
+    lines.append(
+        "Companion to [README.md](README.md). One section per "
+        "cluster, in the YAML-curated clinical reading order, with "
+        "paired Observer + HL7 rows on the same line where pairing "
+        "fired."
+    )
     lines.append("")
 
     for cluster in [*cluster_order, "_unclustered"]:
         cluster_rows = grouped.get(cluster)
         if not cluster_rows:
             continue
-        lines.append(f"### {cluster}")
+        lines.append(f"## {cluster}")
         lines.append("")
         note = CLUSTER_NOTES.get(cluster)
         if note:
@@ -141,14 +182,22 @@ def render(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
 
 
 def main() -> None:
-    """Read the CSV, render the README, write it next to the CSV."""
+    """Read the CSV, render the three docs."""
     if not IN_CSV.exists():
         logger.error("Missing %s; run extract_all.py first", IN_CSV)
         raise SystemExit(1)
     rows = load_rows(IN_CSV)
     cluster_order = load_cluster_order(CLUSTERS_YAML)
-    OUT_MD.write_text(render(rows, cluster_order), encoding="utf-8")
-    logger.info("Wrote %s (%d rows ingested)", OUT_MD, len(rows))
+    README_MD.write_text(render_readme(rows, cluster_order), encoding="utf-8")
+    SCHEMA_MD.write_text(render_schema(rows, cluster_order), encoding="utf-8")
+    CLUSTERS_MD.write_text(render_clusters(rows, cluster_order), encoding="utf-8")
+    logger.info(
+        "Wrote %s, %s, %s (%d rows ingested)",
+        README_MD,
+        SCHEMA_MD,
+        CLUSTERS_MD,
+        len(rows),
+    )
 
 
 if __name__ == "__main__":

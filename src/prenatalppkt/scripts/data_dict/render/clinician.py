@@ -51,13 +51,7 @@ def render_clinician_overview(
     raw_aliases = yaml.safe_load(aliases_path.read_text(encoding="utf-8")) or {}
 
     lines: list[str] = ["## For clinicians: cross-source field map", ""]
-    lines.append(
-        "This section is a plain-language map of the data this pipeline "
-        "ingests, written for clinicians. "
-        "The technical schema starts at `## Regenerate` below; you can "
-        "stop reading after this section if you only need the field-level "
-        "vocabulary."
-    )
+    lines.append("Plain-language map of the data this pipeline ingests.")
     lines.append("")
 
     lines.append("### What the two sources are")
@@ -80,22 +74,13 @@ def render_clinician_overview(
         "multi-fetus disambiguation and on free-text narrative."
     )
     lines.append("")
-    lines.append(
-        "The data dictionary below is built by walking both sources "
-        "exhaustively and matching fields that hold the same clinical "
-        "concept. `concept_aliases.yaml` lists the hand-curated matches; "
-        f"the current alias file declares {len(raw_aliases)} concepts."
-    )
-    lines.append("")
-
     lines.append("### Concepts both systems capture (or only one side does)")
     lines.append("")
     lines.append(
-        "The 22 concepts in `concept_aliases.yaml`, sorted by clinical "
-        "area. `(Observer-only)` and `(ViewPoint-only)` mark concepts "
-        "where only one source has the field; these are the ones the "
-        "XLSX template will need to either collect by hand or infer at "
-        "ETL time."
+        f"The {len(raw_aliases)} hand-curated concepts in "
+        "`concept_aliases.yaml`, sorted by clinical area. "
+        "`(Observer-only)` / `(ViewPoint-only)` mark where only one "
+        "source has the field."
     )
     lines.append("")
     lines.append(
