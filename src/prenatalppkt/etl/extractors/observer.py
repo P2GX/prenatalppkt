@@ -132,10 +132,12 @@ def extract_all_fetuses(
     """
     Extract biometry from every fetus in an Observer JSON.
 
-    Per-fetus extraction errors (e.g. missing biometry on a T1-only twin) are
-    logged and surface as an empty list for that `fetus_number` key, rather
-    than aborting the whole extraction. Top-level structural errors still
-    raise.
+    Each fetus is classified and extracted independently, so a twin exam whose
+    fetuses have different scan types still yields the right bins per fetus
+    (a CRL/NT-only twin yields T1 bins, not []). Per-fetus extraction errors
+    (e.g. an UNKNOWN fetus with partial biometry) are logged and surface as an
+    empty list for that `fetus_number` key, rather than aborting the whole
+    extraction. Top-level structural errors still raise.
 
     Args:
         data: Parsed Observer JSON dictionary
