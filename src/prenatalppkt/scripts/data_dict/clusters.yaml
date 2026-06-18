@@ -1,0 +1,228 @@
+# Cluster mapping for the prenatalppkt data dictionary.
+#
+# Each entry maps one cluster name to (a) Observer dot-path
+# prefixes and (b) EVMS GE HL7 OBX-3 identifier prefixes. A path /
+# identifier routes to the FIRST cluster whose prefix list
+# contains a string prefix of it; order matters when prefixes
+# nest. Anything that matches nothing lands in `_unclustered` so
+# nothing is silently dropped.
+
+- cluster: biometry
+  observer_prefixes:
+    - fetuses[].measurements[]
+    - fetuses[].measurements
+    - fetuses[].ratios[]
+    - fetuses[].ratios
+    - fetuses[].efws[]
+    - fetuses[].efws
+    - fetuses[].firsttrimester
+  viewpoint_prefixes:
+    - SkullFetus
+    - AbdomenFetus
+    - ExtremitiesFetus
+    - NeckSkinFetus
+    - EmbryonicStructuresFetus
+    - Fetus.EstimatedFetal
+    - Fetus.VP_EstimatedFetal
+    - Fetus.HeadCircumference
+    - Fetus.FemurUndefinedLength
+    - Fetus.BonyThoracicCircumference
+    - Fetus.VP_HeadCircumference
+    - Fetus.VP_FemurUndefinedLength
+    - Fetus.VP_BonyThoracic
+    - Fetus.HC
+    - Fetus.FL
+    - Fetus.BPD
+    - U_FGRData_F_
+
+- cluster: anatomy_brain
+  observer_prefixes:
+    - fetuses[].anatomy[].main.brain
+    - fetuses[].anatomy[].detail[].brain
+  viewpoint_prefixes:
+    - BrainFetus
+
+- cluster: anatomy_face_neck
+  observer_prefixes:
+    - fetuses[].anatomy[].main.face
+    - fetuses[].anatomy[].detail[].face
+    - fetuses[].anatomy[].main.neck
+    - fetuses[].anatomy[].detail[].neck
+  viewpoint_prefixes:
+    - FaceFetus
+
+- cluster: anatomy_chest_gi
+  observer_prefixes:
+    - fetuses[].anatomy[].main.chest
+    - fetuses[].anatomy[].detail[].chest
+    - fetuses[].anatomy[].main.gi
+    - fetuses[].anatomy[].detail[].gi
+  viewpoint_prefixes:
+    - ChestFetus
+    - GastrointestinalTractFetus
+
+- cluster: anatomy_spine
+  observer_prefixes:
+    - fetuses[].anatomy[].main.spine
+    - fetuses[].anatomy[].detail[].spine
+  viewpoint_prefixes:
+    - SpineFetus
+
+- cluster: anatomy_urinary
+  observer_prefixes:
+    - fetuses[].anatomy[].main.gu
+    - fetuses[].anatomy[].detail[].gu
+    - fetuses[].anatomy[].main.kidneys
+    - fetuses[].anatomy[].detail[].kidneys
+  viewpoint_prefixes:
+    - UrinaryTractFetus
+
+- cluster: anatomy_general
+  observer_prefixes:
+    - fetuses[].anatomy[].anomalies
+    - fetuses[].anatomy[].detail
+    - fetuses[].anatomy[].main
+    - fetuses[].anatomy
+  viewpoint_prefixes: []
+
+- cluster: cardiac
+  observer_prefixes:
+    - fetuses[].fetal_echo_anatomy
+    - fetuses[].fetal_echo_measurements
+    - fetuses[].dm_echo
+    - fetuses[].fetus.heart
+    - fetuses[].fetus.cardiac
+  viewpoint_prefixes:
+    - HeartFetus
+    - FetalEchocardiography
+    - ChestFetus.Cardiac
+    - ChestFetus.DuctusArteriosus
+    - ChestFetus.Thoracic
+
+- cluster: amniotic_fluid
+  observer_prefixes:
+    - fetuses[].amioticfluid
+  viewpoint_prefixes:
+    - Fetus.AmnioticFluid
+    - Fetus.VP_AmnioticFluid
+
+- cluster: placenta_cord
+  observer_prefixes:
+    - fetuses[].placenta
+    - fetuses[].uards
+    - fetuses[].fetalvessels
+  viewpoint_prefixes:
+    - Fetus.UmbilicalCord
+    - Fetus.VP_UmbilicalCord
+    - UmbilicalCordFetus
+    - Fetus.PlacentaDetails
+    - Fetus.PlacentaSite
+    - Fetus.VP_PlacentaDetails
+
+- cluster: fetal_procedures
+  observer_prefixes:
+    - fetuses[].amniocentesis
+    - fetuses[].fbscvs
+    - fetuses[].ectopic_preg
+    - fetuses[].otherprocs
+  viewpoint_prefixes: []
+
+- cluster: fetus_core
+  observer_prefixes:
+    - fetuses[].fetus
+    - fetuses[].nst
+    - fetuses[].bpp
+    - fetuses[]
+    - fetuses
+  viewpoint_prefixes:
+    - Fetus.Presentation
+    - Fetus.Movements
+    - Fetus.VP_Presentation
+    - Fetus.VP_Movements
+    - Fetus.Activity
+    - Fetus.Tone
+    - Fetus.Identifier
+    - Fetus.VP_Identifier
+    - BabyPatientData
+
+- cluster: indication_impression
+  observer_prefixes:
+    - exam.examIcd10Indication
+    - fetuses[].impression
+  viewpoint_prefixes:
+    - CodingDiagnosis
+    - CodingProcedure
+    - Coding.
+    - ExamCodingIndication
+    - ExamAddData.ExamImpression
+    - ExamAddData.ExamIndication
+    - ExamAddData.ExamRecommendation
+
+- cluster: dating
+  observer_prefixes:
+    - exam.ga_by_dates
+    - exam.ga_by_working_edd
+    - exam.lmp
+    - exam.pt_age_at_edd
+    - exam.age_at_menopause
+    - fetuses[].fetus.ga_by_sonography
+  viewpoint_prefixes:
+    - ExamOBDating
+    - EpisodeHistory.EDD
+    - EpisodeHistory.LastMenstrualPeriod
+    - EpisodeHistory.GestationalAge
+    - EpisodeHistory.AgreedDating
+    - EpisodeHistory.DefaultLengthof
+    - EpisodeHistory.StatedLMP
+    - AntenatalBookingHistory.EDD
+    - AntenatalBookingHistory.LMP
+
+- cluster: maternal_subject
+  observer_prefixes:
+    - exam.patient
+    - exam.pt_age_at_exam
+    - exam.ob_gyn_history
+    - hist_phys_vitals
+  viewpoint_prefixes:
+    - PatientHistory
+    - PatientAnamnesticData
+    - PatientFamilyHistory
+    - AntenatalBookingHistory
+    - MaternalScreeningTests
+
+- cluster: encounter
+  observer_prefixes:
+    - exam.exm_date
+    - exam.exm_locator
+    - exam.exm_signed
+    - exam.scope_name
+    - exam.fetus_count
+    - exam.disc_perc
+    - exam.examTypes
+    - exam.examReferring
+    - exam.examHL7Orders
+    - exam.accession_id
+    - exam.site_name
+    - exam
+    - finalize
+  viewpoint_prefixes:
+    - Exam.
+    - ExamAddData
+    - ExamStateHistory
+    - ExamContact
+    - EpisodeHistory.NumberOfFetuses
+    - EpisodeHistory.TypeOfGestation
+    - ImagingParameters
+    - VP_MDT_SR_Files
+    - WarningMessage
+
+- cluster: non_fetal_gyn
+  observer_prefixes:
+    - adnexa
+    - cervix
+    - endomyocds
+    - uterine_artery
+    - uterus
+    - gyn_procedure
+  viewpoint_prefixes:
+    - Cervix

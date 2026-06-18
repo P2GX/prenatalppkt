@@ -1,0 +1,206 @@
+# Concept aliases for the cross-source data dictionary.
+#
+# Each top-level key is a clinical concept (dot-namespaced). Each
+# entry lists the Observer leaves that hold that concept (as
+# {path, label} pairs) and the EVMS GE HL7 OBX-3 identifiers that
+# hold it (literal strings).
+#
+# extract_all.py looks up each row in this file and stamps the
+# matching `concept_key` into the CSV's first column. Rows that
+# match no concept get an empty `concept_key`. Two rows sharing a
+# `concept_key` describe the same clinical concept across sources.
+#
+# v1 schema: structured-YAML literal lists. JMESPath/JSONPath
+# matching is deferred until the literal lists prove unwieldy.
+#
+# Order does not matter for matching; the file is read once at
+# extract time and indexed into two lookup tables (one keyed by
+# (path, label), one keyed by viewpoint identifier).
+
+# ---------------------------------------------------------------
+# Biometry - per-measurement + per-percentile concepts
+# ---------------------------------------------------------------
+
+biometry.bpd.measurement_mm:
+  description: Biparietal diameter, raw measurement in mm
+  observer:
+    - path: fetuses[].measurements[].value
+      label: BPD
+  viewpoint:
+    - SkullFetus.BiparietalDiameter
+
+biometry.bpd.percentile:
+  description: Biparietal diameter percentile vs gestational age
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: BPD
+  viewpoint:
+    - Fetus.BPD%
+
+biometry.ac.measurement_mm:
+  description: Abdominal circumference, raw measurement in mm
+  observer:
+    - path: fetuses[].measurements[].value
+      label: AC
+  viewpoint:
+    - AbdomenFetus.AbdominalCircumference
+
+biometry.ac.percentile:
+  description: Abdominal circumference percentile vs gestational age
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: AC
+
+biometry.hc.measurement_mm:
+  description: Head circumference, raw measurement in mm
+  observer:
+    - path: fetuses[].measurements[].value
+      label: HC
+  viewpoint:
+    - SkullFetus.HeadCircumference
+    - Fetus.HeadCircumference
+
+biometry.hc.percentile:
+  description: Head circumference percentile vs gestational age
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: HC
+
+biometry.crl.measurement_mm:
+  description: Crown-rump length, raw measurement in mm (first-trimester)
+  observer:
+    - path: fetuses[].measurements[].value
+      label: CRL
+    - path: fetuses[].firsttrimester.crl.value
+      label: ""
+  viewpoint:
+    - EmbryonicStructuresFetus.CrownRumpLength
+
+biometry.crl.percentile:
+  description: Crown-rump length percentile
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: CRL
+
+biometry.femur.measurement_mm:
+  description: Femur length, raw measurement in mm
+  observer:
+    - path: fetuses[].measurements[].value
+      label: Femur
+  viewpoint:
+    - ExtremitiesFetus.FemurUndefinedLength
+    - Fetus.FemurUndefinedLength
+
+biometry.femur.percentile:
+  description: Femur length percentile vs gestational age
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: Femur
+
+biometry.humerus.measurement_mm:
+  description: Humerus length, raw measurement in mm
+  observer:
+    - path: fetuses[].measurements[].value
+      label: Humerus
+  viewpoint:
+    - ExtremitiesFetus.HumerusLength
+
+biometry.humerus.percentile:
+  description: Humerus length percentile vs gestational age
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: Humerus
+
+biometry.nuchal_fold.measurement_mm:
+  description: Nuchal fold thickness, raw measurement in mm
+  observer:
+    - path: fetuses[].measurements[].value
+      label: Nuchal Fold
+  viewpoint:
+    - NeckSkinFetus.NuchalFold
+
+biometry.nuchal_fold.percentile:
+  description: Nuchal fold thickness percentile
+  observer:
+    - path: fetuses[].measurements[].calculated_percentile
+      label: Nuchal Fold
+
+# ---------------------------------------------------------------
+# Fetus core - identity / sex
+# ---------------------------------------------------------------
+
+fetus.gender:
+  description: Fetal sex
+  observer:
+    - path: fetuses[].fetus.gender
+      label: ""
+  viewpoint:
+    - BabyPatientData.Gender
+
+# ---------------------------------------------------------------
+# Indication / impression - coded entries
+# ---------------------------------------------------------------
+
+indication.code:
+  description: ICD-10 indication code
+  observer:
+    - path: exam.examIcd10Indication[].code
+      label: ""
+  viewpoint:
+    - CodingDiagnosis.Code
+
+indication.description:
+  description: ICD-10 indication description / narrative
+  observer:
+    - path: exam.examIcd10Indication[].description
+      label: ""
+  viewpoint:
+    - CodingDiagnosis.Description
+
+# ---------------------------------------------------------------
+# Maternal demographics + history
+# ---------------------------------------------------------------
+
+maternal.gravida:
+  description: Gravidity (count of pregnancies including current)
+  observer:
+    - path: exam.ob_gyn_history.gravida
+      label: ""
+  viewpoint:
+    - PatientAnamnesticData.Gravida
+
+maternal.para:
+  description: Parity (count of completed pregnancies past 20 weeks)
+  observer:
+    - path: exam.ob_gyn_history.para
+      label: ""
+  viewpoint:
+    - PatientAnamnesticData.Para
+
+maternal.first_name:
+  description: Patient first name
+  observer:
+    - path: exam.patient.first_name
+      label: ""
+  viewpoint:
+    - PatientHistory.FirstName
+
+maternal.last_name:
+  description: Patient last name / family name
+  observer:
+    - path: exam.patient.last_name
+      label: ""
+  viewpoint:
+    - PatientHistory.Name
+
+# ---------------------------------------------------------------
+# Non-fetal gyn - cervix funneling
+# ---------------------------------------------------------------
+
+cervix.funneling:
+  description: Cervix funneling presence
+  observer:
+    - path: cervix.cervix.funneling
+      label: ""
+  viewpoint:
+    - Cervix.FunnellingYN
