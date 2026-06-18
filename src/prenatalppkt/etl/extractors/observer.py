@@ -30,6 +30,40 @@ logging.basicConfig(level=logging.DEBUG)
 _default_factory = TermBinFactory()
 
 
+def _validate_structure(data: Any) -> List[Dict[str, Any]]:
+    """Raise on top-level structural issues; return the fetuses list."""
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected dict, got {type(data)}")
+    if "fetuses" not in data:
+        raise ValueError("Missing 'fetuses' key in Observer JSON")
+    fetuses = data["fetuses"]
+    if not fetuses or not isinstance(fetuses, list):
+        raise ValueError("'fetuses' must be non-empty list")
+    return fetuses
+
+
+def _validate_fetus_count(fetuses: List[Dict[str, Any]], declared_count: Any) -> None:
+    """Warn (do not raise) if exam.fetus_count disagrees with len(fetuses)."""
+    actual = len(fetuses)
+    if declared_count is not None and declared_count != actual:
+        logger.warning(
+            "exam.fetus_count=%s but %d fetuses present in array",
+            declared_count,
+            actual,
+        )
+
+
+def _extract_one_fetus(
+    fetus_data: Dict[str, Any], factory: TermBinFactory
+) -> List[TermBin]:
+    """Extract TermBins from one fetus dict; raises if required biometry missing."""
+    fetus_number = _get_fetus_number(fetus_data)
+    logger.debug(f"Processing fetus {fetus_number}")
+    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
+    validate_required_measurements(term_bins)
+    return term_bins
+
+
 def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     """
     Extract biometry measurements from Observer JSON and convert to TermBins.
@@ -47,33 +81,66 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     if factory is None:
         factory = _default_factory  # <-- reuse, no reload
 
-    logger.debug("Starting Observer JSON extraction")
+    logger.debug("Starting Observer JSON extraction (single-fetus)")
+    fetuses = _validate_structure(data)
 
-    # Validate structure
-    if not isinstance(data, dict):
-        raise ValueError(f"Expected dict, got {type(data)}")
+    if len(fetuses) > 1:
+        logger.warning(
+            "Observer JSON has %d fetuses; extract() returns only the first. "
+            "Use extract_all_fetuses() for multi-fetus support.",
+            len(fetuses),
+        )
 
-    if "fetuses" not in data:
-        raise ValueError("Missing 'fetuses' key in Observer JSON")
-
-    fetuses = data["fetuses"]
-    if not fetuses or not isinstance(fetuses, list):
-        raise ValueError("'fetuses' must be non-empty list")
-
-    # Extract from first fetus (can extend for multiple fetuses)
-    fetus_data = fetuses[0]
-    fetus_number = _get_fetus_number(fetus_data)
-
-    logger.debug(f"Processing fetus {fetus_number}")
-
-    # Parse measurements into TermBins
-    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
-
-    # Validate required measurements present
-    validate_required_measurements(term_bins)
-
+    term_bins = _extract_one_fetus(fetuses[0], factory)
     logger.info(f"Extracted {len(term_bins)} TermBins from Observer JSON")
     return term_bins
+
+
+def extract_all_fetuses(
+    data: dict, factory: TermBinFactory | None = None
+) -> Dict[int, List[TermBin]]:
+    """
+    Extract biometry from every fetus in an Observer JSON.
+
+    Per-fetus extraction errors (e.g. missing biometry on a T1-only twin) are
+    logged and surface as an empty list for that `fetus_number` key, rather
+    than aborting the whole extraction. Top-level structural errors still
+    raise.
+
+    Args:
+        data: Parsed Observer JSON dictionary
+        factory: TermBinFactory instance (uses module singleton if None)
+
+    Returns:
+        Dict keyed by `fetus_number`; values are lists of TermBins for that
+        fetus (empty list when extraction failed for that fetus).
+
+    Raises:
+        ValueError: If the JSON structure itself is malformed (missing
+            `fetuses` key, wrong type, empty list).
+    """
+    if factory is None:
+        factory = _default_factory
+
+    logger.debug("Starting Observer JSON extraction (multi-fetus)")
+    fetuses = _validate_structure(data)
+    _validate_fetus_count(fetuses, data.get("exam", {}).get("fetus_count"))
+
+    result: Dict[int, List[TermBin]] = {}
+    for fetus_data in fetuses:
+        fetus_number = _get_fetus_number(fetus_data)
+        try:
+            result[fetus_number] = _extract_one_fetus(fetus_data, factory)
+        except ValueError as e:
+            logger.warning("Fetus %d skipped: %s", fetus_number, e)
+            result[fetus_number] = []
+
+    logger.info(
+        "Extracted %d total TermBins across %d fetuses",
+        sum(len(tbs) for tbs in result.values()),
+        len(result),
+    )
+    return result
 
 
 def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[TermBin]:
@@ -90,6 +157,15 @@ def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[Te
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
     return extract(data, factory)
+
+
+def extract_all_fetuses_from_file(
+    filepath: Path, factory: TermBinFactory | None = None
+) -> Dict[int, List[TermBin]]:
+    """Multi-fetus equivalent of `extract_from_file`."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return extract_all_fetuses(data, factory)
 
 
 def _get_fetus_number(fetus_data: Dict[str, Any]) -> int:
