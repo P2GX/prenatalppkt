@@ -15,7 +15,7 @@ from prenatalppkt.etl.scan_type import (
     ScanType,
     T1_LABELS,
     UnsupportedScanTypeError,
-    detect_scan_type,
+    classify_fetus,
 )
 from prenatalppkt.etl.term_bin_factory import (
     TermBinFactory,
@@ -62,9 +62,33 @@ def _validate_fetus_count(fetuses: List[Dict[str, Any]], declared_count: Any) ->
 def _extract_one_fetus(
     fetus_data: Dict[str, Any], factory: TermBinFactory
 ) -> List[TermBin]:
-    """Extract TermBins from one fetus dict; raises if required biometry missing."""
+    """Extract TermBins from one fetus dict, dispatching on its own scan type.
+
+    Each fetus is classified independently - twin exams mix scan types, so a
+    CRL/NT-only fetus yields T1 bins rather than failing the T2/T3 biometry
+    requirement.
+
+    Raises:
+        UnsupportedScanTypeError: if the fetus is UNKNOWN, or classified T1 but
+            no CRL/NT measurement parsed.
+    """
     fetus_number = _get_fetus_number(fetus_data)
-    logger.debug(f"Processing fetus {fetus_number}")
+    scan_type = classify_fetus(fetus_data)
+    logger.debug(f"Processing fetus {fetus_number}, scan_type={scan_type.value}")
+
+    if scan_type is ScanType.FIRST_TRIMESTER:
+        term_bins = _parse_t1_measurements(fetus_data, fetus_number, factory)
+        if not term_bins:
+            raise UnsupportedScanTypeError(
+                "First-trimester scan classified but no CRL or NT measurement parsed"
+            )
+        return term_bins
+
+    if scan_type is ScanType.UNKNOWN:
+        raise UnsupportedScanTypeError(
+            "Unrecognised scan type; missing the full HC/BPD/AC/Femur biometry set"
+        )
+
     term_bins = _parse_measurements(fetus_data, fetus_number, factory)
     validate_required_measurements(term_bins)
     return term_bins
@@ -90,39 +114,7 @@ def extract(data: dict, factory: TermBinFactory | None = None) -> list[TermBin]:
     logger.debug("Starting Observer JSON extraction (single-fetus)")
     fetuses = _validate_structure(data)
 
-    if len(fetuses) > 1:
-        logger.warning(
-            "Observer JSON has %d fetuses; extract() returns only the first. "
-            "Use extract_all_fetuses() for multi-fetus support.",
-            len(fetuses),
-        )
-
-    # Classify the scan and dispatch internally. One entry point covers every
-    # Observer JSON shape (T1, T2/T3, unrecognised); the per-trimester logic
-    # lives in the helpers below.
-    scan_type = detect_scan_type(data)
-    fetus_data = fetuses[0]
-    fetus_number = _get_fetus_number(fetus_data)
-
-    logger.debug(f"Processing fetus {fetus_number}, scan_type={scan_type.value}")
-
-    if scan_type is ScanType.FIRST_TRIMESTER:
-        term_bins = _parse_t1_measurements(fetus_data, fetus_number, factory)
-        if not term_bins:
-            raise UnsupportedScanTypeError(
-                "First-trimester scan classified but no CRL or NT measurement parsed"
-            )
-        logger.info(f"Extracted {len(term_bins)} T1 TermBins from Observer JSON")
-        return term_bins
-
-    if scan_type is ScanType.UNKNOWN:
-        raise UnsupportedScanTypeError(
-            "Unrecognised scan type; missing the full HC/BPD/AC/Femur biometry set"
-        )
-
-    # T2/T3 path: existing behaviour.
-    term_bins = _parse_measurements(fetus_data, fetus_number, factory)
-    validate_required_measurements(term_bins)
+    term_bins = _extract_one_fetus(fetuses[0], factory)
     logger.info(f"Extracted {len(term_bins)} TermBins from Observer JSON")
     return term_bins
 
