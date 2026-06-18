@@ -6,6 +6,7 @@ per fetus: a CRL/NT-only twin yields T1 bins, a partial/UNKNOWN twin yields [].
 
 from __future__ import annotations
 
+import json
 import logging
 
 from prenatalppkt.etl.extractors import observer
@@ -182,3 +183,19 @@ def test_extract_all_fetuses_unknown_twin_is_empty(caplog):
     assert len(result[1]) == 4
     assert result[2] == []
     assert any("Fetus 2 skipped" in record.message for record in caplog.records)
+
+
+def test_extract_all_fetuses_from_file(tmp_path):
+    """File-loading variant parses JSON and delegates to extract_all_fetuses."""
+    data = {
+        "exam": {"fetus_count": 2},
+        "fetuses": [_fetus_full_biometry(1), _fetus_t1(2)],
+    }
+    test_file = tmp_path / "twins.json"
+    test_file.write_text(json.dumps(data))
+
+    result = observer.extract_all_fetuses_from_file(test_file)
+
+    assert set(result.keys()) == {1, 2}
+    assert len(result[1]) == 4
+    assert len(result[2]) == 1
