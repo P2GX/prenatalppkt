@@ -1,0 +1,6 @@
+##fileformat=VCFv4.2
+##reference=GRCh38
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SYNTHETIC_SAMPLE
+chr2	150000	.	T	C	40	PASS	DP=25	GT	0/1
+chr12	999999	.	G	GA	60	PASS	DP=33	GT	1/1

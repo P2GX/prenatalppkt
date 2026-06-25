@@ -1,0 +1,8 @@
+##fileformat=VCFv4.2
+##reference=GRCh38
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SYNTHETIC_SAMPLE
+chr1	1000	.	A	G	50	PASS	DP=30	GT	0/1
+chr7	200000	rs0000001	C	T	99	PASS	DP=45	GT	1/1
+chrX	500000	.	G	A	30	PASS	DP=20	GT	0/1
