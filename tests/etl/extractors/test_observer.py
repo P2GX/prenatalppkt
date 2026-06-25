@@ -4,12 +4,15 @@ Tests for Observer JSON extractor.
 
 import json
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
 from prenatalppkt.etl.extractors import observer
 from prenatalppkt.etl.term_bin_factory import TermBinFactory
 from prenatalppkt.measurements.term_bin import TermBin
+
+DATA_DIR = Path(__file__).resolve().parents[3] / "tests" / "data"
 
 
 class TestObserverExtract:
@@ -387,3 +390,111 @@ class TestObserverUnitConversion:
         # Skip Nuchal Fold assertion until HPO mapping exists
         # nf = next(tb for tb in term_bins if "Nuchal Fold" in tb.description)
         # assert "4.5" in nf.description
+
+
+# ---------------------------------------------------------------------------
+# First-trimester (T1) dispatch through the same observer.extract() entry point.
+# ---------------------------------------------------------------------------
+
+
+def _t1_fixture(*measurements: dict) -> dict:
+    return {
+        "fetuses": [{"fetus": {"fetus_number": 1}, "measurements": list(measurements)}]
+    }
+
+
+_CRL_OK = {
+    "label": "CRL",
+    "value": 45.0,
+    "unit_of_measure": "mm",
+    "calculated_percentile": 50.0,
+    "calculated_ega": 11.3,
+}
+
+_NT_OK = {
+    "label": "NT",
+    "value": 2.0,
+    "unit_of_measure": "mm",
+    "calculated_percentile": 50.0,
+    "calculated_ega": 11.3,
+}
+
+_NT_ELEVATED = {
+    "label": "NT",
+    "value": 4.2,
+    "unit_of_measure": "mm",
+    "calculated_percentile": 96.0,
+    "calculated_ega": 12.0,
+}
+
+
+class TestObserverT1:
+    """T1 path through observer.extract() (unified entry, dispatches on scan type)."""
+
+    def test_crl_only_returns_one_bin(self):
+        bins = observer.extract(_t1_fixture(_CRL_OK))
+        assert len(bins) == 1
+        assert isinstance(bins[0], TermBin)
+        # CRL at 50% lands in the normal-range HP:0001507 bin.
+        assert bins[0].hpo_id == "HP:0001507"
+        assert bins[0].normal is True
+
+    def test_nt_only_returns_one_bin(self):
+        bins = observer.extract(_t1_fixture(_NT_OK))
+        assert len(bins) == 1
+        assert bins[0].hpo_id == "HP:0010880"
+
+    def test_both_crl_and_nt_returns_two_bins(self):
+        bins = observer.extract(_t1_fixture(_CRL_OK, _NT_ELEVATED))
+        assert len(bins) == 2
+        ids = {b.hpo_id for b in bins}
+        assert ids == {"HP:0001507", "HP:0010880"}
+        nt_bin = next(b for b in bins if b.hpo_id == "HP:0010880")
+        assert nt_bin.normal is False
+
+    def test_skips_crl_without_percentile_but_keeps_nt(self):
+        crl_no_pct = {**_CRL_OK}
+        del crl_no_pct["calculated_percentile"]
+        bins = observer.extract(_t1_fixture(crl_no_pct, _NT_OK))
+        assert len(bins) == 1
+        assert bins[0].hpo_id == "HP:0010880"
+
+    def test_corpus_diva_returns_termbins(self):
+        # Diva is the canonical T1 fixture: CRL only, percentile=0 -> <1%.
+        # Previously raised; now lands in the IUGR bin via the unified dispatch.
+        path = (
+            Path(__file__).resolve().parents[3]
+            / "tests"
+            / "data"
+            / "Diva_Sally_pretty.json"
+        )
+        bins = observer.extract_from_file(path)
+        assert len(bins) >= 1
+        crl_bin = next((b for b in bins if "CRL" in b.description), None)
+        assert crl_bin is not None
+        assert crl_bin.hpo_id == "HP:0001511"
+        assert crl_bin.normal is False
+
+
+class TestObserverCorpus:
+    """extract_from_file() end-to-end over every shipped Observer fixture.
+
+    Keyed on bin count + the set of measurements flagged abnormal, not on
+    specific HPO IDs, so scaffold T1 mappings can be finalised without churn.
+    """
+
+    EXPECTED: ClassVar[dict[str, tuple[int, set[str]]]] = {
+        "Apple_Sally_pretty.json": (4, set()),
+        "Blue_Sally_pretty.json": (4, {"HC"}),
+        "Charm_Sally_pretty.json": (4, {"BPD"}),
+        "Eclair_Sally_pretty.json": (4, set()),
+        "Diva_Sally_pretty.json": (1, {"CRL"}),
+    }
+
+    @pytest.mark.parametrize("fixture_name", sorted(EXPECTED))
+    def test_corpus_extraction(self, fixture_name):
+        n_bins, abnormal = self.EXPECTED[fixture_name]
+        bins = observer.extract_from_file(DATA_DIR / fixture_name)
+        assert len(bins) == n_bins
+        got = {b.description.split(":")[0].strip() for b in bins if not b.normal}
+        assert got == abnormal

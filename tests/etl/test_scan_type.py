@@ -97,7 +97,5 @@ class TestCorpus:
     @pytest.mark.parametrize("fixture_name", sorted(EXPECTED.keys()))
     def test_corpus_classification(self, fixture_name):
         fixture = DATA_DIR / fixture_name
-        if not fixture.exists():
-            pytest.skip(f"{fixture_name} not found")
         data = json.loads(fixture.read_text(encoding="utf-8"))
         assert detect_scan_type(data) == self.EXPECTED[fixture_name]

@@ -6,8 +6,8 @@ fail loudly. Mirrors the existing fixture-driven pattern at
 ``tests/parser/observer/fetuses/test_fetus_measurements_parser.py``.
 
 Four T2/T3 fixtures (Apple, Blue, Charm, Eclair) succeed and produce 4
-LOINC-coded TermBins each. Diva is first-trimester (CRL only) so the
-extractor raises ``ValueError`` from ``validate_required_measurements``.
+LOINC-coded TermBins each. Diva is first-trimester (CRL only); the extractor
+emits T1 bins (CRL) for it - these carry no LOINC biometry code.
 """
 
 from __future__ import annotations
@@ -156,11 +156,16 @@ def test_corpus_fixture_phenotypic_exporter_emits_measurements(fixture_name):
         assert m["value"]["quantity"]["unit"]["id"] == "UO:0000016"
 
 
-def test_corpus_diva_first_trimester_raises():
-    """Diva is CRL-only (T1); extractor raises rather than silently dropping."""
+def test_corpus_diva_first_trimester_extracts_t1_bins():
+    """Diva is CRL-only (T1); the extractor emits T1 bins rather than raising.
+
+    CRL is a first-trimester measurement with no LOINC biometry code, so the
+    resulting bins carry ``loinc_code is None``.
+    """
     fixture = DATA_DIR / "Diva_Sally_pretty.json"
     if not fixture.exists():
         pytest.skip("Diva_Sally_pretty.json not found")
 
-    with pytest.raises(ValueError, match="Missing required biometry"):
-        observer.extract_from_file(fixture)
+    term_bins = observer.extract_from_file(fixture)
+    assert len(term_bins) >= 1
+    assert all(tb.loinc_code is None for tb in term_bins)

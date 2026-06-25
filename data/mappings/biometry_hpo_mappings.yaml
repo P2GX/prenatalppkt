@@ -291,3 +291,112 @@ occipitofrontal_diameter:
     id: "HP:0000240" # Need a specific HPO ID & Term here
     label: "Abnormality of skull size" # Need a specific HPO ID & Term here
     normal: false
+
+# ---------------------------------------------------------------------------
+# First-trimester measurements (CRL, NT). Added with PR #56/#59 foundation.
+#
+# TODO(@VarenyaJ): the HPO bin assignments below are SCAFFOLDING only -
+# they need clinical review before being relied on. The shapes match the
+# existing 8-bin pattern but the specific terms / cutoffs are placeholders.
+# Once T1 ETL lands and we have real reviewer input, replace these with
+# clinically-grounded mappings.
+#
+# LOINC follow-up: candidate codes are LOINC:11957-8 for CRL and
+# LOINC:33069-6 for NT. These will be added as `loinc:` blocks in the
+# dict-shape YAML once PR #69 (LOINC support in the loader) merges and
+# this branch rebases.
+# ---------------------------------------------------------------------------
+
+crown_rump_length:
+  # TODO(@VarenyaJ): clinical review needed. Placeholder uses HP:0001507
+  # "Growth abnormality" as the shared parent term (mirrors how HC uses
+  # HP:0000240 "Abnormality of skull size"). Replace with CRL-specific
+  # terms when sourced.
+  - min: 0
+    max: 3
+    id: "HP:0001511" # IUGR
+    label: "Intrauterine growth retardation"
+    normal: false
+  - min: 3
+    max: 5
+    id: "HP:0001511" # TODO: more specific T1-IUGR term if one exists
+    label: "Intrauterine growth retardation"
+    normal: false
+  - min: 5
+    max: 10
+    id: "HP:0001507"
+    label: "Growth abnormality"
+    normal: false
+  - min: 10
+    max: 50
+    id: "HP:0001507"
+    label: "Growth abnormality"
+    normal: true
+  - min: 50
+    max: 90
+    id: "HP:0001507"
+    label: "Growth abnormality"
+    normal: true
+  - min: 90
+    max: 95
+    id: "HP:0004323"
+    label: "Abnormality of body weight"
+    normal: false
+  - min: 95
+    max: 97
+    id: "HP:0004323"
+    label: "Abnormality of body weight"
+    normal: false
+  - min: 97
+    max: 100
+    id: "HP:0004323"
+    label: "Abnormality of body weight"
+    normal: false
+
+nuchal_translucency:
+  # TODO(@VarenyaJ): clinical review needed. NT is clinically considered
+  # elevated above ~3.5mm absolute or above the 95th percentile. The
+  # percentile bins below approximate the threshold but don't account
+  # for the absolute-mm fallback. HP:0010880 "Increased nuchal
+  # translucency" is the canonical HPO term; low NT is clinically normal
+  # so all low/mid bins are marked normal=true.
+  - min: 0
+    max: 3
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: true
+  - min: 3
+    max: 5
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: true
+  - min: 5
+    max: 10
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: true
+  - min: 10
+    max: 50
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: true
+  - min: 50
+    max: 90
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: true
+  - min: 90
+    max: 95
+    id: "HP:0010880" # TODO: confirm 90th vs 95th cutoff with clinician
+    label: "Increased nuchal translucency"
+    normal: true
+  - min: 95
+    max: 97
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: false
+  - min: 97
+    max: 100
+    id: "HP:0010880"
+    label: "Increased nuchal translucency"
+    normal: false

@@ -45,10 +45,13 @@ class TestBiometryMeasurement:
         """Test all_values returns all canonical names."""
         values = BiometryMeasurement.all_values()
         assert isinstance(values, set)
-        assert len(values) == 8
+        # 8 T2/T3 + 2 T1 (CRL, NT)
+        assert len(values) == 10
         assert "HC" in values
         assert "BPD" in values
         assert "Femur" in values
+        assert "CRL" in values
+        assert "NT" in values
 
 
 class TestSectionHeader:
@@ -153,10 +156,13 @@ class TestNameMaps:
 
     def test_observer_map_completeness(self):
         """Test that Observer map has all measurements."""
-        assert len(OBSERVER_NAME_MAP) == 8
+        # 8 T2/T3 + 2 T1 (CRL, NT)
+        assert len(OBSERVER_NAME_MAP) == 10
         assert "HC" in OBSERVER_NAME_MAP
         assert "BPD" in OBSERVER_NAME_MAP
         assert "Femur" in OBSERVER_NAME_MAP
+        assert "CRL" in OBSERVER_NAME_MAP
+        assert "NT" in OBSERVER_NAME_MAP
 
     def test_viewpoint_text_map_completeness(self):
         """Test that ViewPoint text map has all measurements."""
