@@ -99,6 +99,17 @@ class TestBuildGenomicInterpretation:
         )
         assert not interp.diagnosis.HasField("disease")
 
+    def test_empty_variants_yields_interpretation_with_no_genomic_interpretations(self):
+        # No variants scanned -> still a well-formed, inert Interpretation with an
+        # empty genomic_interpretations list (not an error).
+        interp = build_genomic_interpretation(
+            [], subject_id="fetus-1", interpretation_id="interp-1"
+        )
+        assert isinstance(interp, Interpretation)
+        assert interp.id == "interp-1"
+        assert interp.progress_status == Interpretation.ProgressStatus.UNKNOWN_PROGRESS
+        assert len(interp.diagnosis.genomic_interpretations) == 0
+
     def test_round_trips_through_json_on_a_phenopacket(self):
         """File + Interpretation survive MessageToJson -> Parse on a Phenopacket."""
         variant = _variant()
