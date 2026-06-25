@@ -57,26 +57,32 @@ class UnsupportedScanTypeError(ValueError):
     """
 
 
-def detect_scan_type(observer_json: dict[str, Any]) -> ScanType:
-    """Classify an Observer JSON dict by inspecting the first fetus's labels.
+def classify_fetus(fetus_data: dict[str, Any]) -> ScanType:
+    """Classify a single fetus dict by its measurement labels.
 
     Rules:
       - Has CRL or NT and lacks the full T2/T3 set -> FIRST_TRIMESTER
       - Has all of {AC, BPD, HC, Femur}             -> T2_T3_BIOMETRY
       - Otherwise                                   -> UNKNOWN
+
+    Twin exams carry fetuses with different scan types, so classification must
+    run per fetus, not once for the whole exam.
     """
-    fetuses = observer_json.get("fetuses") or []
-    if not fetuses:
-        return ScanType.UNKNOWN
-    measurements = fetuses[0].get("measurements") or []
+    measurements = fetus_data.get("measurements") or []
     labels = _canonical_labels(measurements)
 
-    has_t2t3 = T2T3_REQUIRED_LABELS.issubset(labels)
-    if has_t2t3:
+    if T2T3_REQUIRED_LABELS.issubset(labels):
         return ScanType.T2_T3_BIOMETRY
 
-    has_t1 = bool(labels & T1_LABELS)
-    if has_t1:
+    if labels & T1_LABELS:
         return ScanType.FIRST_TRIMESTER
 
     return ScanType.UNKNOWN
+
+
+def detect_scan_type(observer_json: dict[str, Any]) -> ScanType:
+    """Classify an Observer JSON dict by inspecting the first fetus's labels."""
+    fetuses = observer_json.get("fetuses") or []
+    if not fetuses:
+        return ScanType.UNKNOWN
+    return classify_fetus(fetuses[0])
