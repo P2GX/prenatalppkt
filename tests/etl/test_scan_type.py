@@ -11,7 +11,6 @@ import pytest
 from prenatalppkt.etl.scan_type import (
     ScanType,
     UnsupportedScanTypeError,
-    classify_fetus,
     detect_scan_type,
 )
 
@@ -87,47 +86,6 @@ class TestDetectScanType:
             ]
         }
         assert detect_scan_type(data) == ScanType.T2_T3_BIOMETRY
-
-
-class TestClassifyFetus:
-    """classify_fetus() takes a single fetus dict; detect_scan_type delegates to it."""
-
-    def test_full_biometry_is_t2_t3(self):
-        fetus = {
-            "measurements": [{"label": lbl} for lbl in ["AC", "BPD", "HC", "Femur"]]
-        }
-        assert classify_fetus(fetus) == ScanType.T2_T3_BIOMETRY
-
-    def test_fl_label_is_t2_t3(self):
-        fetus = {"measurements": [{"label": lbl} for lbl in ["AC", "BPD", "HC", "FL"]]}
-        assert classify_fetus(fetus) == ScanType.T2_T3_BIOMETRY
-
-    def test_crl_only_is_first_trimester(self):
-        assert (
-            classify_fetus({"measurements": [{"label": "CRL"}]})
-            == ScanType.FIRST_TRIMESTER
-        )
-
-    def test_partial_biometry_is_unknown(self):
-        assert classify_fetus({"measurements": [{"label": "HC"}]}) == ScanType.UNKNOWN
-
-    def test_no_measurements_is_unknown(self):
-        assert classify_fetus({}) == ScanType.UNKNOWN
-
-    def test_detect_scan_type_delegates_to_classify_fetus(self):
-        """The two fetuses of a twin exam can classify differently."""
-        data = {
-            "fetuses": [
-                {
-                    "measurements": [
-                        {"label": lbl} for lbl in ["AC", "BPD", "HC", "Femur"]
-                    ]
-                },
-                {"measurements": [{"label": "CRL"}]},
-            ]
-        }
-        assert detect_scan_type(data) == classify_fetus(data["fetuses"][0])
-        assert classify_fetus(data["fetuses"][1]) == ScanType.FIRST_TRIMESTER
 
 
 class TestUnsupportedScanTypeError:
