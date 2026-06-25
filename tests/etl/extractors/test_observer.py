@@ -459,6 +459,19 @@ class TestObserverT1:
         assert len(bins) == 1
         assert bins[0].hpo_id == "HP:0010880"
 
+    def test_t1_classified_but_nothing_parseable_raises(self):
+        # CRL + NT labels classify the fetus FIRST_TRIMESTER, but with both
+        # percentiles missing neither parses, so _parse_t1_measurements returns
+        # [] and extract() raises rather than handing back an empty bin list.
+        crl_no_pct = {**_CRL_OK}
+        del crl_no_pct["calculated_percentile"]
+        nt_no_pct = {**_NT_OK}
+        del nt_no_pct["calculated_percentile"]
+        with pytest.raises(
+            observer.UnsupportedScanTypeError, match="no CRL or NT measurement parsed"
+        ):
+            observer.extract(_t1_fixture(crl_no_pct, nt_no_pct))
+
     def test_corpus_diva_returns_termbins(self):
         # Diva is the canonical T1 fixture: CRL only, percentile=0 -> <1%.
         # Previously raised; now lands in the IUGR bin via the unified dispatch.
