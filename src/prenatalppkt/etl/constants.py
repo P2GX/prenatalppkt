@@ -105,6 +105,7 @@ OBSERVER_NAME_MAP: Dict[str, BiometryMeasurement] = {
     "BPD": BiometryMeasurement.BIPARIETAL_DIAMETER,
     "AC": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
     "Femur": BiometryMeasurement.FEMUR_LENGTH,
+    "FL": BiometryMeasurement.FEMUR_LENGTH,
     "Nuchal Fold": BiometryMeasurement.NUCHAL_FOLD,
     "Cerebellum": BiometryMeasurement.CEREBELLUM,
     "OFD": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
