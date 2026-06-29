@@ -22,8 +22,7 @@ from prenatalppkt.phenotypic_export import PhenotypicExporter
 
 DATA_DIR = Path("tests/data")
 
-# LOINC codes verified against loinc.org (see
-# docs/local-only/PLAN-loinc-measurements-issue-57.md in cerebro).
+# LOINC codes verified against loinc.org.
 EXPECTED_LOINC = {
     "HC": ("LOINC:11984-2", "Fetal Head Circumference US"),
     "BPD": ("LOINC:11820-8", "Fetal Head Diameter.biparietal US Active"),
