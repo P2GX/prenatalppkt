@@ -10,9 +10,17 @@ that yielded no phenotypic features (UNKNOWN scan type, missing biometry).
 from __future__ import annotations
 
 import re
+from typing import Optional
 
 from prenatalppkt.gestational_age import GestationalAge
 
 
 _GA_PATTERN = re.compile(r"at (\d+)w(\d+)d")
 _DEFAULT_GA = GestationalAge(weeks=27, days=0)
+
+
+def _parse_ga_from_description(description: str) -> Optional[tuple[int, int]]:
+    m = _GA_PATTERN.search(description or "")
+    if m:
+        return (int(m.group(1)), int(m.group(2)))
+    return None
