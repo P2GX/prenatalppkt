@@ -92,3 +92,9 @@ def _hpo_resource(hpo_parser: HpoParser) -> pps2.Resource:
         namespace_prefix="HP",
         iri_prefix="http://purl.obolibrary.org/obo/HP_",
     )
+
+
+def _phenopacket_id(accession_id: Optional[str], fetus_number: int) -> str:
+    if accession_id:
+        return f"{accession_id.lower().replace('_', '-')}-fetus-{fetus_number}"
+    return f"fetus-{fetus_number}"
