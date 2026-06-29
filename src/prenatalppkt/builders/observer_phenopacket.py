@@ -53,3 +53,17 @@ def _biometry_feature(tb: TermBin) -> pps2.PhenotypicFeature:
         description=f"Biometry: {tb.description}",
         onset=pps2.TimeElement(gestational_age=pps2.GestationalAge(weeks=w, days=d)),
     )
+
+
+def _narrative_feature(
+    term, description_prefix: str, subject_ga: GestationalAge
+) -> pps2.PhenotypicFeature:
+    return pps2.PhenotypicFeature(
+        type=pps2.OntologyClass(id=term.hpo_id, label=term.hpo_label),
+        description=description_prefix,
+        onset=pps2.TimeElement(
+            gestational_age=pps2.GestationalAge(
+                weeks=subject_ga.weeks, days=subject_ga.days
+            )
+        ),
+    )
