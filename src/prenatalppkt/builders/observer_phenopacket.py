@@ -67,3 +67,16 @@ def _narrative_feature(
             )
         ),
     )
+
+
+def _dedup_by_hpo_id(
+    features: list[pps2.PhenotypicFeature],
+) -> list[pps2.PhenotypicFeature]:
+    seen: set[str] = set()
+    out: list[pps2.PhenotypicFeature] = []
+    for pf in features:
+        if pf.type.id in seen:
+            continue
+        seen.add(pf.type.id)
+        out.append(pf)
+    return out
