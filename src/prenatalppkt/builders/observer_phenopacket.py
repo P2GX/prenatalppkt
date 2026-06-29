@@ -15,6 +15,7 @@ from typing import Optional
 import phenopackets.schema.v2 as pps2
 
 from prenatalppkt.gestational_age import GestationalAge
+from prenatalppkt.hpo import HpoParser
 from prenatalppkt.measurements.term_bin import TermBin
 
 
@@ -80,3 +81,14 @@ def _dedup_by_hpo_id(
         seen.add(pf.type.id)
         out.append(pf)
     return out
+
+
+def _hpo_resource(hpo_parser: HpoParser) -> pps2.Resource:
+    return pps2.Resource(
+        id="hp",
+        name="human phenotype ontology",
+        url="http://purl.obolibrary.org/obo/hp.owl",
+        version=hpo_parser.get_version() or "unknown",
+        namespace_prefix="HP",
+        iri_prefix="http://purl.obolibrary.org/obo/HP_",
+    )
