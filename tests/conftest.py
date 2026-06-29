@@ -10,7 +10,7 @@ HP_JSON_GZ = DATA_DIR / "hp.json.gz"
 
 
 @pytest.fixture(scope="session")
-def hpo_cr(tmp_path_factory):
+def hpo_parser(tmp_path_factory):
     """Shared fixture: load and parse gzipped hp.json once per test session."""
     tmp_dir = tmp_path_factory.mktemp("hpo")
     json_path = tmp_dir / "hp.json"
@@ -21,5 +21,9 @@ def hpo_cr(tmp_path_factory):
     ):
         f_out.write(f_in.read())
 
-    parser = HpoParser(hpo_json_file=str(json_path))
-    return parser.get_hpo_concept_recognizer()
+    return HpoParser(hpo_json_file=str(json_path))
+
+
+@pytest.fixture(scope="session")
+def hpo_cr(hpo_parser):
+    return hpo_parser.get_hpo_concept_recognizer()
