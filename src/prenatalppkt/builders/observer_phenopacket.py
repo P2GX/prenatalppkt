@@ -13,6 +13,7 @@ import re
 from typing import Optional
 
 from prenatalppkt.gestational_age import GestationalAge
+from prenatalppkt.measurements.term_bin import TermBin
 
 
 _GA_PATTERN = re.compile(r"at (\d+)w(\d+)d")
@@ -24,3 +25,15 @@ def _parse_ga_from_description(description: str) -> Optional[tuple[int, int]]:
     if m:
         return (int(m.group(1)), int(m.group(2)))
     return None
+
+
+def _resolve_subject_ga(dating: dict, term_bins: list[TermBin]) -> GestationalAge:
+    ga_weeks = dating.get("ga_weeks")
+    if ga_weeks:
+        return GestationalAge.from_weeks(float(ga_weeks))
+    for tb in term_bins:
+        parsed = _parse_ga_from_description(tb.description)
+        if parsed is not None:
+            w, d = parsed
+            return GestationalAge(weeks=w, days=d)
+    return _DEFAULT_GA
