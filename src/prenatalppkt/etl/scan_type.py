@@ -1,10 +1,10 @@
 """Scan-type classifier for Observer JSON exports.
 
-Today the cerebro pipeline detects first-trimester scans via its own
-`_is_first_trimester()` helper and skips them; the prenatalppkt extractor
-just raises a generic ValueError when biometry is missing. Lifting the
-classifier into the library lets every caller (cerebro CLI, future TUI,
-Beacon endpoint) reach the same verdict from the same code path.
+Historically each caller detected first-trimester scans via its own
+local heuristic and skipped them; the extractor here just raised a
+generic ValueError when biometry was missing. Lifting the classifier
+into the library lets every caller (CLI, future TUI, Beacon endpoint)
+reach the same verdict from the same code path.
 
 The enum is deliberately minimal: only the distinctions the extractor
 acts on today (FIRST_TRIMESTER vs T2_T3_BIOMETRY) plus UNKNOWN for
