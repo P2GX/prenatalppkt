@@ -12,6 +12,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+import phenopackets.schema.v2 as pps2
+
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.measurements.term_bin import TermBin
 
@@ -37,3 +39,17 @@ def _resolve_subject_ga(dating: dict, term_bins: list[TermBin]) -> GestationalAg
             w, d = parsed
             return GestationalAge(weeks=w, days=d)
     return _DEFAULT_GA
+
+
+def _biometry_feature(tb: TermBin) -> pps2.PhenotypicFeature:
+    parsed = _parse_ga_from_description(tb.description)
+    if parsed is not None:
+        w, d = parsed
+    else:
+        w, d = _DEFAULT_GA.weeks, _DEFAULT_GA.days
+    return pps2.PhenotypicFeature(
+        type=pps2.OntologyClass(id=tb.hpo_id, label=tb.hpo_label),
+        excluded=tb.normal,
+        description=f"Biometry: {tb.description}",
+        onset=pps2.TimeElement(gestational_age=pps2.GestationalAge(weeks=w, days=d)),
+    )
