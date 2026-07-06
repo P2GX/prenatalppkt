@@ -5,7 +5,7 @@ src/prenatalppkt/hpo/hp_term.py
 import hpotk
 import pandas as pd
 import typing
-from pyphetools.pp.v202 import TimeElement as TimeElement202
+from phenopackets.schema.v2 import TimeElement
 from prenatalppkt.hpo.simple_term import SimpleTerm
 
 
@@ -33,8 +33,8 @@ class HpTerm:
         label: str,
         observed: bool = True,
         measured: bool = True,
-        onset: typing.Optional[TimeElement202] = None,
-        resolution: typing.Optional[TimeElement202] = None,
+        onset: typing.Optional[TimeElement] = None,
+        resolution: typing.Optional[TimeElement] = None,
     ):
         if hpo_id is None or len(hpo_id) == 0 or not hpo_id.startswith("HP"):
             raise ValueError(f"invalid id argument: '{hpo_id}'")
@@ -44,8 +44,6 @@ class HpTerm:
         self._label = label
         self._observed = observed
         self._measured = measured
-        # if not onset is None or str(type(onset)) != "<class 'pyphetools.pp.v202._base.TimeElement'>":
-        #    raise ValueError(f"onset argument must be TimeElement202 or None but was {type(onset)}")
         self._onset = onset
         self._resolution = resolution
 
@@ -106,28 +104,28 @@ class HpTerm:
         return self._measured
 
     @property
-    def onset(self) -> typing.Optional[TimeElement202]:
+    def onset(self) -> typing.Optional[TimeElement]:
         """
-        :returns: A PyPheToolsAge object representing the age this abnormality first was observed
-        :rtype: typing.Optional[TimeElement202]
+        :returns: A TimeElement representing the age this abnormality first was observed
+        :rtype: typing.Optional[TimeElement]
         """
         return self._onset
 
-    def set_onset(self, onset: TimeElement202) -> None:
+    def set_onset(self, onset: TimeElement) -> None:
         """
         Assign onset information to the HPO term
         """
-        if not isinstance(onset, TimeElement202):
+        if not isinstance(onset, TimeElement):
             raise ValueError(
-                f"argument of set_onset but be TimeElement202 but was {type(onset)}"
+                f"argument of set_onset must be TimeElement but was {type(onset)}"
             )
         self._onset = onset
 
     @property
-    def resolution(self) -> typing.Optional[TimeElement202]:
+    def resolution(self) -> typing.Optional[TimeElement]:
         """
-        :returns: A PyPheToolsAge object representing the age this abnormality resolved
-        :rtype: typing.Optional[TimeElement202]
+        :returns: A TimeElement representing the age this abnormality resolved
+        :rtype: typing.Optional[TimeElement]
         """
         return self._resolution
 
