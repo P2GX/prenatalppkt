@@ -2,7 +2,6 @@ import hpotk
 import logging
 import os
 import typing
-from hpotk.constants.hpo.base import PHENOTYPIC_ABNORMALITY
 from hpotk.store import OntologyType
 from prenatalppkt.hpo.fenominal_cr import FenominalConceptRecognizer
 
@@ -54,30 +53,6 @@ class HpoParser:
         :returns: a reference to the HPO
         """
         return self._ontology
-
-    def get_label_to_id_map(self) -> typing.Mapping[str, str]:
-        """
-        Create a map from a lower case version of HPO labels to the corresponding HPO id
-        only include terms that are descendants of PHENOTYPE_ROOT
-
-        :returns: a map from lower-case HPO term labels to HPO ids
-        """
-        label_to_id_d = {}
-
-        for term in self._ontology.terms:
-            hpo_id = term.identifier
-            if not self._ontology.graph.is_ancestor_of(PHENOTYPIC_ABNORMALITY, hpo_id):  # type: ignore
-                continue
-            label_to_id_d[term.name.lower()] = hpo_id.value
-            # Add the labels of the synonyms
-            if term.synonyms is not None and len(term.synonyms) > 0:
-                for synonym in term.synonyms:
-                    lc_syn = synonym.name.lower()
-                    # only take synonyms with length at least 5 to avoid spurious matches
-                    if len(lc_syn) > 4:
-                        label_to_id_d[lc_syn] = hpo_id.value
-
-        return label_to_id_d
 
     def get_id_to_label_map(self) -> typing.Mapping[str, str]:
         """
