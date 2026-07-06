@@ -26,7 +26,7 @@ def parse_clinical_impression(
     Args:
         data: Raw input data (JSON string, dict, or text)
         source_format: One of "observer_json", "viewpoint_text", "viewpoint_hl7"
-        hpo_cr: Optional HpoExactConceptRecognizer for HPO term extraction.
+        hpo_cr: Optional concept recognizer for HPO term extraction.
                 If provided, will extract HPO terms from impression text.
 
     Returns:
@@ -61,7 +61,7 @@ def parse_clinical_impression(
     # Extract HPO terms if concept recognizer is provided
     hpo_terms = []
     if impression_text and hpo_cr is not None:
-        # HpoExactConceptRecognizer uses parse() method, not extract()
+        # the concept recognizer uses parse(), not extract()
         if hasattr(hpo_cr, "parse"):
             hpo_terms = hpo_cr.parse(impression_text)
 
