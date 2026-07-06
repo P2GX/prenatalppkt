@@ -2,7 +2,6 @@
 src/prenatalppkt/hpo/hp_term.py
 """
 
-import hpotk
 import pandas as pd
 import typing
 from phenopackets.schema.v2 import TimeElement
@@ -204,20 +203,6 @@ class HpTerm:
             items.append(d)
         return pd.DataFrame(items)
 
-    @staticmethod
-    def from_hpo_tk_term(hpotk_term: hpotk.Term) -> "HpTerm":
-        """Create a pyphetools HpTerm object from an hpo-toolkit Term object
-
-        :param hpotk_term: A term from the HPO toolkit
-        :type hpotk_term: hpotk.Term
-        :returns: The corresponding HpTerm object
-        :rtype: HpTerm
-        """
-        hpo_id = hpotk_term.identifier.value
-        hpo_label = hpotk_term.name
-        return HpTerm(hpo_id=hpo_id, label=hpo_label)
-
-    # Add this method to HpTerm class:
     def to_simple_term(self) -> SimpleTerm:
         """
         Convert this HpTerm to a lightweight SimpleTerm.
