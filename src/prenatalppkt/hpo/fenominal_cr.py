@@ -40,29 +40,3 @@ class FenominalConceptRecognizer(HpoConceptRecognizer):
             )
             for hit in hits
         ]
-
-    def parse_cell_for_exact_matches(
-        self, cell_contents, custom_d
-    ) -> typing.List[SimpleTerm]:
-        """Not supported: fenominal has no custom-dictionary exact-match mode."""
-        # TODO(varenya): decide if custom-dictionary matching can be rebuilt on
-        # fenominal, or dropped; unused by any caller today. See the Part 3 follow-up.
-        raise NotImplementedError(
-            "FenominalConceptRecognizer does not support custom-dictionary matching"
-        )
-
-    def get_term_from_id(self, hpo_id) -> SimpleTerm:
-        """Not supported: fenominal recognizes text, it does not look terms up by id."""
-        # TODO(varenya): decide if id lookup can be rebuilt on fenominal, or
-        # dropped; unused by any caller today. See the Part 3 follow-up.
-        raise NotImplementedError(
-            "FenominalConceptRecognizer does not support id lookup"
-        )
-
-    def get_term_from_label(self, label) -> SimpleTerm:
-        """Not supported: fenominal recognizes text, it does not look terms up by label."""
-        # TODO(varenya): decide if label lookup can be rebuilt on fenominal, or
-        # dropped; unused by any caller today. See the Part 3 follow-up.
-        raise NotImplementedError(
-            "FenominalConceptRecognizer does not support label lookup"
-        )
