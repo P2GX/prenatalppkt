@@ -48,6 +48,10 @@ class HpoParser:
             self._ontology = store.load_hpo()
             self._hpo_json_file = store.resolve_store_path(OntologyType.HPO)
 
+        # Build the recognizer now, while hp.json is present; fenominal loads the
+        # file into memory here, so the file may be removed afterwards.
+        self._concept_recognizer = FenominalConceptRecognizer(self._hpo_json_file)
+
     def get_ontology(self) -> hpotk.Ontology:
         """
         :returns: a reference to the HPO
@@ -70,8 +74,7 @@ class HpoParser:
         """
         Return initialized HPO concept recognizer
         """
-        logger.debug("Instantiating fenominal HPO concept recognizer.")
-        return FenominalConceptRecognizer(self._hpo_json_file)
+        return self._concept_recognizer
 
     def get_version(self) -> typing.Optional[str]:
         """
