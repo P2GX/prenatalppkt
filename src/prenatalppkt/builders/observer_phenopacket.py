@@ -108,6 +108,13 @@ def _phenopacket_id(accession_id: Optional[str], fetus_number: int) -> str:
     return f"fetus-{fetus_number}"
 
 
+def _subject_id(accession_id: Optional[str], fetus_number: int) -> str:
+    if accession_id:
+        patient = accession_id.lower().replace("_", "-").split("-", 1)[0]
+        return f"{patient}-fetus-{fetus_number}"
+    return f"fetus-{fetus_number}"
+
+
 def build_observer_phenopacket(
     data: dict,
     hpo_parser: HpoParser,
