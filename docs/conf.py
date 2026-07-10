@@ -26,15 +26,11 @@ source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 master_doc = "index"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "issues/*"]
 
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_rtd_theme"
 html_title = "prenatalppkt"
 html_static_path: list[str] = []
 
-html_theme_options = {
-    "github_url": "https://github.com/P2GX/prenatalppkt",
-    "navbar_align": "left",
-    "show_toc_level": 2,
-}
+html_theme_options = {"navigation_depth": 4, "collapse_navigation": False}
 
 myst_enable_extensions = [
     "colon_fence",
