@@ -109,6 +109,11 @@ def _phenopacket_id(accession_id: Optional[str], fetus_number: int) -> str:
 
 
 def _subject_id(accession_id: Optional[str], fetus_number: int) -> str:
+    # TODO(@VarenyaJ): this accession-segment split is reverse-engineered
+    # from Columbia/CUIMC Observer exports only (confirmed via Derek's
+    # 2026-07-13 email). We have no real Observer samples from Broad,
+    # Charite, or UNSW - confirm this shape holds there before trusting
+    # subject.id grouping on non-CUIMC data.
     if accession_id:
         parts = accession_id.lower().replace("_", "-").split("-")
         patient = parts[0]
@@ -146,6 +151,13 @@ def build_observer_phenopacket(
     impression = parse_clinical_impression(data, "observer_json", hpo_cr=hpo_cr)
     anatomy = parse_fetal_anatomy(data, "observer_json", hpo_cr=hpo_cr)
     parse_estimated_fetal_weight(data, "observer_json")  # Plan 2 hook
+    # TODO(@VarenyaJ): #90a Measurement enrichment (deferred 2026-07-13) -
+    # emitting Measurement is unblocked, but turning an abnormal reading
+    # into a PhenotypicFeature needs a percentile/z-score threshold from
+    # Ron/Michael/Peter, and TermBin only stores a binned PercentileRange
+    # (not the raw percentile) while phenopackets' ReferenceRange expects
+    # low/high in the same unit as the value (mm) - percentile-as-a-
+    # ReferenceRange doesn't map cleanly yet either.
 
     hp_resource = _hpo_resource(hpo_parser)
     impression_terms = impression.get("hpo_terms", [])
