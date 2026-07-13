@@ -110,7 +110,10 @@ def _phenopacket_id(accession_id: Optional[str], fetus_number: int) -> str:
 
 def _subject_id(accession_id: Optional[str], fetus_number: int) -> str:
     if accession_id:
-        patient = accession_id.lower().replace("_", "-").split("-", 1)[0]
+        parts = accession_id.lower().replace("_", "-").split("-")
+        patient = parts[0]
+        if len(parts) > 2:
+            return f"{patient}-preg{parts[2]}-fetus-{fetus_number}"
         return f"{patient}-fetus-{fetus_number}"
     return f"fetus-{fetus_number}"
 
@@ -167,7 +170,7 @@ def build_observer_phenopacket(
         pp = pps2.Phenopacket(
             id=_phenopacket_id(accession_id, fetus_number),
             subject=pps2.Individual(
-                id=f"fetus-{fetus_number}",
+                id=_subject_id(accession_id, fetus_number),
                 time_at_last_encounter=pps2.TimeElement(
                     gestational_age=pps2.GestationalAge(
                         weeks=subject_ga.weeks, days=subject_ga.days
