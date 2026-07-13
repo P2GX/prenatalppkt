@@ -26,7 +26,7 @@ def parse_fetal_anatomy(
     Args:
         data: Raw input data (JSON string, dict, or text)
         source_format: One of "observer_json", "viewpoint_text", "viewpoint_hl7"
-        hpo_cr: Optional HpoExactConceptRecognizer for HPO term extraction.
+        hpo_cr: Optional concept recognizer for HPO term extraction.
                 If provided, will extract HPO terms from anomaly descriptions.
 
     Returns:

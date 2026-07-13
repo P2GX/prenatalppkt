@@ -9,7 +9,6 @@ pandas==2.3.2
 phenopackets==2.0.2.post4
 protobuf==3.20.3
 # pydantic==2.11.9
-pyphetools==0.9.118
 python-calamine==0.5.3
 PyYAML==6.0.2
 requests==2.32.4
