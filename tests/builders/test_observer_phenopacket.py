@@ -155,13 +155,11 @@ def test_apple_sally_real_fixture_smoke(hpo_parser, now_ts):
     """End-to-end on a real Observer JSON fixture (single fetus, T2/T3)."""
     raw = json.loads((DATA_DIR / "Apple_Sally_pretty.json").read_text())
 
-    pps = build_observer_phenopacket(
-        raw, hpo_parser, now_ts, accession_id="apple-sally"
-    )
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="applesally")
 
     assert len(pps) == 1
     pp = pps[0]
-    assert pp.id == "apple-sally-fetus-1"
+    assert pp.id == "applesally-fetus-1"
     assert pp.subject.id == "fetus-1"
     assert pp.phenotypic_features  # has at least one term
     for pf in pp.phenotypic_features:
