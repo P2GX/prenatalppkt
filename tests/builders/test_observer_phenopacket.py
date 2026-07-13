@@ -132,6 +132,35 @@ def test_twin_returns_two_phenopackets(hpo_parser, now_ts):
     assert any("crown" in d.lower() or "crl" in d.lower() for d in twin2_descriptions)
 
 
+def test_subject_id_stable_across_exams_in_same_pregnancy(hpo_parser, now_ts):
+    data = _exam([_fetus_full_biometry(1)])
+
+    exam_2 = build_observer_phenopacket(
+        data, hpo_parser, now_ts, accession_id="B567817-U-1-2"
+    )[0]
+    exam_3 = build_observer_phenopacket(
+        data, hpo_parser, now_ts, accession_id="B567817-U-1-3"
+    )[0]
+
+    assert exam_2.subject.id == exam_3.subject.id == "b567817-preg1-fetus-1"
+    assert exam_2.id != exam_3.id
+
+
+def test_subject_id_differs_across_separate_pregnancies(hpo_parser, now_ts):
+    data = _exam([_fetus_full_biometry(1)])
+
+    pregnancy_1 = build_observer_phenopacket(
+        data, hpo_parser, now_ts, accession_id="B567817-U-1-1"
+    )[0]
+    pregnancy_2 = build_observer_phenopacket(
+        data, hpo_parser, now_ts, accession_id="B567817-U-2-1"
+    )[0]
+
+    assert pregnancy_1.subject.id == "b567817-preg1-fetus-1"
+    assert pregnancy_2.subject.id == "b567817-preg2-fetus-1"
+    assert pregnancy_1.subject.id != pregnancy_2.subject.id
+
+
 def test_unknown_fetus_returns_empty_features_phenopacket(hpo_parser, now_ts):
     data = _exam([_fetus_unknown(1)])
 
