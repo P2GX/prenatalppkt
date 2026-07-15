@@ -184,26 +184,25 @@ def _parse_measurement_code(code: str) -> Optional[Tuple[str, str]]:
     Returns:
         Tuple of (canonical_name, field_type) or None
     """
-    # Extract measurement code (before ^)
+    # Extract measurement code (before ^), then strip the leading
+    # "<Namespace>." segment (e.g. "SkullFetus.") - OBX-3 identifiers are
+    # always namespaced, but VIEWPOINT_HL7_NAME_MAP keys are not.
     code_part = code.split("^")[0]
+    local_code = code_part.split(".")[-1] if "." in code_part else code_part
 
     # Determine field type
-    if "_Percentile" in code_part:
+    if "_Percentile" in local_code:
         field_type = "percentile"
-        base_code = code_part.replace("VP_", "").replace("_Percentile", "")
-    elif "_GA" in code_part:
+        base_code = local_code.replace("VP_", "").replace("_Percentile", "")
+    elif "_GA" in local_code:
         field_type = "ga"
-        base_code = code_part.replace("VP_", "").replace("_GA", "")
-    elif "_Author" in code_part:
+        base_code = local_code.replace("VP_", "").replace("_GA", "")
+    elif "_Author" in local_code:
         field_type = "method"  # Changed from "author" to "method"
-        base_code = code_part.replace("VP_", "").replace("_Author", "")
+        base_code = local_code.replace("VP_", "").replace("_Author", "")
     else:
         field_type = "value"
-        # Extract last part after dot
-        if "." in code_part:
-            base_code = code_part.split(".")[-1]
-        else:
-            base_code = code_part
+        base_code = local_code
 
     logger.debug(f"    Parsed code: base={base_code}, type={field_type}")
 

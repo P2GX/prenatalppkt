@@ -452,3 +452,38 @@ class TestViewPointHL7MalformedSegments:
         term_bins = viewpoint_hl7.extract(data)
         # Should still extract 4 measurements despite malformed line
         assert len(term_bins) == 4
+
+
+class TestViewPointHL7MeasurementCodeParsing:
+    """
+    Regression tests for a bug found while scoping multi-fetus extraction
+    (#93): namespaced OBX-3 codes (e.g. "SkullFetus.VP_HeadCircumference_
+    Percentile") weren't matching VIEWPOINT_HL7_NAME_MAP for percentile/GA/
+    method fields - only the "value" field type stripped the namespace
+    prefix. This silently dropped every percentile/GA/method reading on
+    realistically-shaped HL7, so extract() returned zero TermBins. Not
+    exercised by the classes above since they're all skip-marked.
+    """
+
+    def test_namespaced_percentile_code_resolves(self):
+        from prenatalppkt.etl.extractors.viewpoint_hl7 import _parse_measurement_code
+
+        assert _parse_measurement_code(
+            "SkullFetus.VP_HeadCircumference_Percentile"
+        ) == ("HC", "percentile")
+
+    def test_namespaced_ga_code_resolves(self):
+        from prenatalppkt.etl.extractors.viewpoint_hl7 import _parse_measurement_code
+
+        assert _parse_measurement_code("SkullFetus.VP_HeadCircumference_GA") == (
+            "HC",
+            "ga",
+        )
+
+    def test_namespaced_author_code_resolves(self):
+        from prenatalppkt.etl.extractors.viewpoint_hl7 import _parse_measurement_code
+
+        assert _parse_measurement_code("SkullFetus.VP_HeadCircumference_Author") == (
+            "HC",
+            "method",
+        )
