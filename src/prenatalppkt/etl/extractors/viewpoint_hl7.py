@@ -96,6 +96,64 @@ def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[Te
     return extract(data, factory)
 
 
+def _parse_fetus_number(fetus_id: str) -> int:
+    """Convert an OBX-5 sub-id like "Fetus2" to its int fetus number."""
+    match = re.search(r"(\d+)$", fetus_id)
+    return int(match.group(1)) if match else 1
+
+
+def extract_all_fetuses(
+    data: str, factory: TermBinFactory = None
+) -> Dict[int, List[TermBin]]:
+    """
+    Extract biometry from every fetus in a ViewPoint HL7 message.
+
+    Mirrors etl/extractors/observer.py's extract_all_fetuses shape: one
+    key per fetus_number, values are that fetus's TermBins.
+    `_group_measurements_by_fetus` and `_create_term_bins` are already
+    fetus-count-agnostic - `extract()` just discarded every key but the
+    first; this loops over all of them instead.
+
+    Args:
+        data: ViewPoint HL7 message content as string
+        factory: TermBinFactory instance (creates new if None)
+
+    Returns:
+        Dict keyed by fetus_number; values are lists of TermBins for that
+        fetus (empty list when no measurements matched for that fetus).
+
+    Raises:
+        ValueError: If data is not a string.
+    """
+    if factory is None:
+        factory = TermBinFactory()
+
+    if not isinstance(data, str):
+        raise ValueError(f"Expected string, got {type(data)}")
+
+    obx_segments = _extract_obx_segments(data)
+    if not obx_segments:
+        logger.warning("No OBX segments found in HL7 message")
+        return {}
+
+    measurements_by_fetus = _group_measurements_by_fetus(obx_segments)
+
+    result: Dict[int, List[TermBin]] = {}
+    for fetus_id, measurements in measurements_by_fetus.items():
+        fetus_number = _parse_fetus_number(fetus_id)
+        result[fetus_number] = _create_term_bins(measurements, factory)
+    return result
+
+
+def extract_all_fetuses_from_file(
+    filepath: Path, factory: TermBinFactory = None
+) -> Dict[int, List[TermBin]]:
+    """Multi-fetus equivalent of `extract_from_file`."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = f.read()
+    return extract_all_fetuses(data, factory)
+
+
 def _extract_obx_segments(data: str) -> List[str]:
     """Extract all OBX segments from HL7 message."""
     lines = data.split("\n")

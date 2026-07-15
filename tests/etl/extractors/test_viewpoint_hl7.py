@@ -521,3 +521,69 @@ class TestViewPointHL7UnitFieldParsing:
         term_bins = viewpoint_hl7.extract(data)
         assert len(term_bins) == 1
         assert "HC" in term_bins[0].description
+
+
+HL7_TWINS_TEST_FILE = TEST_DIR / "data" / "viewpoint_hl7_twins_test.txt"
+
+
+class TestViewPointHL7ExtractAllFetuses:
+    def test_extract_all_fetuses_two_fetuses(self):
+        data = """
+        MSH|^~\\&|ViewPoint|Hospital|||20211223144928||ORU^R01|123456|P|2.4
+        OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+        OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+        OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+        OBX|4|NM|SkullFetus.BiParietalDiameter^BPD|Fetus1|68^68.0|mm&millimeters^mm&millimeters
+        OBX|5|NM|SkullFetus.VP_BiParietalDiameter_Percentile|Fetus1|55^55%|%&percent^fmt&formatted
+        OBX|6|NM|AbdomenFetus.AbdominalCircumference^AC|Fetus1|212^212.0|mm&millimeters^mm&millimeters
+        OBX|7|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|48^48%|%&percent^fmt&formatted
+        OBX|8|NM|ExtremitiesFetus.FemurLength^FL|Fetus1|48^48.0|mm&millimeters^mm&millimeters
+        OBX|9|NM|ExtremitiesFetus.VP_FemurLength_Percentile|Fetus1|52^52%|%&percent^fmt&formatted
+        OBX|10|ST|Fetus.Identifier^Fetus Identifier|Fetus2|B
+        OBX|11|NM|SkullFetus.HeadCircumference^HC|Fetus2|180^180.0|mm&millimeters^mm&millimeters
+        OBX|12|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus2|60^60%|%&percent^fmt&formatted
+        OBX|13|NM|SkullFetus.BiParietalDiameter^BPD|Fetus2|70^70.0|mm&millimeters^mm&millimeters
+        OBX|14|NM|SkullFetus.VP_BiParietalDiameter_Percentile|Fetus2|58^58%|%&percent^fmt&formatted
+        OBX|15|NM|AbdomenFetus.AbdominalCircumference^AC|Fetus2|215^215.0|mm&millimeters^mm&millimeters
+        OBX|16|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus2|50^50%|%&percent^fmt&formatted
+        OBX|17|NM|ExtremitiesFetus.FemurLength^FL|Fetus2|49^49.0|mm&millimeters^mm&millimeters
+        OBX|18|NM|ExtremitiesFetus.VP_FemurLength_Percentile|Fetus2|54^54%|%&percent^fmt&formatted
+        """
+        result = viewpoint_hl7.extract_all_fetuses(data)
+
+        assert set(result.keys()) == {1, 2}
+        assert len(result[1]) == 4
+        assert len(result[2]) == 4
+
+    def test_extract_all_fetuses_single_fetus_backward_compat(self):
+        data = """
+        MSH|^~\\&|ViewPoint|Hospital|||20211223144928||ORU^R01|123456|P|2.4
+        OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+        OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+        OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+        OBX|4|NM|SkullFetus.BiParietalDiameter^BPD|Fetus1|68^68.0|mm&millimeters^mm&millimeters
+        OBX|5|NM|SkullFetus.VP_BiParietalDiameter_Percentile|Fetus1|55^55%|%&percent^fmt&formatted
+        OBX|6|NM|AbdomenFetus.AbdominalCircumference^AC|Fetus1|212^212.0|mm&millimeters^mm&millimeters
+        OBX|7|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|48^48%|%&percent^fmt&formatted
+        OBX|8|NM|ExtremitiesFetus.FemurLength^FL|Fetus1|48^48.0|mm&millimeters^mm&millimeters
+        OBX|9|NM|ExtremitiesFetus.VP_FemurLength_Percentile|Fetus1|52^52%|%&percent^fmt&formatted
+        """
+        result = viewpoint_hl7.extract_all_fetuses(data)
+        assert set(result.keys()) == {1}
+        assert len(result[1]) == 4
+
+    def test_extract_all_fetuses_no_obx_segments(self):
+        data = "MSH|^~\\&|ViewPoint|Hospital|||20211223144928||ORU^R01|123456|P|2.4"
+        assert viewpoint_hl7.extract_all_fetuses(data) == {}
+
+    def test_extract_all_fetuses_invalid_type(self):
+        with pytest.raises(ValueError, match="Expected string"):
+            viewpoint_hl7.extract_all_fetuses(123)
+
+
+class TestViewPointHL7ExtractAllFetusesFromFile:
+    def test_extract_all_fetuses_from_file_two_fetuses(self):
+        result = viewpoint_hl7.extract_all_fetuses_from_file(HL7_TWINS_TEST_FILE)
+        assert set(result.keys()) == {1, 2}
+        assert len(result[1]) == 4
+        assert len(result[2]) == 4
