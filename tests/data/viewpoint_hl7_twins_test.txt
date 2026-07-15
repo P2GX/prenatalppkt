@@ -1,0 +1,40 @@
+MSH|^~\&|GE|ViewPoint|Discrete||20260115120000||ORU^R01|20|P|2.4|||AL|NE||8859/15
+PID|||MRN0000020^^^MRN||Twin^Sally||19920101|F|||100 Test Street^^Faketown^NY^10001^USA||1112223333^4445556666|4445556666||M|||321-45-6789
+PV1||O|OB^100^1^OBWEST|||OB^100^1^OBWEST||3333^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician|||||||||||VISIT99001||||||||||||||||||||OB|||||20260115113000
+ZED|900^SecondTrimesterUltrasound^2nd Trim.^Second Trimester Ultrasound|ordered^^A1TESTG^20260115113000~new_1^admin^A1TESTG^20260115120000||128^Obstetrics|3333^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician||admin|||VISIT99001|||Default department
+ORC|CN|VISIT99001^^VISIT99001|900|||||||||3333^DOCTOR^ATTENDING||||Twin anatomy and growth survey|||||OB
+OBR|1|VISIT99001|900|IMGABS1^AABBSS^^VISIT99002^Second Trimester Ultrasound|||20260115120000||||||Twin anatomy and growth survey|||3333^DOCTOR^ATTENDING||||||20260115120000|||P||||||^Twin anatomy and growth survey
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A|||||||||20260115120000
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|205^205.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|3|ST|SkullFetus.VP_HeadCircumference_Author|Fetus1|Hadlock|||||||||20260115120000
+OBX|4|NM|SkullFetus.VP_HeadCircumference_GA|Fetus1|150^21w 3d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|5|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|45^45%|%&percent^fmt&formatted||||||||20260115120000
+OBX|6|NM|SkullFetus.BiParietalDiameter^BPD|Fetus1|53^53.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|7|ST|SkullFetus.VP_BiParietalDiameter_Author|Fetus1|Hadlock|||||||||20260115120000
+OBX|8|NM|SkullFetus.VP_BiParietalDiameter_GA|Fetus1|149^21w 2d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|9|NM|SkullFetus.VP_BiParietalDiameter_Percentile|Fetus1|40^40%|%&percent^fmt&formatted||||||||20260115120000
+OBX|10|NM|AbdomenFetus.AbdominalCircumference^AC|Fetus1|168^168.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|11|ST|AbdomenFetus.VP_AbdominalCircumference_Author|Fetus1|Hadlock|||||||||20260115120000
+OBX|12|NM|AbdomenFetus.VP_AbdominalCircumference_GA|Fetus1|151^21w 4d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|13|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|38^38%|%&percent^fmt&formatted||||||||20260115120000
+OBX|14|NM|ExtremitiesFetus.FemurLength^FL|Fetus1|34^34.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|15|ST|ExtremitiesFetus.VP_FemurLength_Author|Fetus1|Hadlock|||||||||20260115120000
+OBX|16|NM|ExtremitiesFetus.VP_FemurLength_GA|Fetus1|150^21w 3d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|17|NM|ExtremitiesFetus.VP_FemurLength_Percentile|Fetus1|42^42%|%&percent^fmt&formatted||||||||20260115120000
+OBX|18|ST|Fetus.Identifier^Fetus Identifier|Fetus2|B|||||||||20260115120000
+OBX|19|NM|SkullFetus.HeadCircumference^HC|Fetus2|198^198.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|20|ST|SkullFetus.VP_HeadCircumference_Author|Fetus2|Hadlock|||||||||20260115120000
+OBX|21|NM|SkullFetus.VP_HeadCircumference_GA|Fetus2|147^21w 0d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|22|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus2|30^30%|%&percent^fmt&formatted||||||||20260115120000
+OBX|23|NM|SkullFetus.BiParietalDiameter^BPD|Fetus2|51^51.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|24|ST|SkullFetus.VP_BiParietalDiameter_Author|Fetus2|Hadlock|||||||||20260115120000
+OBX|25|NM|SkullFetus.VP_BiParietalDiameter_GA|Fetus2|148^21w 1d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|26|NM|SkullFetus.VP_BiParietalDiameter_Percentile|Fetus2|28^28%|%&percent^fmt&formatted||||||||20260115120000
+OBX|27|NM|AbdomenFetus.AbdominalCircumference^AC|Fetus2|160^160.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|28|ST|AbdomenFetus.VP_AbdominalCircumference_Author|Fetus2|Hadlock|||||||||20260115120000
+OBX|29|NM|AbdomenFetus.VP_AbdominalCircumference_GA|Fetus2|149^21w 2d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|30|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus2|25^25%|%&percent^fmt&formatted||||||||20260115120000
+OBX|31|NM|ExtremitiesFetus.FemurLength^FL|Fetus2|32^32.0|mm&millimeters^mm&millimeters||||||||20260115120000
+OBX|32|ST|ExtremitiesFetus.VP_FemurLength_Author|Fetus2|Hadlock|||||||||20260115120000
+OBX|33|NM|ExtremitiesFetus.VP_FemurLength_GA|Fetus2|148^21w 1d|d&weeks_days^fmt&formatted||||||||20260115120000
+OBX|34|NM|ExtremitiesFetus.VP_FemurLength_Percentile|Fetus2|33^33%|%&percent^fmt&formatted||||||||20260115120000
