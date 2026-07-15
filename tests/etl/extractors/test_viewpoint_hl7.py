@@ -487,3 +487,37 @@ class TestViewPointHL7MeasurementCodeParsing:
             "HC",
             "method",
         )
+
+
+class TestViewPointHL7UnitFieldParsing:
+    """
+    Regression tests for a second bug found while scoping multi-fetus
+    extraction (#93): OBX-6 unit fields use HL7's coded-value format
+    ("mm&millimeters^mm&millimeters"), but _convert_to_mm expects a bare
+    unit string and raised an uncaught ValueError on any realistically-
+    formatted unit field - crashing extraction entirely, not just
+    dropping one measurement.
+    """
+
+    def test_coded_unit_field_parses_to_bare_unit(self):
+        from prenatalppkt.etl.extractors.viewpoint_hl7 import _parse_unit_field
+
+        assert _parse_unit_field("mm&millimeters^mm&millimeters") == "mm"
+
+    def test_extract_from_real_shaped_hl7_yields_term_bins(self):
+        """
+        End-to-end: namespaced percentile codes + coded-value units, the
+        exact shape real ViewPoint HL7 exports use (confirmed against
+        tests/data/viewpoint_hl7_test.txt). Before both fixes, this
+        returned zero TermBins (percentile bug) then raised ValueError
+        (unit bug).
+        """
+        data = """
+        MSH|^~\\&|ViewPoint|Hospital|||20211223144928||ORU^R01|123456|P|2.4
+        OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+        OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+        OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+        """
+        term_bins = viewpoint_hl7.extract(data)
+        assert len(term_bins) == 1
+        assert "HC" in term_bins[0].description

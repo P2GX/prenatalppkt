@@ -224,7 +224,7 @@ def _extract_field_value(
         value = _parse_value(value_field)
         # Store unit if available
         if value is not None and len(fields) > 6:
-            return {"value": value, "unit": fields[6]}
+            return {"value": value, "unit": _parse_unit_field(fields[6])}
         return value if value is not None else None
 
     elif field_type == "percentile":
@@ -286,6 +286,18 @@ def _parse_value(value_field: str) -> Optional[float]:
     except ValueError:
         logger.debug(f"Could not parse value: {value_field}")
         return None
+
+
+def _parse_unit_field(unit_field: str) -> str:
+    """
+    Parse the primary unit code from an HL7 coded-value unit field.
+
+    Format: "mm&millimeters^mm&millimeters" (code&text^code&text) - take
+    the first caret segment's code, before "&".
+    """
+    if not unit_field:
+        return unit_field
+    return unit_field.split("^")[0].split("&")[0]
 
 
 def _parse_percentile_field(value_field: str) -> Optional[float]:
