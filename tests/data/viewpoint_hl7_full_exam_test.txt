@@ -1,0 +1,31 @@
+MSH|^~\&|GE|ViewPoint|Discrete||20260115140000||ORU^R01|22|P|2.4|||AL|NE||8859/15
+PID|||MRN0000022^^^MRN||Full^Sally||19880401|F|||300 Test Boulevard^^Faketown^NY^10003^USA||3334445555^6667778888|6667778888||M|||987-65-4321
+PV1||O|OB^102^1^OBWEST|||OB^102^1^OBWEST||5555^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician|||||||||||VISIT99020||||||||||||||||||||OB|||||20260115133000
+ZED|920^SecondTrimesterUltrasound^2nd Trim.^Second Trimester Ultrasound|ordered^^A1TESTG^20260115133000~new_1^admin^A1TESTG^20260115140000||128^Obstetrics|5555^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician||admin|||VISIT99020|||Default department
+ORC|CN|VISIT99020^^VISIT99020|920|||||||||5555^DOCTOR^ATTENDING||||Full second trimester survey|||||OB
+OBR|1|VISIT99020|920|IMGABS1^AABBSS^^VISIT99021^Second Trimester Ultrasound|||20260115140000||||||Full second trimester survey|||5555^DOCTOR^ATTENDING||||||20260115140000|||P||||||^Full second trimester survey
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A|||||||||20260115140000
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|205^205.0|mm&millimeters^mm&millimeters||||||||20260115140000
+OBX|3|NM|SkullFetus.VP_HeadCircumference_GA|Fetus1|150^21w 3d|d&weeks_days^fmt&formatted||||||||20260115140000
+OBX|4|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|45^45%|%&percent^fmt&formatted||||||||20260115140000
+OBX|5|NM|SkullFetus.BiParietalDiameter^BPD|Fetus1|53^53.0|mm&millimeters^mm&millimeters||||||||20260115140000
+OBX|6|NM|SkullFetus.VP_BiParietalDiameter_GA|Fetus1|149^21w 2d|d&weeks_days^fmt&formatted||||||||20260115140000
+OBX|7|NM|SkullFetus.VP_BiParietalDiameter_Percentile|Fetus1|40^40%|%&percent^fmt&formatted||||||||20260115140000
+OBX|8|NM|AbdomenFetus.AbdominalCircumference^AC|Fetus1|168^168.0|mm&millimeters^mm&millimeters||||||||20260115140000
+OBX|9|NM|AbdomenFetus.VP_AbdominalCircumference_GA|Fetus1|151^21w 4d|d&weeks_days^fmt&formatted||||||||20260115140000
+OBX|10|NM|AbdomenFetus.VP_AbdominalCircumference_Percentile|Fetus1|38^38%|%&percent^fmt&formatted||||||||20260115140000
+OBX|11|NM|ExtremitiesFetus.FemurLength^FL|Fetus1|34^34.0|mm&millimeters^mm&millimeters||||||||20260115140000
+OBX|12|NM|ExtremitiesFetus.VP_FemurLength_GA|Fetus1|150^21w 3d|d&weeks_days^fmt&formatted||||||||20260115140000
+OBX|13|NM|ExtremitiesFetus.VP_FemurLength_Percentile|Fetus1|42^42%|%&percent^fmt&formatted||||||||20260115140000
+OBX|14|ST|BrainFetus.BrainAppearance^Brain appearance|Fetus1|normal|||||||||20260115140000
+OBX|15|ST|BrainFetus.CerebellumAppearance^Cerebellum appearance|Fetus1|abnormal|||||||||20260115140000
+OBX|16|ST|BrainFetus.CerebellumDetails^Cerebellum details|Fetus1|cerebellar hypoplasia|||||||||20260115140000
+OBX|17|ST|FaceFetus.FaceAppearance^Face appearance|Fetus1|normal|||||||||20260115140000
+OBX|18|ST|ChestFetus.ChestAppearance^Chest appearance|Fetus1|normal|||||||||20260115140000
+OBX|19|ST|GastrointestinalTractFetus.GastrointestinalTractAppearance^GI tract appearance|Fetus1|normal|||||||||20260115140000
+OBX|20|ST|SpineFetus.SpineAppearance^Spine appearance|Fetus1|normal|||||||||20260115140000
+OBX|21|ST|UrinaryTractFetus.BladderAppearance^Bladder appearance|Fetus1|normal|||||||||20260115140000
+OBX|22|ST|UrinaryTractFetus.UrogenitalTractAppearance^Urogenital tract appearance|Fetus1|normal|||||||||20260115140000
+OBX|23|ST|UrinaryTractFetus.KidneyLAppearance^Left kidney appearance|Fetus1|normal|||||||||20260115140000
+OBX|24|ST|UrinaryTractFetus.KidneyRAppearance^Right kidney appearance|Fetus1|normal|||||||||20260115140000
+OBX|25|ST|RequestedProcedure.Indication^Indication^Order indication|1|Full second trimester survey; anomaly follow-up|||||||||20260115140000
