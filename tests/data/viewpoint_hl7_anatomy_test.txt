@@ -1,0 +1,21 @@
+MSH|^~\&|GE|ViewPoint|Discrete||20260115130000||ORU^R01|21|P|2.4|||AL|NE||8859/15
+PID|||MRN0000021^^^MRN||Anat^Sally||19900615|F|||200 Test Avenue^^Faketown^NY^10002^USA||2223334444^5556667777|5556667777||M|||654-32-1098
+PV1||O|OB^101^1^OBWEST|||OB^101^1^OBWEST||4444^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician|||||||||||VISIT99010||||||||||||||||||||OB|||||20260115123000
+ZED|910^SecondTrimesterUltrasound^2nd Trim.^Second Trimester Ultrasound|ordered^^A1TESTG^20260115123000~new_1^admin^A1TESTG^20260115130000||128^Obstetrics|4444^DOCTOR^ATTENDING^^^^^^^^^^^^^^U_Attending_physician||admin|||VISIT99010|||Default department
+ORC|CN|VISIT99010^^VISIT99010|910|||||||||4444^DOCTOR^ATTENDING||||Fetal anatomy survey|||||OB
+OBR|1|VISIT99010|910|IMGABS1^AABBSS^^VISIT99011^Second Trimester Ultrasound|||20260115130000||||||Fetal anatomy survey|||4444^DOCTOR^ATTENDING||||||20260115130000|||P||||||^Fetal anatomy survey
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A|||||||||20260115130000
+OBX|2|ST|BrainFetus.BrainAppearance^Brain appearance|Fetus1|normal|||||||||20260115130000
+OBX|3|ST|BrainFetus.CerebellumAppearance^Cerebellum appearance|Fetus1|abnormal|||||||||20260115130000
+OBX|4|ST|BrainFetus.CerebellumDetails^Cerebellum details|Fetus1|cerebellar hypoplasia|||||||||20260115130000
+OBX|5|ST|BrainFetus.LateralVentricleLAppearance^Left lateral ventricle appearance|Fetus1|normal|||||||||20260115130000
+OBX|6|ST|BrainFetus.LateralVentricleRAppearance^Right lateral ventricle appearance|Fetus1|suboptimal|||||||||20260115130000
+OBX|7|ST|FaceFetus.FaceAppearance^Face appearance|Fetus1|normal|||||||||20260115130000
+OBX|8|ST|ChestFetus.ChestAppearance^Chest appearance|Fetus1|normal|||||||||20260115130000
+OBX|9|ST|ChestFetus.ThoracicDescAortaDetails^Thoracic descending aorta details|Fetus1|mild aortic arch narrowing|||||||||20260115130000
+OBX|10|ST|GastrointestinalTractFetus.GastrointestinalTractAppearance^GI tract appearance|Fetus1|abnormal|||||||||20260115130000
+OBX|11|ST|SpineFetus.SpineAppearance^Spine appearance|Fetus1|normal|||||||||20260115130000
+OBX|12|ST|UrinaryTractFetus.BladderAppearance^Bladder appearance|Fetus1|normal|||||||||20260115130000
+OBX|13|ST|UrinaryTractFetus.UrogenitalTractAppearance^Urogenital tract appearance|Fetus1|abnormal|||||||||20260115130000
+OBX|14|ST|UrinaryTractFetus.KidneyLAppearance^Left kidney appearance|Fetus1|normal|||||||||20260115130000
+OBX|15|ST|UrinaryTractFetus.KidneyRAppearance^Right kidney appearance|Fetus1|abnormal|||||||||20260115130000
