@@ -193,3 +193,21 @@ def test_apple_sally_real_fixture_smoke(hpo_parser, now_ts):
     assert pp.phenotypic_features  # has at least one term
     for pf in pp.phenotypic_features:
         assert pf.type.id.startswith("HP:")
+
+
+def test_negated_narrative_finding_marked_excluded(hpo_parser, now_ts):
+    """Apple Sally's anatomy narrative explicitly documents an ABSENT
+    finding ("without evidence of a neural tube defect"). fenominal
+    correctly flags this SimpleTerm as excluded=True; the resulting
+    PhenotypicFeature must carry that same excluded=True rather than
+    silently defaulting to "observed/present"."""
+    raw = json.loads((DATA_DIR / "Apple_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts)
+
+    pp = pps[0]
+    neural_tube_features = [
+        pf for pf in pp.phenotypic_features if pf.type.id == "HP:0045005"
+    ]
+    assert len(neural_tube_features) == 1
+    assert neural_tube_features[0].excluded is True

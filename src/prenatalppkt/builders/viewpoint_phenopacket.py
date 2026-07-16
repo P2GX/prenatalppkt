@@ -82,6 +82,7 @@ def _narrative_feature(
 ) -> pps2.PhenotypicFeature:
     return pps2.PhenotypicFeature(
         type=pps2.OntologyClass(id=term.hpo_id, label=term.hpo_label),
+        excluded=term.excluded,
         description=description_prefix,
         onset=pps2.TimeElement(
             gestational_age=pps2.GestationalAge(
