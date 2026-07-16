@@ -93,14 +93,15 @@ def _process_anatomy_item(
     # Classify main structure
     _classify_structure(label, state, normal, abnormal, unseen)
 
-    # Process detail sub-structures
-    for detail in item.get("detail", []):
+    # Process detail sub-structures (real exports set "detail" to null
+    # rather than omitting it when a structure has no sub-details)
+    for detail in item.get("detail") or []:
         detail_label = detail.get("label", "")
         detail_state = detail.get("anat_det_state", "")
         _classify_structure(detail_label, detail_state, normal, abnormal, unseen)
 
-    # Process anomalies
-    for anom in item.get("anomalies", []):
+    # Process anomalies (same null-vs-missing quirk as "detail" above)
+    for anom in item.get("anomalies") or []:
         description = anom.get("description", "")
         if description:
             anomalies.append(
@@ -134,7 +135,8 @@ def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
 
     Paths:
     - fetuses[i].fetus.anatomy_text - free text narrative
-    - fetuses[i].fetus.anatomy[] - structured findings
+    - fetuses[i].anatomy[] - structured findings (sibling of "fetus", not
+      nested inside it)
       - main.label - structure name (e.g., "Head", "Face")
       - main.anat_state - "Normal", "Abnormal", or "Unseen"
       - detail[].label - sub-structure name
@@ -154,7 +156,7 @@ def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
     not_visualized: List[str] = []
     anomalies: List[Dict] = []
 
-    for item in fetus_block.get("anatomy", []):
+    for item in fetuses[0].get("anatomy", []):
         _process_anatomy_item(
             item, normal_structures, abnormal_structures, not_visualized, anomalies
         )
