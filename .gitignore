@@ -232,3 +232,6 @@ Discrete*.txt
 tests/data/*pytest-results.txt
 pytest-results.txt
 docs/issues
+# fallback data-dictionary output when the real corpus isn't present -
+# see scripts/data_dict/paths.py
+docs/data_dictionary/*.local.*

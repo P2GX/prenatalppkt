@@ -14,6 +14,11 @@ Inputs:
     prenatal-site-data/viewpoint/center/evms/GE_export_of_EVMS_test_cases/phenotype_*.txt
     src/prenatalppkt/scripts/data_dict/clusters.yaml
 
+    When the external prenatal-site-data checkout isn't present, falls
+    back to this repo's own synthetic fixtures under tests/data/ and
+    writes to `.local` suffixed output files instead (see paths.py) -
+    never overwrites the real corpus-derived comparison.csv.
+
 Output:
     prenatalppkt/docs/data_dictionary/comparison.csv (16 columns;
     the first column is `concept_key`, populated by looking up each
@@ -26,7 +31,6 @@ import csv
 import json
 import logging
 from collections import defaultdict
-from pathlib import Path
 
 from prenatalppkt.scripts.data_dict.extract.build import build_rows
 from prenatalppkt.scripts.data_dict.extract.clusters import load_clusters
@@ -34,6 +38,14 @@ from prenatalppkt.scripts.data_dict.extract.concept_aliases import load_concept_
 from prenatalppkt.scripts.data_dict.extract.hl7 import walk_hl7_file
 from prenatalppkt.scripts.data_dict.extract.models import ObserverField, ViewpointField
 from prenatalppkt.scripts.data_dict.extract.observer import walk_observer
+from prenatalppkt.scripts.data_dict.paths import (
+    HL7_DIR,
+    HL7_GLOBS,
+    OBSERVER_DIR,
+    OBSERVER_GLOB,
+    OUT_CSV,
+    SCRIPT_DIR,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -42,30 +54,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PPKT_ROOT = SCRIPT_DIR.parents[3]
-PREGEN_ROOT = PPKT_ROOT.parent
-OBSERVER_DIR = (
-    PREGEN_ROOT
-    / "prenatal-site-data"
-    / "observer"
-    / "center"
-    / "CUIMC"
-    / "pretty_print"
-)
-OBSERVER_GLOB = "*_pretty.json"
-HL7_DIR = (
-    PREGEN_ROOT
-    / "prenatal-site-data"
-    / "viewpoint"
-    / "center"
-    / "evms"
-    / "GE_export_of_EVMS_test_cases"
-)
-HL7_GLOB = "phenotype_*.txt"
 CLUSTERS_YAML = SCRIPT_DIR / "clusters.yaml"
 CONCEPT_ALIASES_YAML = SCRIPT_DIR / "concept_aliases.yaml"
-OUT_CSV = PPKT_ROOT / "docs" / "data_dictionary" / "comparison.csv"
 
 CSV_COLUMNS = [
     "concept_key",
@@ -97,12 +87,12 @@ def main() -> None:
         len(viewpoint_concepts),
     )
     observer_paths = sorted(OBSERVER_DIR.glob(OBSERVER_GLOB))
-    hl7_paths = sorted(HL7_DIR.glob(HL7_GLOB))
+    hl7_paths = sorted({p for pattern in HL7_GLOBS for p in HL7_DIR.glob(pattern)})
     if not observer_paths:
         logger.error("No Observer JSONs at %s/%s", OBSERVER_DIR, OBSERVER_GLOB)
         raise SystemExit(1)
     if not hl7_paths:
-        logger.error("No HL7 files at %s/%s", HL7_DIR, HL7_GLOB)
+        logger.error("No HL7 files at %s/%s", HL7_DIR, HL7_GLOBS)
         raise SystemExit(1)
 
     observer_fields: dict[tuple[str, str], ObserverField] = {}
