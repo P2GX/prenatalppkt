@@ -17,6 +17,7 @@ Skeleton parsers (TODO):
 - parse_placenta: Placental assessment
 - parse_amniotic_fluid: AFI, MVP measurements
 - parse_umbilical_cord: Vessel count, insertion site
+- parse_fetal_echo: Cardiac structure findings and measurements
 """
 
 from prenatalppkt.etl.sections.maternal_history import parse_maternal_history
@@ -31,6 +32,7 @@ from prenatalppkt.etl.sections.fetal_ratios import parse_fetal_ratios
 from prenatalppkt.etl.sections.placenta import parse_placenta
 from prenatalppkt.etl.sections.amniotic_fluid import parse_amniotic_fluid
 from prenatalppkt.etl.sections.umbilical_cord import parse_umbilical_cord
+from prenatalppkt.etl.sections.fetal_echo import parse_fetal_echo
 
 __all__ = [
     "parse_maternal_history",
@@ -43,4 +45,5 @@ __all__ = [
     "parse_placenta",
     "parse_amniotic_fluid",
     "parse_umbilical_cord",
+    "parse_fetal_echo",
 ]
