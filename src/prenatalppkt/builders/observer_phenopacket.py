@@ -108,6 +108,21 @@ def _phenopacket_id(accession_id: Optional[str], fetus_number: int) -> str:
     return f"fetus-{fetus_number}"
 
 
+def _subject_id(accession_id: Optional[str], fetus_number: int) -> str:
+    # TODO(@VarenyaJ): this accession-segment split is reverse-engineered
+    # from Columbia/CUIMC Observer exports only (confirmed via Derek's
+    # 2026-07-13 email). We have no real Observer samples from Broad,
+    # Charite, or UNSW - confirm this shape holds there before trusting
+    # subject.id grouping on non-CUIMC data.
+    if accession_id:
+        parts = accession_id.lower().replace("_", "-").split("-")
+        patient = parts[0]
+        if len(parts) > 2:
+            return f"{patient}-preg{parts[2]}-fetus-{fetus_number}"
+        return f"{patient}-fetus-{fetus_number}"
+    return f"fetus-{fetus_number}"
+
+
 def build_observer_phenopacket(
     data: dict,
     hpo_parser: HpoParser,
@@ -136,6 +151,13 @@ def build_observer_phenopacket(
     impression = parse_clinical_impression(data, "observer_json", hpo_cr=hpo_cr)
     anatomy = parse_fetal_anatomy(data, "observer_json", hpo_cr=hpo_cr)
     parse_estimated_fetal_weight(data, "observer_json")  # Plan 2 hook
+    # TODO(@VarenyaJ): #90a Measurement enrichment (deferred 2026-07-13) -
+    # emitting Measurement is unblocked, but turning an abnormal reading
+    # into a PhenotypicFeature needs a percentile/z-score threshold from
+    # Ron/Michael/Peter, and TermBin only stores a binned PercentileRange
+    # (not the raw percentile) while phenopackets' ReferenceRange expects
+    # low/high in the same unit as the value (mm) - percentile-as-a-
+    # ReferenceRange doesn't map cleanly yet either.
 
     hp_resource = _hpo_resource(hpo_parser)
     impression_terms = impression.get("hpo_terms", [])
@@ -160,7 +182,7 @@ def build_observer_phenopacket(
         pp = pps2.Phenopacket(
             id=_phenopacket_id(accession_id, fetus_number),
             subject=pps2.Individual(
-                id=f"fetus-{fetus_number}",
+                id=_subject_id(accession_id, fetus_number),
                 time_at_last_encounter=pps2.TimeElement(
                     gestational_age=pps2.GestationalAge(
                         weeks=subject_ga.weeks, days=subject_ga.days
