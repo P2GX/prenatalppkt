@@ -5,6 +5,14 @@ This module stitches `extract_all_fetuses` output together with the
 exam-level section parses (impression, anatomy, pregnancy dating) and
 returns one `Phenopacket` per fetus. The caller decides what to do with
 fetuses that yielded no phenotypic features.
+
+TODO @VarenyaJ: this module's private helpers (_resolve_subject_ga,
+_biometry_feature, _narrative_feature, _dedup_by_hpo_id, _hpo_resource,
+_phenopacket_id, _subject_id) are now duplicated near-verbatim across
+three builder files (this one, observer_phenopacket.py,
+gyn_phenopacket.py) by deliberate choice - each builder was kept
+self-contained rather than sharing a utils module across 2 files.
+Worth revisiting now that it's 3.
 """
 
 from __future__ import annotations
@@ -38,6 +46,12 @@ def _parse_ga_from_description(description: str) -> Optional[tuple[int, int]]:
 
 
 def _resolve_subject_ga(dating: dict, term_bins: list[TermBin]) -> GestationalAge:
+    # TODO @VarenyaJ: dating.get("ga_weeks") is dead code today -
+    # _parse_viewpoint_hl7_pregnancy returns ga_by_lmp/ga_by_ultrasound/
+    # assigned_ga, never a "ga_weeks" key, so this branch never fires
+    # and GA always falls through to the description-parsing loop below
+    # (or the 27w0d default). Same quirk as observer_phenopacket.py's
+    # copy of this function.
     ga_weeks = dating.get("ga_weeks")
     if ga_weeks:
         return GestationalAge.from_weeks(float(ga_weeks))

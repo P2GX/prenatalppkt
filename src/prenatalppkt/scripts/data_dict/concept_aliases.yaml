@@ -339,3 +339,126 @@ anatomy.kidney_right.state:
       label: Right kidney
   viewpoint:
     - UrinaryTractFetus.KidneyRAppearance
+
+# ---------------------------------------------------------------
+# Cardiac - structure state and free-text finding. Observer's
+# fetal_echo_anatomy[] items use the same shape as the regular
+# fetus.anatomy[] items (main.label/anat_state, anomalies[].
+# description), disambiguated by label the same way. ViewPoint
+# identifiers confirmed via comparison.csv. Numeric echo
+# measurements (dm_echo, valve Zscore fields) are a separate,
+# larger scope - not covered here, see the skeleton parser
+# etl/sections/fetal_echo.py.
+# ---------------------------------------------------------------
+
+cardiac.heart.state:
+  description: Overall heart structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].main.anat_state
+      label: Heart
+  viewpoint:
+    - HeartFetus.HeartAppearance
+
+cardiac.heart.finding:
+  description: Overall heart free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Heart
+  viewpoint:
+    - HeartFetus.HeartDetails
+
+cardiac.viscero_atrial_situs.state:
+  description: Viscero-atrial situs (organ arrangement) normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].main.anat_state
+      label: Viscero-atrial situs
+  viewpoint:
+    - HeartFetus.VisceroAtrialSitusAppearance
+
+cardiac.ascending_aorta.finding:
+  description: Ascending aorta free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Ascending aorta
+  viewpoint:
+    - HeartFetus.AortaAscDetails
+
+cardiac.aortic_isthmus.finding:
+  description: Aortic isthmus free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Aortic isthmus
+  viewpoint:
+    - HeartFetus.AorticIsthmusDetails
+
+cardiac.atria.finding:
+  description: Atria free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Atria
+  viewpoint:
+    - HeartFetus.AtriaDetails
+
+cardiac.atrioventricular_connections.finding:
+  description: Atrioventricular connections free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Atrioventricular connections
+  viewpoint:
+    - HeartFetus.AtrioVentricularConnectionsDetails
+
+cardiac.great_artery_crossing.finding:
+  description: Great artery crossing free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Great artery crossing
+  viewpoint:
+    - HeartFetus.GreatArteryCrossingDetails
+
+cardiac.pulmonary_artery_left.finding:
+  description: Left pulmonary artery free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Left pulmonary artery
+  viewpoint:
+    - HeartFetus.PulmonaryArteryLDetails
+
+cardiac.pulmonary_artery_main.finding:
+  description: Main pulmonary artery free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Main pulmonary artery
+  viewpoint:
+    - HeartFetus.PulmonaryArteryMainDetails
+
+cardiac.pulmonary_artery_right.finding:
+  description: Right pulmonary artery free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Right pulmonary artery
+  viewpoint:
+    - HeartFetus.PulmonaryArteryRDetails
+
+cardiac.venous_atrial_connections.finding:
+  description: Venous atrial connections free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Venous atrial connections
+  viewpoint:
+    - HeartFetus.VenousAtrialConnectionsDetails
+
+cardiac.ventricle_artery_connections.finding:
+  description: Ventricle-artery connections free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Ventricle-artery connections
+  viewpoint:
+    - HeartFetus.VentricleArteryConnectionsDetails
+
+cardiac.ventricles.finding:
+  description: Ventricles free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetal_echo_anatomy[].anomalies[].description
+      label: Ventricles
+  viewpoint:
+    - HeartFetus.VentriclesDetails
