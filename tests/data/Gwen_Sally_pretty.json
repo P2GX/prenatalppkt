@@ -1,0 +1,246 @@
+{
+  "exam": {
+    "site_name": "51 W51st Street",
+    "patient": {
+      "first_name": "Gwen",
+      "last_name": "Sally",
+      "b_date": "1985-01-01"
+    },
+    "ob_gyn_history": {
+      "gravida": 2,
+      "f_term": 2,
+      "p_term": 2,
+      "para": 2,
+      "s_abort": 0,
+      "t_abort": 0,
+      "liv_children": 2,
+      "stl_born": 0,
+      "ect_preg_num_left": 0,
+      "ect_preg_num_right": 0,
+      "ect_preg_num_other": 0
+    },
+    "scope_name": "Full GYN Exam",
+    "accession_id": "",
+    "exm_locator": "GYN00001-G-1",
+    "exm_date": "2026-01-15",
+    "fetus_count": 0,
+    "exm_signed": 1,
+    "pt_age_at_exam": 41,
+    "lmp": "0001-01-01",
+    "pt_age_at_edd": 0,
+    "disc_perc": 0,
+    "ga_by_dates": 0,
+    "ga_by_working_edd": 0,
+    "age_at_menopause": 0,
+    "examIcd10Indication": [
+      {
+        "code": "Z01.419",
+        "description": "Encounter for gynecological examination without abnormal findings"
+      }
+    ],
+    "examReferring": [
+      {
+        "assgnd_id": 16,
+        "name": "Ronald Wapner"
+      }
+    ],
+    "examTypes": null,
+    "examHL7Orders": null
+  },
+  "adnexa": {
+    "left": {
+      "done": 1,
+      "ovry_seen": "Visualized",
+      "ovry_loc": "Normal",
+      "ovry_surg_abs": 0,
+      "ovry_size_a": 0,
+      "ovry_size_b": 0,
+      "ovry_size_c": 0,
+      "ovry_vol": 0,
+      "tube_seen": "Unspecified",
+      "tube_nrml": "Unspecified",
+      "tube_surg_abs": 0,
+      "tube_hydrosalpinx": 0,
+      "tube_hydrosalpinx_size_a": 0,
+      "tube_hydrosalpinx_size_b": 0,
+      "tube_hydrosalpinx_size_c": 0,
+      "tube_hydrosalpinx_volume": 0
+    },
+    "right": {
+      "done": 1,
+      "ovry_seen": "Visualized",
+      "ovry_loc": "Normal",
+      "ovry_surg_abs": 0,
+      "ovry_size_a": 0,
+      "ovry_size_b": 0,
+      "ovry_size_c": 0,
+      "ovry_vol": 0,
+      "tube_seen": "Unspecified",
+      "tube_nrml": "Unspecified",
+      "tube_surg_abs": 0,
+      "tube_hydrosalpinx": 0,
+      "tube_hydrosalpinx_size_a": 0,
+      "tube_hydrosalpinx_size_b": 0,
+      "tube_hydrosalpinx_size_c": 0,
+      "tube_hydrosalpinx_volume": 0
+    },
+    "masses": null
+  },
+  "cervix": {
+    "cervix": {
+      "done": 1,
+      "length": 0,
+      "normal": "Normal",
+      "surg_abs": 0,
+      "dilation": 0,
+      "funneling": "Unspecified",
+      "response_to_tfp": "Unspecified",
+      "response_to_valsalva": "Unspecified",
+      "response_to_standing": "Unspecified",
+      "dynamic_chngs": "Unspecified",
+      "exam_performed_manually": 0,
+      "exam_performed_by_us": 1,
+      "response_to_tfp_debris": "Unspecified"
+    },
+    "cervix_anomalies": null
+  },
+  "endomyocds": {
+    "gyn_data": {
+      "done": 1,
+      "myo_homo_hetro": 0,
+      "cds_fld_seen": 0,
+      "cds_fld_descr": 0,
+      "cds_fld_amt": 0,
+      "cds_fld_other_txt": "",
+      "cds_fld_size_a": 0,
+      "cds_fld_size_b": 0,
+      "cds_fld_size_c": 0,
+      "cds_fld_volume": 0,
+      "gen_comment": "",
+      "endo_shape": 0,
+      "endo_thickness_layers": 0,
+      "endo_thickness_cm": 0,
+      "endo_lining": 0,
+      "endo_colr_dop": 0,
+      "endo_dop_ri": 0,
+      "endo_dop_ri_value": 0,
+      "endo_cont_other_txt": "",
+      "endo_cont_fld_pres": 0,
+      "endo_cont_fld_type": 0
+    },
+    "endo_contents": null,
+    "gyn_anomalies": null
+  },
+  "finalize": {
+    "generalComment": {
+      "plain_text": "Full gynecological ultrasound performed. Uterus is normal in size, shape, and contour. Endometrium appears normal in thickness. Both ovaries were visualized and appear normal in size and echotexture. No adnexal masses identified. Cervix appears unremarkable on transvaginal imaging. No evidence of hydronephrosis or free fluid. Overall a normal pelvic ultrasound.",
+      "formatted_text": ""
+    },
+    "recommendations": [],
+    "probes": [],
+    "examinerTwo": null,
+    "attendingMD": {
+      "examiner_no": 3,
+      "assgnd_id": 30,
+      "name": "Ivette Miranda"
+    },
+    "examIcd10Diagnosis": null
+  },
+  "gyn_procedure": {
+    "gyn_procedure": {
+      "done": 0,
+      "hysteroscopy_done": 0,
+      "hysteroscopy_fld_type": "",
+      "hysteroscopy_amt": 0,
+      "sonohystgrpy_done": 0,
+      "sonohystgrpy_cath_type": "Unspecified",
+      "sonohystgrpy_cath_type_txt": "",
+      "sonohystgrpy_fld_type": "Unspecified",
+      "sonohystgrpy_fld_type_txt": "",
+      "sonohystgrpy_amt": 0,
+      "sonohystsalgrpy_lft_tube": "Unspecified",
+      "sonohystsalgrpy_lft_tube_blk": "Unspecified",
+      "sonohystsalgrpy_rht_tube": "Unspecified",
+      "sonohystsalgrpy_rht_tube_blk": "Unspecified",
+      "sonohystgrpy_nrml": 0,
+      "sonohystsalgrpy_lft_tube_fld": 0,
+      "sonohystsalgrpy_l_tube_fld_oth": "",
+      "sonohystsalgrpy_rht_tube_fld": 0,
+      "sonohystsalgrpy_r_tube_fld_oth": ""
+    },
+    "hormone_replacement_therapy": null
+  },
+  "hist_phys_vitals": {
+    "surgeries": null,
+    "vital_signs": {
+      "initial_blood_pressure_sys": 118,
+      "initial_blood_pressure_dia": 76,
+      "initial_plood_uressurelse": 0,
+      "height_feet": 5,
+      "height_inches": 5,
+      "later_bp_sys": 0,
+      "later_bp_dia": 0,
+      "later_pulse": 0,
+      "weight_lb": 150,
+      "time_vitals_rec_init": "",
+      "bmi": 25
+    }
+  },
+  "uterine_artery": {
+    "left": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "notch": "Unspecified",
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified"
+    },
+    "right": {
+      "done": 0,
+      "sd": 0,
+      "pi": 0,
+      "ri": 0,
+      "notch": "Unspecified",
+      "aedv": "Unspecified",
+      "rev_flow": "Unspecified",
+      "dominant": "Unspecified"
+    },
+    "postpartum_left": {
+      "done": 0
+    },
+    "postpartum_right": {
+      "done": 0
+    },
+    "subplacental": {
+      "done": 0
+    }
+  },
+  "uterus": {
+    "uterus": {
+      "done": 1,
+      "seen": "Visualized",
+      "size_a": 8.1,
+      "size_b": 4.9,
+      "size_c": 4.2,
+      "shape": "Normal",
+      "midplane": 0,
+      "anteflexed": 1,
+      "retroflexed": 0,
+      "anteverted": 1,
+      "retroverted": 0,
+      "dextroverted": 0,
+      "levoverted": 0,
+      "qual_size": "Normal",
+      "surgically_absent": 0
+    },
+    "uterus_anomalies": null,
+    "bladder": {
+      "done": 0,
+      "description": "Unspecified",
+      "contours": "Unspecified"
+    }
+  },
+  "fetuses": []
+}
