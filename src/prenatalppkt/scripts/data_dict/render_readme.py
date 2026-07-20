@@ -1,7 +1,9 @@
 """
 render_readme.py
 
-Read `docs/data_dictionary/comparison.csv` and emit three docs:
+Read `docs/data_dictionary/comparison.csv` (or, when the real corpus
+isn't available, `comparison.local.csv` - see paths.py) and emit three
+docs alongside it:
 
 - `README.md` - clinician-facing field map + Regenerate + cross-links
 - `schema.md` - CSV schema + value-class tokens + pairing methodology
@@ -14,7 +16,6 @@ The docs are fully generated; edit `render_readme.py`, `extract_all.py`,
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from prenatalppkt.scripts.data_dict.render.clinician import render_clinician_overview
 from prenatalppkt.scripts.data_dict.render.constants import CLUSTER_NOTES
@@ -25,6 +26,14 @@ from prenatalppkt.scripts.data_dict.render.io import (
 )
 from prenatalppkt.scripts.data_dict.render.pairing import render_pairing_section
 from prenatalppkt.scripts.data_dict.render.tables import render_table
+from prenatalppkt.scripts.data_dict.paths import (
+    CLUSTERS_MD,
+    OUT_CSV as IN_CSV,
+    PPKT_ROOT,
+    README_MD,
+    SCHEMA_MD,
+    SCRIPT_DIR,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -33,12 +42,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PPKT_ROOT = SCRIPT_DIR.parents[3]
-IN_CSV = PPKT_ROOT / "docs" / "data_dictionary" / "comparison.csv"
-README_MD = PPKT_ROOT / "docs" / "data_dictionary" / "README.md"
-SCHEMA_MD = PPKT_ROOT / "docs" / "data_dictionary" / "schema.md"
-CLUSTERS_MD = PPKT_ROOT / "docs" / "data_dictionary" / "clusters.md"
 CLUSTERS_YAML = SCRIPT_DIR / "clusters.yaml"
 CONCEPT_ALIASES_YAML = SCRIPT_DIR / "concept_aliases.yaml"
 

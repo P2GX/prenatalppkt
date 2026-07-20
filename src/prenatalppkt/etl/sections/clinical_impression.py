@@ -176,6 +176,12 @@ def _infer_growth_assessment(text: str) -> Optional[str]:
         "LGA" - Large for Gestational Age
         "AGA" - Appropriate for Gestational Age
         None - No assessment detected
+
+    TODO @VarenyaJ: this is a naive substring match on the impression
+    text, not a computed classification from actual percentiles, and
+    neither build_observer_phenopacket nor build_viewpoint_phenopacket
+    reads "growth_assessment" from parse_clinical_impression's output
+    today - the value is computed here but never consumed.
     """
     if not text:
         return None

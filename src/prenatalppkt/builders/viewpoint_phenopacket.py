@@ -1,17 +1,18 @@
-"""Observer JSON -> Phenopacket v2 builder.
+"""ViewPoint HL7 -> Phenopacket v2 builder.
 
-One Observer JSON file describes one exam with one or more fetuses. This
-module stitches `extract_all_fetuses` output together with the exam-level
-section parses (impression, anatomy, EFW, pregnancy dating) and returns
-one `Phenopacket` per fetus. The caller decides what to do with fetuses
-that yielded no phenotypic features (UNKNOWN scan type, missing biometry).
+One ViewPoint HL7 message describes one exam with one or more fetuses.
+This module stitches `extract_all_fetuses` output together with the
+exam-level section parses (impression, anatomy, pregnancy dating) and
+returns one `Phenopacket` per fetus. The caller decides what to do with
+fetuses that yielded no phenotypic features.
 
 TODO @VarenyaJ: this module's private helpers (_resolve_subject_ga,
 _biometry_feature, _narrative_feature, _dedup_by_hpo_id, _hpo_resource,
 _phenopacket_id, _subject_id) are now duplicated near-verbatim across
-three builder files (this one, gyn_phenopacket.py, viewpoint_phenopacket.py)
-by deliberate choice - each builder was kept self-contained rather than
-sharing a utils module across 2 files. Worth revisiting now that it's 3.
+three builder files (this one, observer_phenopacket.py,
+gyn_phenopacket.py) by deliberate choice - each builder was kept
+self-contained rather than sharing a utils module across 2 files.
+Worth revisiting now that it's 3.
 """
 
 from __future__ import annotations
@@ -22,10 +23,9 @@ from typing import Optional
 import phenopackets.schema.v2 as pps2
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from prenatalppkt.etl.extractors import observer
+from prenatalppkt.etl.extractors import viewpoint_hl7
 from prenatalppkt.etl.sections import (
     parse_clinical_impression,
-    parse_estimated_fetal_weight,
     parse_fetal_anatomy,
     parse_pregnancy_dating,
 )
@@ -47,10 +47,11 @@ def _parse_ga_from_description(description: str) -> Optional[tuple[int, int]]:
 
 def _resolve_subject_ga(dating: dict, term_bins: list[TermBin]) -> GestationalAge:
     # TODO @VarenyaJ: dating.get("ga_weeks") is dead code today -
-    # _parse_observer_pregnancy returns ga_by_lmp/ga_by_ultrasound/
+    # _parse_viewpoint_hl7_pregnancy returns ga_by_lmp/ga_by_ultrasound/
     # assigned_ga, never a "ga_weeks" key, so this branch never fires
     # and GA always falls through to the description-parsing loop below
-    # (or the 27w0d default).
+    # (or the 27w0d default). Same quirk as observer_phenopacket.py's
+    # copy of this function.
     ga_weeks = dating.get("ga_weeks")
     if ga_weeks:
         return GestationalAge.from_weeks(float(ga_weeks))
@@ -122,11 +123,6 @@ def _phenopacket_id(accession_id: Optional[str], fetus_number: int) -> str:
 
 
 def _subject_id(accession_id: Optional[str], fetus_number: int) -> str:
-    # TODO(@VarenyaJ): this accession-segment split is reverse-engineered
-    # from Columbia/CUIMC Observer exports only (confirmed via Derek's
-    # 2026-07-13 email). We have no real Observer samples from Broad,
-    # Charite, or UNSW - confirm this shape holds there before trusting
-    # subject.id grouping on non-CUIMC data.
     if accession_id:
         parts = accession_id.lower().replace("_", "-").split("-")
         patient = parts[0]
@@ -136,41 +132,32 @@ def _subject_id(accession_id: Optional[str], fetus_number: int) -> str:
     return f"fetus-{fetus_number}"
 
 
-def build_observer_phenopacket(
-    data: dict,
+def build_viewpoint_phenopacket(
+    data: str,
     hpo_parser: HpoParser,
     created_at: Timestamp,
     *,
     accession_id: Optional[str] = None,
 ) -> list[pps2.Phenopacket]:
-    """Build one Phenopacket per fetus from an Observer JSON dict.
+    """Build one Phenopacket per fetus from a ViewPoint HL7 message string.
 
     Args:
-        data: Parsed Observer JSON dictionary.
+        data: ViewPoint HL7 message content as string.
         hpo_parser: Loaded HpoParser for the concept recognizer + resource version.
         created_at: Timestamp to stamp into each Phenopacket's MetaData.
         accession_id: Optional exam accession to use as the subject-id prefix.
 
     Returns:
-        One Phenopacket per fetus in `data["fetuses"]`. A fetus whose
-        extraction yielded no term bins (UNKNOWN scan type, or T1 with
-        no parseable CRL/NT) produces a Phenopacket with no phenotypic
-        features so the caller can decide whether to drop it.
+        One Phenopacket per fetus found in `data`. A fetus whose
+        extraction yielded no term bins produces a Phenopacket with no
+        phenotypic features so the caller can decide whether to drop it.
     """
     hpo_cr = hpo_parser.get_hpo_concept_recognizer()
 
-    bins_by_fetus = observer.extract_all_fetuses(data)
-    dating = parse_pregnancy_dating(data, "observer_json")
-    impression = parse_clinical_impression(data, "observer_json", hpo_cr=hpo_cr)
-    anatomy = parse_fetal_anatomy(data, "observer_json", hpo_cr=hpo_cr)
-    parse_estimated_fetal_weight(data, "observer_json")  # Plan 2 hook
-    # TODO(@VarenyaJ): #90a Measurement enrichment (deferred 2026-07-13) -
-    # emitting Measurement is unblocked, but turning an abnormal reading
-    # into a PhenotypicFeature needs a percentile/z-score threshold from
-    # Ron/Michael/Peter, and TermBin only stores a binned PercentileRange
-    # (not the raw percentile) while phenopackets' ReferenceRange expects
-    # low/high in the same unit as the value (mm) - percentile-as-a-
-    # ReferenceRange doesn't map cleanly yet either.
+    bins_by_fetus = viewpoint_hl7.extract_all_fetuses(data)
+    dating = parse_pregnancy_dating(data, "viewpoint_hl7")
+    impression = parse_clinical_impression(data, "viewpoint_hl7", hpo_cr=hpo_cr)
+    anatomy = parse_fetal_anatomy(data, "viewpoint_hl7", hpo_cr=hpo_cr)
 
     hp_resource = _hpo_resource(hpo_parser)
     impression_terms = impression.get("hpo_terms", [])
