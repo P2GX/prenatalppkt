@@ -1157,8 +1157,22 @@ For OCR/PDF ingestion via docling (pulls in torch and CUDA drivers, ~3GB):
 uv sync --extra dev --extra ocr
 ```
 
-**VSCode notebook users:** ipykernel is included in the `dev` extra and will be
-auto-detected by VSCode after `uv sync --extra dev`.
+**VSCode / VSCodium notebook users:** `ipykernel` is included in the `dev` extra,
+but auto-detection is unreliable — `uv sync` can register a kernelspec whose
+`argv` is just `"python"` instead of the venv's absolute interpreter path, which
+resolves against whatever `python` happens to be on `PATH` at kernel-launch time
+and fails with `ModuleNotFoundError: No module named 'google'` (or similar) if
+that's not this venv. If notebook cells fail to import project dependencies:
+
+```bash
+uv run python -m ipykernel install --user --name=prenatalppkt-venv \
+    --display-name="prenatalppkt (.venv)"
+```
+
+Then reload the editor window and select **"prenatalppkt (.venv)"** as the
+notebook's kernel. If that kernel doesn't appear after reloading, select the
+interpreter directly instead: "Select Another Kernel" → "Python Environments" →
+the `.venv/bin/python3` inside this repo.
 
 **hp.json:** The repo root contains `hp.json`, a version-pinned HPO ontology snapshot
 used by tests. Do not delete or re-download it unless intentionally updating the
