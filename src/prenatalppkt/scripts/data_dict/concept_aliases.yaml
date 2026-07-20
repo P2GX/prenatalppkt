@@ -204,3 +204,138 @@ cervix.funneling:
       label: ""
   viewpoint:
     - Cervix.FunnellingYN
+
+# ---------------------------------------------------------------
+# Fetal anatomy - structure state (Normal/Abnormal/Unseen) and
+# free-text finding, per structure. Observer's anatomy items are a
+# list (fetuses[].fetus.anatomy[]), disambiguated by main.label the
+# same way biometry disambiguates by label.
+# ---------------------------------------------------------------
+
+anatomy.brain.state:
+  description: Brain structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Brain
+  viewpoint:
+    - BrainFetus.BrainAppearance
+
+anatomy.cerebellum.state:
+  description: Cerebellum structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Cerebellum
+  viewpoint:
+    - BrainFetus.CerebellumAppearance
+
+anatomy.cerebellum.finding:
+  description: Cerebellum free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetus.anatomy[].anomalies[].description
+      label: Cerebellum
+  viewpoint:
+    - BrainFetus.CerebellumDetails
+
+anatomy.lateral_ventricle_left.state:
+  description: Left lateral ventricle normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Left lateral ventricle
+  viewpoint:
+    - BrainFetus.LateralVentricleLAppearance
+
+anatomy.lateral_ventricle_left.finding:
+  description: Left lateral ventricle free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetus.anatomy[].anomalies[].description
+      label: Left lateral ventricle
+  viewpoint:
+    - BrainFetus.LateralVentricleLDetails
+
+anatomy.lateral_ventricle_right.state:
+  description: Right lateral ventricle normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Right lateral ventricle
+  viewpoint:
+    - BrainFetus.LateralVentricleRAppearance
+
+anatomy.lateral_ventricle_right.finding:
+  description: Right lateral ventricle free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetus.anatomy[].anomalies[].description
+      label: Right lateral ventricle
+  viewpoint:
+    - BrainFetus.LateralVentricleRDetails
+
+anatomy.face.state:
+  description: Face structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Face
+  viewpoint:
+    - FaceFetus.FaceAppearance
+
+anatomy.chest.state:
+  description: Chest structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Chest
+  viewpoint:
+    - ChestFetus.ChestAppearance
+
+anatomy.thoracic_descending_aorta.finding:
+  description: Thoracic descending aorta free-text finding (present when abnormal)
+  observer:
+    - path: fetuses[].fetus.anatomy[].anomalies[].description
+      label: Thoracic descending aorta
+  viewpoint:
+    - ChestFetus.ThoracicDescAortaDetails
+
+anatomy.gi_tract.state:
+  description: Gastrointestinal tract structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Gastrointestinal tract
+  viewpoint:
+    - GastrointestinalTractFetus.GastrointestinalTractAppearance
+
+anatomy.spine.state:
+  description: Spine structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Spine
+  viewpoint:
+    - SpineFetus.SpineAppearance
+
+anatomy.bladder.state:
+  description: Bladder structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Bladder
+  viewpoint:
+    - UrinaryTractFetus.BladderAppearance
+
+anatomy.urogenital_tract.state:
+  description: Urogenital tract structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Urogenital tract
+  viewpoint:
+    - UrinaryTractFetus.UrogenitalTractAppearance
+
+anatomy.kidney_left.state:
+  description: Left kidney structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Left kidney
+  viewpoint:
+    - UrinaryTractFetus.KidneyLAppearance
+
+anatomy.kidney_right.state:
+  description: Right kidney structure normal/abnormal/unseen state
+  observer:
+    - path: fetuses[].fetus.anatomy[].main.anat_state
+      label: Right kidney
+  viewpoint:
+    - UrinaryTractFetus.KidneyRAppearance
