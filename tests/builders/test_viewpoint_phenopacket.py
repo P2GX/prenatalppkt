@@ -137,3 +137,29 @@ def test_round_trips_through_message_to_json(hpo_parser, now_ts):
     round_tripped = Parse(json_str, pps2.Phenopacket())
 
     assert round_tripped == pp
+
+
+_NEGATED_FINDING_HL7 = """
+MSH|^~\\&|ViewPoint|Hospital|||20211223144928||ORU^R01|123456|P|2.4
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+OBX|4|ST|ExamAddData.ExamImpression^Impression|1|The spine was visualized without evidence of a neural tube defect.
+"""
+
+
+def test_negated_narrative_finding_marked_excluded(hpo_parser, now_ts):
+    """The HL7 impression text explicitly documents an ABSENT finding
+    ("without evidence of a neural tube defect"). fenominal correctly
+    flags this SimpleTerm as excluded=True; the resulting
+    PhenotypicFeature must carry that same excluded=True rather than
+    silently defaulting to "observed/present" - same fix as
+    observer_phenopacket.py's identical bug."""
+    pps = build_viewpoint_phenopacket(_NEGATED_FINDING_HL7, hpo_parser, now_ts)
+
+    pp = pps[0]
+    neural_tube_features = [
+        pf for pf in pp.phenotypic_features if pf.type.id == "HP:0045005"
+    ]
+    assert len(neural_tube_features) == 1
+    assert neural_tube_features[0].excluded is True

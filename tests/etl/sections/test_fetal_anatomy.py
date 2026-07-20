@@ -10,6 +10,9 @@ from prenatalppkt.etl.sections.fetal_anatomy import parse_fetal_anatomy
 HL7_ANATOMY_TEST_FILE = (
     Path(__file__).parent.parent.parent / "data" / "viewpoint_hl7_anatomy_test.txt"
 )
+APPLE_SALLY_FIXTURE = (
+    Path(__file__).parent.parent.parent / "data" / "Apple_Sally_pretty.json"
+)
 
 
 # ---------------------------------------------------------------------
@@ -23,26 +26,24 @@ class TestFetalAnatomyObserver:
         data = {
             "fetuses": [
                 {
-                    "fetus": {
-                        "anatomy_text": "The fetal anatomy was assessed.",
-                        "anatomy": [
-                            {
-                                "main": {"label": "Head", "anat_state": "Normal"},
-                                "detail": [],
-                                "anomalies": [],
-                            },
-                            {
-                                "main": {"label": "Heart", "anat_state": "Abnormal"},
-                                "detail": [],
-                                "anomalies": [],
-                            },
-                            {
-                                "main": {"label": "Spine", "anat_state": "Unseen"},
-                                "detail": [],
-                                "anomalies": [],
-                            },
-                        ],
-                    }
+                    "fetus": {"anatomy_text": "The fetal anatomy was assessed."},
+                    "anatomy": [
+                        {
+                            "main": {"label": "Head", "anat_state": "Normal"},
+                            "detail": [],
+                            "anomalies": [],
+                        },
+                        {
+                            "main": {"label": "Heart", "anat_state": "Abnormal"},
+                            "detail": [],
+                            "anomalies": [],
+                        },
+                        {
+                            "main": {"label": "Spine", "anat_state": "Unseen"},
+                            "detail": [],
+                            "anomalies": [],
+                        },
+                    ],
                 }
             ]
         }
@@ -60,26 +61,21 @@ class TestFetalAnatomyObserver:
         data = {
             "fetuses": [
                 {
-                    "fetus": {
-                        "anatomy_text": "",
-                        "anatomy": [
-                            {
-                                "main": {"label": "Head", "anat_state": "Abnormal"},
-                                "detail": [
-                                    {
-                                        "label": "Cerebellum",
-                                        "anat_det_state": "Abnormal",
-                                    }
-                                ],
-                                "anomalies": [
-                                    {
-                                        "description": "Dandy Walker",
-                                        "abnormal_or_normal_variant": "Abnormal",
-                                    }
-                                ],
-                            }
-                        ],
-                    }
+                    "fetus": {"anatomy_text": ""},
+                    "anatomy": [
+                        {
+                            "main": {"label": "Head", "anat_state": "Abnormal"},
+                            "detail": [
+                                {"label": "Cerebellum", "anat_det_state": "Abnormal"}
+                            ],
+                            "anomalies": [
+                                {
+                                    "description": "Dandy Walker",
+                                    "abnormal_or_normal_variant": "Abnormal",
+                                }
+                            ],
+                        }
+                    ],
                 }
             ]
         }
@@ -99,17 +95,15 @@ class TestFetalAnatomyObserver:
             "fetuses": [
                 {
                     "fetus": {
-                        "anatomy_text": "Findings consistent with Dandy-Walker malformation.",
-                        "anatomy": [
-                            {
-                                "main": {"label": "Brain", "anat_state": "Abnormal"},
-                                "detail": [],
-                                "anomalies": [
-                                    {"description": "Ventriculomegaly noted"}
-                                ],
-                            }
-                        ],
-                    }
+                        "anatomy_text": "Findings consistent with Dandy-Walker malformation."
+                    },
+                    "anatomy": [
+                        {
+                            "main": {"label": "Brain", "anat_state": "Abnormal"},
+                            "detail": [],
+                            "anomalies": [{"description": "Ventriculomegaly noted"}],
+                        }
+                    ],
                 }
             ]
         }
@@ -128,12 +122,10 @@ class TestFetalAnatomyObserver:
             {
                 "fetuses": [
                     {
-                        "fetus": {
-                            "anatomy_text": "Normal anatomy.",
-                            "anatomy": [
-                                {"main": {"label": "Face", "anat_state": "Normal"}}
-                            ],
-                        }
+                        "fetus": {"anatomy_text": "Normal anatomy."},
+                        "anatomy": [
+                            {"main": {"label": "Face", "anat_state": "Normal"}}
+                        ],
                     }
                 ]
             }
@@ -161,6 +153,20 @@ class TestFetalAnatomyObserver:
 
         assert result["anatomy_text"] == "Some text."
         assert result["normal_structures"] == []
+
+    def test_real_fixture_structured_anatomy_is_populated(self):
+        """The structured anatomy array lives at fetuses[i]["anatomy"], a
+        sibling of "fetus" - not nested inside it. Apple Sally's real
+        fixture has 16 anatomy items; this must classify them, not come
+        back empty."""
+        data = json.loads(APPLE_SALLY_FIXTURE.read_text())
+
+        result = parse_fetal_anatomy(data, "observer_json")
+
+        assert "Head" in result["abnormal_structures"]
+        assert "Cerebellum" in result["abnormal_structures"]
+        assert any(a["description"] == "Dandy Walker" for a in result["anomalies"])
+        assert result["normal_structures"], "expected normal structures to be found"
 
 
 # ---------------------------------------------------------------------

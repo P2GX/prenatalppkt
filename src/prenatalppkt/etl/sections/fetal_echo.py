@@ -38,9 +38,11 @@ def parse_fetal_echo(data, source_format: str, hpo_cr=None) -> Dict:
     TODO @VarenyaJ Implementation steps:
         1. Observer JSON: fetuses[].fetal_echo_anatomy[] uses the exact
            same main.label / main.anat_state / detail[] / anomalies[]
-           shape as fetuses[].fetus.anatomy[] (the regular anatomy
-           parser) - reuse _process_anatomy_item / _classify_structure
-           from fetal_anatomy.py rather than rewriting that logic.
+           shape as fetuses[].anatomy[] (the regular anatomy parser,
+           a sibling of "fetus" - not nested inside it, same as
+           fetal_echo_anatomy itself) - reuse _process_anatomy_item /
+           _classify_structure from fetal_anatomy.py rather than
+           rewriting that logic.
         2. ViewPoint HL7: HeartFetus.HeartAppearance and
            HeartFetus.VisceroAtrialSitusAppearance are the top-level
            state fields (normal/abnormal/suboptimal - same 3-value
