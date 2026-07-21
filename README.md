@@ -73,6 +73,16 @@ uv run python -c "import prenatalppkt; print(prenatalppkt.__version__)"
 ### Alternative with venv and pip
 
 ```bash
+uv sync --extra dev --extra ocr
+```
+
+### Alternative: pip + venv
+
+For users who cannot or prefer not to install uv:
+
+```bash
+# Clone and enter the repo
+
 git clone https://github.com/P2GX/prenatalppkt.git
 cd prenatalppkt
 
@@ -82,6 +92,29 @@ pip install -e ".[dev]"
 
 python -c "import prenatalppkt; print(prenatalppkt.__version__)"
 ```
+
+### Installation Notes:
+
+**VSCode / VSCodium notebook users:** `ipykernel` is included in the `dev` extra,
+but auto-detection is unreliable - `uv sync` can register a kernelspec whose
+`argv` is just `"python"` instead of the venv's absolute interpreter path, which
+resolves against whatever `python` happens to be on `PATH` at kernel-launch time
+and fails with `ModuleNotFoundError: No module named 'google'` (or similar) if
+that's not this venv. If notebook cells fail to import project dependencies, try:
+
+```bash
+uv run python -m ipykernel install --user --name=prenatalppkt-venv \
+    --display-name="prenatalppkt (.venv)"
+```
+
+Then reload the editor window and select **"prenatalppkt (.venv)"** as the
+notebook's kernel. If that kernel doesn't appear after reloading, select the
+interpreter directly instead: "Select Another Kernel" → "Python Environments" →
+the `.venv/bin/python3` inside this repo.
+
+**hp.json:** The repo root may contain `hp.json`, a version-pinned HPO ontology snapshot
+used by tests. Do not delete or re-download it unless intentionally updating the
+ontology version — it is pinned for reproducibility.
 
 ### Build the docs locally
 

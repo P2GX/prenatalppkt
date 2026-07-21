@@ -96,6 +96,64 @@ def extract_from_file(filepath: Path, factory: TermBinFactory = None) -> List[Te
     return extract(data, factory)
 
 
+def _parse_fetus_number(fetus_id: str) -> int:
+    """Convert an OBX-5 sub-id like "Fetus2" to its int fetus number."""
+    match = re.search(r"(\d+)$", fetus_id)
+    return int(match.group(1)) if match else 1
+
+
+def extract_all_fetuses(
+    data: str, factory: TermBinFactory = None
+) -> Dict[int, List[TermBin]]:
+    """
+    Extract biometry from every fetus in a ViewPoint HL7 message.
+
+    Mirrors etl/extractors/observer.py's extract_all_fetuses shape: one
+    key per fetus_number, values are that fetus's TermBins.
+    `_group_measurements_by_fetus` and `_create_term_bins` are already
+    fetus-count-agnostic - `extract()` just discarded every key but the
+    first; this loops over all of them instead.
+
+    Args:
+        data: ViewPoint HL7 message content as string
+        factory: TermBinFactory instance (creates new if None)
+
+    Returns:
+        Dict keyed by fetus_number; values are lists of TermBins for that
+        fetus (empty list when no measurements matched for that fetus).
+
+    Raises:
+        ValueError: If data is not a string.
+    """
+    if factory is None:
+        factory = TermBinFactory()
+
+    if not isinstance(data, str):
+        raise ValueError(f"Expected string, got {type(data)}")
+
+    obx_segments = _extract_obx_segments(data)
+    if not obx_segments:
+        logger.warning("No OBX segments found in HL7 message")
+        return {}
+
+    measurements_by_fetus = _group_measurements_by_fetus(obx_segments)
+
+    result: Dict[int, List[TermBin]] = {}
+    for fetus_id, measurements in measurements_by_fetus.items():
+        fetus_number = _parse_fetus_number(fetus_id)
+        result[fetus_number] = _create_term_bins(measurements, factory)
+    return result
+
+
+def extract_all_fetuses_from_file(
+    filepath: Path, factory: TermBinFactory = None
+) -> Dict[int, List[TermBin]]:
+    """Multi-fetus equivalent of `extract_from_file`."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = f.read()
+    return extract_all_fetuses(data, factory)
+
+
 def _extract_obx_segments(data: str) -> List[str]:
     """Extract all OBX segments from HL7 message."""
     lines = data.split("\n")
@@ -184,26 +242,25 @@ def _parse_measurement_code(code: str) -> Optional[Tuple[str, str]]:
     Returns:
         Tuple of (canonical_name, field_type) or None
     """
-    # Extract measurement code (before ^)
+    # Extract measurement code (before ^), then strip the leading
+    # "<Namespace>." segment (e.g. "SkullFetus.") - OBX-3 identifiers are
+    # always namespaced, but VIEWPOINT_HL7_NAME_MAP keys are not.
     code_part = code.split("^")[0]
+    local_code = code_part.split(".")[-1] if "." in code_part else code_part
 
     # Determine field type
-    if "_Percentile" in code_part:
+    if "_Percentile" in local_code:
         field_type = "percentile"
-        base_code = code_part.replace("VP_", "").replace("_Percentile", "")
-    elif "_GA" in code_part:
+        base_code = local_code.replace("VP_", "").replace("_Percentile", "")
+    elif "_GA" in local_code:
         field_type = "ga"
-        base_code = code_part.replace("VP_", "").replace("_GA", "")
-    elif "_Author" in code_part:
+        base_code = local_code.replace("VP_", "").replace("_GA", "")
+    elif "_Author" in local_code:
         field_type = "method"  # Changed from "author" to "method"
-        base_code = code_part.replace("VP_", "").replace("_Author", "")
+        base_code = local_code.replace("VP_", "").replace("_Author", "")
     else:
         field_type = "value"
-        # Extract last part after dot
-        if "." in code_part:
-            base_code = code_part.split(".")[-1]
-        else:
-            base_code = code_part
+        base_code = local_code
 
     logger.debug(f"    Parsed code: base={base_code}, type={field_type}")
 
@@ -225,7 +282,7 @@ def _extract_field_value(
         value = _parse_value(value_field)
         # Store unit if available
         if value is not None and len(fields) > 6:
-            return {"value": value, "unit": fields[6]}
+            return {"value": value, "unit": _parse_unit_field(fields[6])}
         return value if value is not None else None
 
     elif field_type == "percentile":
@@ -287,6 +344,18 @@ def _parse_value(value_field: str) -> Optional[float]:
     except ValueError:
         logger.debug(f"Could not parse value: {value_field}")
         return None
+
+
+def _parse_unit_field(unit_field: str) -> str:
+    """
+    Parse the primary unit code from an HL7 coded-value unit field.
+
+    Format: "mm&millimeters^mm&millimeters" (code&text^code&text) - take
+    the first caret segment's code, before "&".
+    """
+    if not unit_field:
+        return unit_field
+    return unit_field.split("^")[0].split("&")[0]
 
 
 def _parse_percentile_field(value_field: str) -> Optional[float]:
