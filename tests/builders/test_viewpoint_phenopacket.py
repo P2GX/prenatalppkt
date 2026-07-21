@@ -105,6 +105,45 @@ def test_twins_returns_two_phenopackets(hpo_parser, now_ts):
     assert [pp.id for pp in pps] == ["twin-fetus-1", "twin-fetus-2"]
 
 
+def test_single_fetus_fixture_complete_findings(hpo_parser, now_ts):
+    """viewpoint_hl7_test.txt end-to-end - pure normal biometry, no
+    narrative text, so the complete expected HPO set is exactly the
+    three core biometry terms, all ruled out (normal readings)."""
+    data = (DATA_DIR / "viewpoint_hl7_test.txt").read_text()
+
+    pps = build_viewpoint_phenopacket(data, hpo_parser, now_ts, accession_id="TEST")
+
+    assert len(pps) == 1
+    pp = pps[0]
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0000240",  # Abnormality of skull size (HC, normal)
+    }
+    assert all(pf.excluded for pf in pp.phenotypic_features)
+
+
+def test_discrete_hl7_sample_fixture_complete_findings(hpo_parser, now_ts):
+    """Discrete_HL7_Messages_Sample.txt end-to-end - a GE ViewPoint
+    vendor demo export with joke placeholder patient data (confirmed
+    not real PHI), but real-shaped biometry OBX segments. Same shape as
+    viewpoint_hl7_test.txt: pure normal biometry, no narrative text."""
+    data = (DATA_DIR / "Discrete_HL7_Messages_Sample.txt").read_text()
+
+    pps = build_viewpoint_phenopacket(data, hpo_parser, now_ts, accession_id="DISC")
+
+    assert len(pps) == 1
+    pp = pps[0]
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0000240",  # Abnormality of skull size (HC, normal)
+    }
+    assert all(pf.excluded for pf in pp.phenotypic_features)
+
+
 def test_full_exam_fixture_has_biometry_and_anatomy_features(hpo_parser, now_ts):
     """End-to-end on a fixture with both biometry and the 16 anatomy fields.
 
