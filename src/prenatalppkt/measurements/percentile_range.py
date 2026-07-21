@@ -188,7 +188,9 @@ class PercentileRange:
         ValueError
             If the percentile is outside the 0-100 range.
         """
-        if perc < 3.0:
+        if perc < 0:
+            raise ValueError(f"Invalid percentile: {perc}")
+        elif perc < 3.0:
             return PercentileRange.below_3p()
         elif perc < 5.0:
             return PercentileRange.between_3p_5p()
