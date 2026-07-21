@@ -110,11 +110,40 @@ class TestFetalAnatomyObserver:
 
         result = parse_fetal_anatomy(data, "observer_json", hpo_cr=hpo_cr)
 
-        # Should find HPO terms from the combined text
-        assert len(result["hpo_terms"]) > 0
         hpo_ids = [t.hpo_id for t in result["hpo_terms"]]
-        # Dandy-Walker malformation is HP:0001305
-        assert "HP:0001305" in hpo_ids or "HP:0002119" in hpo_ids  # Ventriculomegaly
+        assert "HP:0002119" in hpo_ids  # Ventriculomegaly, from the anomaly description
+
+    @pytest.mark.xfail(
+        reason=(
+            "fenominal does not recognize 'Dandy-Walker malformation' in "
+            "free text, even though that phrase is an exact match for "
+            "HP:0001305's official HPO label - confirmed via direct "
+            "testing 2026-07-21 across several phrasings, not yet "
+            "reported upstream to fenominal. This used to be masked by "
+            "an 'or' fallback in test_anatomy_with_hpo_extraction above; "
+            "documenting it honestly here instead. Remove this xfail once "
+            "fenominal (or a fallback) recognizes the phrase."
+        ),
+        strict=True,
+    )
+    def test_dandy_walker_malformation_recognized_in_anatomy_text(self, hpo_cr):
+        """Known gap, not a hidden bug: a real, present, exact-label-match
+        finding is silently dropped by fenominal today."""
+        data = {
+            "fetuses": [
+                {
+                    "fetus": {
+                        "anatomy_text": "Findings consistent with Dandy-Walker malformation."
+                    },
+                    "anatomy": [],
+                }
+            ]
+        }
+
+        result = parse_fetal_anatomy(data, "observer_json", hpo_cr=hpo_cr)
+
+        hpo_ids = [t.hpo_id for t in result["hpo_terms"]]
+        assert "HP:0001305" in hpo_ids
 
     def test_anatomy_json_string_input(self):
         """Test that JSON string input is handled correctly."""
@@ -256,11 +285,44 @@ class TestFetalAnatomyViewPointHL7:
         assert "Right lateral ventricle" not in result["abnormal_structures"]
 
     def test_hpo_terms_extracted_from_details_fields(self, hpo_cr):
+        """The fixture has two Details findings - only 'cerebellar
+        hypoplasia' is checked here since fenominal reliably recognizes
+        it. See test_aortic_arch_narrowing_recognized_from_details_field
+        below for the other one, which is a known gap."""
         data = HL7_ANATOMY_TEST_FILE.read_text()
         result = parse_fetal_anatomy(data, "viewpoint_hl7", hpo_cr=hpo_cr)
 
-        assert len(result["hpo_terms"]) > 0
+        hpo_ids = [t.hpo_id for t in result["hpo_terms"]]
         assert all(t.hpo_id.startswith("HP:") for t in result["hpo_terms"])
+        assert "HP:0001321" in hpo_ids  # Cerebellar hypoplasia
+
+    @pytest.mark.xfail(
+        reason=(
+            "fenominal does not recognize 'mild aortic arch narrowing' "
+            "(the fixture's ThoracicDescAortaDetails finding) as "
+            "HP:0001680 Coarctation of aorta - confirmed via direct "
+            "testing 2026-07-21: fenominal correctly matches the exact "
+            "label 'coarctation of the aorta', but 'narrowing' alone is "
+            "not a recognized synonym, and this fixture's text never says "
+            "'coarctation'. Not yet reported upstream. This used to be "
+            "masked by a len(...) > 0 check in "
+            "test_hpo_terms_extracted_from_details_fields above; "
+            "documenting it honestly here instead. Remove this xfail once "
+            "fenominal (or a fallback) recognizes the phrase."
+        ),
+        strict=True,
+    )
+    def test_aortic_arch_narrowing_recognized_from_details_field(self, hpo_cr):
+        """Known gap, not a hidden bug: a real, present anomaly finding
+        in a Details field is silently dropped by fenominal today.
+        Clinically, "narrowing" of the aorta is coarctation (HP:0001680) -
+        confirmed fenominal recognizes that exact label, just not the
+        word "narrowing" used in this fixture's free text."""
+        data = HL7_ANATOMY_TEST_FILE.read_text()
+        result = parse_fetal_anatomy(data, "viewpoint_hl7", hpo_cr=hpo_cr)
+
+        hpo_ids = [t.hpo_id for t in result["hpo_terms"]]
+        assert "HP:0001680" in hpo_ids  # Coarctation of aorta
 
     def test_no_anatomy_text_narrative_for_hl7(self):
         """HL7 has no free-text anatomy narrative field (unlike Observer's
