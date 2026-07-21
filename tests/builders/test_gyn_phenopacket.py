@@ -49,3 +49,21 @@ def test_gyn_phenopacket_no_accession_falls_back(hpo_parser, now_ts):
 
     assert pp.subject.id == "patient"
     assert pp.id == "gyn-exam"
+
+
+def test_negated_narrative_finding_marked_excluded(hpo_parser, now_ts):
+    """Gwen Sally's impression explicitly documents an ABSENT finding
+    ("No evidence of hydronephrosis"). fenominal correctly flags this
+    SimpleTerm as excluded=True; the resulting PhenotypicFeature must
+    carry that same excluded=True rather than silently defaulting to
+    "observed/present" - same fix as observer_phenopacket.py's and
+    viewpoint_phenopacket.py's identical bug."""
+    raw = json.loads((DATA_DIR / "Gwen_Sally_pretty.json").read_text())
+
+    pp = build_gyn_phenopacket(raw, hpo_parser, now_ts)
+
+    hydronephrosis_features = [
+        pf for pf in pp.phenotypic_features if pf.type.id == "HP:0000126"
+    ]
+    assert len(hydronephrosis_features) == 1
+    assert hydronephrosis_features[0].excluded is True

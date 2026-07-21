@@ -44,6 +44,7 @@ def _hpo_resource(hpo_parser: HpoParser) -> pps2.Resource:
 def _narrative_feature(term) -> pps2.PhenotypicFeature:
     return pps2.PhenotypicFeature(
         type=pps2.OntologyClass(id=term.hpo_id, label=term.hpo_label),
+        excluded=term.excluded,
         description="Gyn exam impression",
     )
 
