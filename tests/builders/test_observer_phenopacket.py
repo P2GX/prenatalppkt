@@ -181,7 +181,14 @@ def test_hpo_id_dedup_keeps_first_occurrence(hpo_parser, now_ts):
 
 
 def test_apple_sally_real_fixture_smoke(hpo_parser, now_ts):
-    """End-to-end on a real Observer JSON fixture (single fetus, T2/T3)."""
+    """End-to-end on a real Observer JSON fixture (single fetus, T2/T3).
+
+    Checks the complete, specific set of expected findings rather than
+    just "produced something" - this is the exact list confirmed by
+    hand against the fixture's raw measurements and impression/anatomy
+    text on 2026-07-21. If this list ever needs to change, that's a
+    real behavior change worth a human looking at, not just a passing
+    "non-empty" check quietly continuing to pass through it."""
     raw = json.loads((DATA_DIR / "Apple_Sally_pretty.json").read_text())
 
     pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="applesally")
@@ -190,9 +197,43 @@ def test_apple_sally_real_fixture_smoke(hpo_parser, now_ts):
     pp = pps[0]
     assert pp.id == "applesally-fetus-1"
     assert pp.subject.id == "applesally-fetus-1"
-    assert pp.phenotypic_features  # has at least one term
     for pf in pp.phenotypic_features:
         assert pf.type.id.startswith("HP:")
+
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0000240",  # Abnormality of skull size (BPD/HC, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0000256",  # Macrocephaly (clinical impression, ruled out)
+        "HP:0002119",  # Ventriculomegaly (clinical impression, ruled out)
+        "HP:0001274",  # Agenesis of corpus callosum (clinical impression, present)
+        "HP:0045005",  # Neural tube defect (fetal anatomy, ruled out)
+    }
+
+
+@pytest.mark.xfail(
+    reason=(
+        "Known fenominal gap (see tests/etl/sections/test_fetal_anatomy.py::"
+        "test_dandy_walker_malformation_recognized_in_anatomy_text for the "
+        "section-parser-level version of this test) threads all the way "
+        "through the full builder pipeline: Apple Sally's impression text "
+        "names Dandy-Walker malformation exactly, but it never reaches the "
+        "final Phenopacket. Confirmed 2026-07-21. Remove once fenominal (or "
+        "a fallback) recognizes the phrase."
+    ),
+    strict=True,
+)
+def test_apple_sally_dandy_walker_reaches_final_phenopacket(hpo_parser, now_ts):
+    """Known gap, not a hidden bug: proves the missing finding isn't
+    just a section-parser quirk - it's genuinely absent from the final,
+    built Phenopacket a real caller would receive."""
+    raw = json.loads((DATA_DIR / "Apple_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="applesally")
+
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert "HP:0001305" in hpo_ids  # Dandy-Walker malformation
 
 
 def test_negated_narrative_finding_marked_excluded(hpo_parser, now_ts):
