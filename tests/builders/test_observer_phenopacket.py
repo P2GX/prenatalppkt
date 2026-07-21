@@ -236,6 +236,147 @@ def test_apple_sally_dandy_walker_reaches_final_phenopacket(hpo_parser, now_ts):
     assert "HP:0001305" in hpo_ids  # Dandy-Walker malformation
 
 
+def test_blue_sally_real_fixture_complete_findings(hpo_parser, now_ts):
+    """Same treatment as Apple: the complete, specific expected HPO set
+    for a second real fixture, confirmed by hand against its raw
+    measurements and impression/anatomy text on 2026-07-21."""
+    raw = json.loads((DATA_DIR / "Blue_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="bluesally")
+
+    assert len(pps) == 1
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0000240",  # Abnormality of skull size (BPD, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0000122",  # Unilateral renal agenesis (clinical impression, present)
+        "HP:0000813",  # Bicornuate uterus (clinical impression, present)
+        "HP:0045005",  # Neural tube defect (fetal anatomy narrative, ruled out)
+        "HP:0000104",  # Renal agenesis (fetal anatomy structured anomaly, present)
+    }
+
+
+@pytest.mark.xfail(
+    reason=(
+        "Known fenominal gap: Blue Sally's impression text says 'possible "
+        "unicornuate or bicornuate uterus' - only 'bicornuate' is "
+        "recognized. 'unicornuate uterus' tested alone IS recognized as "
+        "HP:0031909, so it's specifically the combined sentence that "
+        "defeats recognition. Confirmed 2026-07-21. Remove once fenominal "
+        "(or a fallback) recognizes the phrase in context."
+    ),
+    strict=True,
+)
+def test_blue_sally_unicornuate_uterus_reaches_final_phenopacket(hpo_parser, now_ts):
+    """Known gap, not a hidden bug."""
+    raw = json.loads((DATA_DIR / "Blue_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="bluesally")
+
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert "HP:0031909" in hpo_ids  # Unicornuate uterus
+
+
+def test_charm_sally_real_fixture_complete_findings(hpo_parser, now_ts):
+    """Same treatment as Apple/Blue: the complete, specific expected HPO
+    set for a third real fixture. Charm's BPD is genuinely above the
+    97th percentile (a real abnormal biometry reading, not ruled out -
+    excluded=False), unlike the other fixtures' normal BPD readings."""
+    raw = json.loads((DATA_DIR / "Charm_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="charmsally")
+
+    assert len(pps) == 1
+    pp = pps[0]
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert (
+        hpo_ids
+        == {
+            "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+            "HP:0000240",  # Abnormality of skull size (BPD, genuinely abnormal - >97th percentile)
+            "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+            "HP:0010866",  # Abdominal wall defect (clinical impression, present)
+            "HP:0001539",  # Omphalocele (clinical impression + fetal anatomy, present)
+            "HP:0045005",  # Neural tube defect (fetal anatomy narrative, ruled out)
+        }
+    )
+
+    skull_feature = next(
+        pf for pf in pp.phenotypic_features if pf.type.id == "HP:0000240"
+    )
+    assert skull_feature.excluded is False  # genuinely abnormal, not ruled out
+
+
+def test_diva_sally_real_fixture_complete_findings(hpo_parser, now_ts):
+    """Same treatment, for the one first-trimester (T1, CRL-only)
+    fixture in the corpus - see the T1-vs-T2/T3 parity TODO for why this
+    one deserves its own closer look beyond just this test."""
+    raw = json.loads((DATA_DIR / "Diva_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="divasally")
+
+    assert len(pps) == 1
+    pp = pps[0]
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {
+        "HP:0001511",  # Intrauterine growth retardation (CRL biometry, present)
+        "HP:0030716",  # Acrania (clinical impression + fetal anatomy, present)
+    }
+    # Known, already-documented gap (not new): CRL has no LOINC code in
+    # the mapping table, so this fixture never produces a measurement.
+    assert list(pp.measurements) == []
+
+
+def test_eclair_sally_real_fixture_complete_findings(hpo_parser, now_ts):
+    """Same treatment as Apple/Blue/Charm: the complete, specific
+    expected HPO set for a fifth real fixture."""
+    raw = json.loads((DATA_DIR / "Eclair_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(
+        raw, hpo_parser, now_ts, accession_id="eclairsally"
+    )
+
+    assert len(pps) == 1
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0000240",  # Abnormality of skull size (BPD, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0001627",  # Abnormal heart morphology (clinical impression, present)
+        "HP:0004383",  # Hypoplastic left ventricle (fetal anatomy, present)
+    }
+
+
+@pytest.mark.xfail(
+    reason=(
+        "Known fenominal gap: Eclair Sally's impression text describes "
+        "'a small ascending aorta, and a small but thick-walled left "
+        "ventricle and enlarged right heart chambers' - only a generic "
+        "'Abnormal heart morphology' parent term survives; the specific "
+        "right-heart finding never appears. 'right ventricular "
+        "hypertrophy' and 'cardiomegaly' tested alone ARE recognized, so "
+        "it's the full-sentence context that defeats recognition, not "
+        "missing vocabulary. Confirmed 2026-07-21. Remove once fenominal "
+        "(or a fallback) recognizes the phrase in context."
+    ),
+    strict=True,
+)
+def test_eclair_sally_right_heart_finding_reaches_final_phenopacket(hpo_parser, now_ts):
+    """Known gap, not a hidden bug. "Enlarged right heart chambers" is
+    clinically an enlarged-heart finding - HP:0001640 Cardiomegaly is
+    the single closest match, confirmed recognized when the exact label
+    is used in isolation."""
+    raw = json.loads((DATA_DIR / "Eclair_Sally_pretty.json").read_text())
+
+    pps = build_observer_phenopacket(
+        raw, hpo_parser, now_ts, accession_id="eclairsally"
+    )
+
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert "HP:0001640" in hpo_ids  # Cardiomegaly
+
+
 def test_negated_narrative_finding_marked_excluded(hpo_parser, now_ts):
     """Apple Sally's anatomy narrative explicitly documents an ABSENT
     finding ("without evidence of a neural tube defect"). fenominal
