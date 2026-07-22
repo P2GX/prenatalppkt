@@ -128,8 +128,10 @@ class TestObserverExtract:
         with pytest.raises(ValueError, match="Expected dict"):
             observer.extract("not a dict")
 
-    def test_extract_missing_required_measurements(self):
-        """Test extraction fails when required measurements missing."""
+    def test_extract_missing_required_measurements_still_returns_what_it_has(self):
+        """A fetus with only some of HC/BPD/AC/Femur - a targeted follow-up
+        scan, not a full anatomy survey - still returns whatever is present
+        and mappable, rather than raising."""
         data = {  # noqa: F841
             "fetuses": [
                 {
@@ -147,7 +149,18 @@ class TestObserverExtract:
             ]
         }
 
-        with pytest.raises(ValueError, match="Unrecognised scan type"):
+        term_bins = observer.extract(data)
+        assert len(term_bins) == 1
+        assert term_bins[0].description.startswith("HC:")
+
+    def test_extract_no_measurements_at_all_raises(self):
+        """A fetus with an empty measurements list still raises - there is
+        nothing to extract, unlike a partial-but-real targeted scan."""
+        data = {  # noqa: F841
+            "fetuses": [{"fetus": {"fetus_number": 1}, "measurements": []}]
+        }
+
+        with pytest.raises(ValueError, match="No measurements present"):
             observer.extract(data)
 
     def test_extract_skips_measurements_without_percentile(self):
