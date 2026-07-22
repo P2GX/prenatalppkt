@@ -310,8 +310,8 @@ def test_charm_sally_real_fixture_complete_findings(hpo_parser, now_ts):
 
 def test_diva_sally_real_fixture_complete_findings(hpo_parser, now_ts):
     """Same treatment, for the one first-trimester (T1, CRL-only)
-    fixture in the corpus - see the T1-vs-T2/T3 parity TODO for why this
-    one deserves its own closer look beyond just this test."""
+    fixture - see the T1-vs-T2/T3 parity TODO for why this one deserves
+    its own closer look beyond just this test."""
     raw = json.loads((DATA_DIR / "Diva_Sally_pretty.json").read_text())
 
     pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="divasally")
@@ -323,8 +323,10 @@ def test_diva_sally_real_fixture_complete_findings(hpo_parser, now_ts):
         "HP:0001511",  # Intrauterine growth retardation (CRL biometry, present)
         "HP:0030716",  # Acrania (clinical impression + fetal anatomy, present)
     }
-    # Known, already-documented gap (not new): CRL has no LOINC code in
-    # the mapping table, so this fixture never produces a measurement.
+    # build_observer_phenopacket doesn't populate pp.measurements for any
+    # fixture yet (verified: even Apple, whose four core biometries all
+    # carry real LOINC codes, produces an empty list too) - a separate,
+    # known builder-level gap, not specific to Diva or to CRL's LOINC code.
     assert list(pp.measurements) == []
 
 
