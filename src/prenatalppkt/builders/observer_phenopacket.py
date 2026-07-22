@@ -161,8 +161,10 @@ def build_observer_phenopacket(
 
     bins_by_fetus = observer.extract_all_fetuses(data)
     dating = parse_pregnancy_dating(data, "observer_json")
+    # Clinical impression (finalize.generalComment) is a single exam-level
+    # sign-off note in the Observer schema - there is no per-fetus version
+    # to read, so it is computed once and applied to every fetus below.
     impression = parse_clinical_impression(data, "observer_json", hpo_cr=hpo_cr)
-    anatomy = parse_fetal_anatomy(data, "observer_json", hpo_cr=hpo_cr)
     parse_estimated_fetal_weight(data, "observer_json")  # Plan 2 hook
     # TODO(@VarenyaJ): #90a Measurement enrichment (deferred 2026-07-13) -
     # emitting Measurement is unblocked, but turning an abnormal reading
@@ -174,10 +176,20 @@ def build_observer_phenopacket(
 
     hp_resource = _hpo_resource(hpo_parser)
     impression_terms = impression.get("hpo_terms", [])
-    anatomy_terms = anatomy.get("hpo_terms", [])
 
     phenopackets: list[pps2.Phenopacket] = []
-    for fetus_number, term_bins in bins_by_fetus.items():
+    for fetus_index, fetus_data in enumerate(data.get("fetuses", [])):
+        fetus_number = fetus_data.get("fetus", {}).get("fetus_number", 1)
+        term_bins = bins_by_fetus.get(fetus_number, [])
+        # Anatomy (structured findings + free-text narrative) is stored per
+        # fetus in the Observer schema, so it is read per fetus here too -
+        # a twin exam's second fetus must not inherit the first fetus's
+        # anatomy findings.
+        anatomy = parse_fetal_anatomy(
+            data, "observer_json", hpo_cr=hpo_cr, fetus_index=fetus_index
+        )
+        anatomy_terms = anatomy.get("hpo_terms", [])
+
         subject_ga = _resolve_subject_ga(dating, term_bins)
         features: list[pps2.PhenotypicFeature] = [
             _biometry_feature(tb) for tb in term_bins

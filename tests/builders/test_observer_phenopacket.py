@@ -132,6 +132,39 @@ def test_twin_returns_two_phenopackets(hpo_parser, now_ts):
     assert any("crown" in d.lower() or "crl" in d.lower() for d in twin2_descriptions)
 
 
+def test_twin_each_fetus_keeps_its_own_anatomy_finding(hpo_parser, now_ts):
+    """A twin exam's fetuses each carry their own real anatomy data in the
+    Observer schema - fetus 2 must not inherit fetus 1's anomaly, and vice
+    versa."""
+    fetus_1 = _fetus_full_biometry(1)
+    fetus_1["anatomy"] = [
+        {
+            "main": {"label": "Kidney", "anat_state": "Abnormal"},
+            "detail": [],
+            "anomalies": [{"description": "Renal agenesis"}],
+        }
+    ]
+    fetus_2 = _fetus_full_biometry(2)
+    fetus_2["anatomy"] = [
+        {
+            "main": {"label": "Skull", "anat_state": "Abnormal"},
+            "detail": [],
+            "anomalies": [{"description": "Acrania"}],
+        }
+    ]
+    data = _exam([fetus_1, fetus_2])
+
+    pps = build_observer_phenopacket(data, hpo_parser, now_ts, accession_id="TWIN")
+
+    assert len(pps) == 2
+    fetus1_hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    fetus2_hpo_ids = {pf.type.id for pf in pps[1].phenotypic_features}
+    assert "HP:0000104" in fetus1_hpo_ids  # Renal agenesis
+    assert "HP:0030716" not in fetus1_hpo_ids  # Acrania belongs to fetus 2 only
+    assert "HP:0030716" in fetus2_hpo_ids  # Acrania
+    assert "HP:0000104" not in fetus2_hpo_ids  # Renal agenesis belongs to fetus 1 only
+
+
 def test_subject_id_stable_across_exams_in_same_pregnancy(hpo_parser, now_ts):
     data = _exam([_fetus_full_biometry(1)])
 

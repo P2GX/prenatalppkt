@@ -13,7 +13,7 @@ from typing import Dict, List, Union
 
 
 def parse_fetal_anatomy(
-    data: Union[str, Dict], source_format: str, hpo_cr=None
+    data: Union[str, Dict], source_format: str, hpo_cr=None, fetus_index: int = 0
 ) -> Dict:
     """
     Parse fetal anatomy section.
@@ -29,6 +29,9 @@ def parse_fetal_anatomy(
         source_format: One of "observer_json", "viewpoint_text", "viewpoint_hl7"
         hpo_cr: Optional concept recognizer for HPO term extraction.
                 If provided, will extract HPO terms from anomaly descriptions.
+        fetus_index: For observer_json, which fetus's own anatomy data to
+                read (a twin/multi-fetus exam carries separate anatomy data
+                per fetus). Ignored for the other source formats.
 
     Returns:
         Dict with keys:
@@ -43,7 +46,7 @@ def parse_fetal_anatomy(
     if source_format == "observer_json":
         if isinstance(data, str):
             data = json.loads(data)
-        return _parse_observer_anatomy(data, hpo_cr)
+        return _parse_observer_anatomy(data, hpo_cr, fetus_index)
 
     elif source_format == "viewpoint_text":
         if not isinstance(data, str):
@@ -129,11 +132,12 @@ def _extract_hpo_terms(anatomy_text: str, anomalies: List[Dict], hpo_cr) -> List
     return hpo_cr.parse(combined_text)
 
 
-def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
+def _parse_observer_anatomy(json_data: Dict, hpo_cr=None, fetus_index: int = 0) -> Dict:
     """
     Extract anatomy findings from Observer JSON.
 
-    Paths:
+    Paths (per fetus - a twin exam's fetuses each carry their own anatomy
+    and anatomy_text, not a shared exam-level value):
     - fetuses[i].fetus.anatomy_text - free text narrative
     - fetuses[i].anatomy[] - structured findings (sibling of "fetus", not
       nested inside it)
@@ -145,10 +149,10 @@ def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
       - anomalies[].abnormal_or_normal_variant - classification
     """
     fetuses = json_data.get("fetuses", [])
-    if not fetuses:
+    if not fetuses or fetus_index >= len(fetuses):
         return _empty_result("observer_json")
 
-    fetus_block = fetuses[0].get("fetus", {})
+    fetus_block = fetuses[fetus_index].get("fetus", {})
     anatomy_text = fetus_block.get("anatomy_text", "")
 
     normal_structures: List[str] = []
@@ -156,7 +160,7 @@ def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
     not_visualized: List[str] = []
     anomalies: List[Dict] = []
 
-    for item in fetuses[0].get("anatomy", []):
+    for item in fetuses[fetus_index].get("anatomy", []):
         _process_anatomy_item(
             item, normal_structures, abnormal_structures, not_visualized, anomalies
         )
