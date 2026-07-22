@@ -400,3 +400,231 @@ nuchal_translucency:
     id: "HP:0010880"
     label: "Increased nuchal translucency"
     normal: false
+
+# ---------------------------------------------------------------------------
+# Long-bone and foot measurements. These carry a genuine percentile in real
+# Observer exports (unlike Cisterna Magna, Nasal Bone, Lateral Vent, and
+# Biorbit, which never carry one at all - not mapped here for that reason).
+#
+# TODO(@VarenyaJ): the HPO bin assignments below are SCAFFOLDING only, same
+# caveat as the first-trimester section above - general "Abnormal X
+# morphology" term for most bins, one specific hypoplasia/short term for
+# the low bins, needs clinical review before being relied on. No LOINC
+# codes yet; leave blank until a verified code is sourced rather than
+# guessing one.
+# ---------------------------------------------------------------------------
+
+tibia_length:
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0005736"
+      label: "Short tibia"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0005736"
+      label: "Short tibia"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0002992"
+      label: "Abnormal tibia morphology"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0002992"
+      label: "Abnormal tibia morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0002992"
+      label: "Abnormal tibia morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0002992"
+      label: "Abnormal tibia morphology"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0002992" # Need a specific HPO ID & Term here
+      label: "Abnormal tibia morphology" # Need a specific HPO ID & Term here
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0002992" # Need a specific HPO ID & Term here
+      label: "Abnormal tibia morphology" # Need a specific HPO ID & Term here
+      normal: false
+
+fibula_length:
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0003038"
+      label: "Fibular hypoplasia"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0003038"
+      label: "Fibular hypoplasia"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0002991"
+      label: "Abnormal fibula morphology"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0002991"
+      label: "Abnormal fibula morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0002991"
+      label: "Abnormal fibula morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0002991"
+      label: "Abnormal fibula morphology"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0002991" # Need a specific HPO ID & Term here
+      label: "Abnormal fibula morphology" # Need a specific HPO ID & Term here
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0002991" # Need a specific HPO ID & Term here
+      label: "Abnormal fibula morphology" # Need a specific HPO ID & Term here
+      normal: false
+
+radius_length:
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0002984"
+      label: "Hypoplasia of the radius"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0002984"
+      label: "Hypoplasia of the radius"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0002818"
+      label: "Abnormal morphology of the radius"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0002818"
+      label: "Abnormal morphology of the radius"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0002818"
+      label: "Abnormal morphology of the radius"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0002818"
+      label: "Abnormal morphology of the radius"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0002818" # Need a specific HPO ID & Term here
+      label: "Abnormal morphology of the radius" # Need a specific HPO ID & Term here
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0002818" # Need a specific HPO ID & Term here
+      label: "Abnormal morphology of the radius" # Need a specific HPO ID & Term here
+      normal: false
+
+ulna_length:
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0003022"
+      label: "Hypoplasia of the ulna"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0003022"
+      label: "Hypoplasia of the ulna"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0040071"
+      label: "Abnormal morphology of ulna"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0040071"
+      label: "Abnormal morphology of ulna"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0040071"
+      label: "Abnormal morphology of ulna"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0040071"
+      label: "Abnormal morphology of ulna"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0040071" # Need a specific HPO ID & Term here
+      label: "Abnormal morphology of ulna" # Need a specific HPO ID & Term here
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0040071" # Need a specific HPO ID & Term here
+      label: "Abnormal morphology of ulna" # Need a specific HPO ID & Term here
+      normal: false
+
+foot_length:
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0001773"
+      label: "Short foot"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0001773"
+      label: "Short foot"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0001760"
+      label: "Abnormal foot morphology"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0001760"
+      label: "Abnormal foot morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0001760"
+      label: "Abnormal foot morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0001760"
+      label: "Abnormal foot morphology"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0001760" # Need a specific HPO ID & Term here
+      label: "Abnormal foot morphology" # Need a specific HPO ID & Term here
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0001760" # Need a specific HPO ID & Term here
+      label: "Abnormal foot morphology" # Need a specific HPO ID & Term here
+      normal: false

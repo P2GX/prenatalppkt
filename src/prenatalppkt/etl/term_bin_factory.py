@@ -55,9 +55,6 @@ DEFAULT_MAPPINGS_PATH = (
 # - OFD (Occipitofrontal Diameter) abnormalities
 # These should map to more general skull/bone morphology terms for now
 #
-# TODO(@VarenyaJ): Tibia, Fibula, Radius, Ulna, Foot have verified general HPO
-# terms lined up and will get real YAML bins + _NAME_TO_YAML entries next.
-#
 # TODO(@VarenyaJ): Cisterna Magna, Nasal Bone, Lateral Vent left/right, and
 # Biorbit never carry a percentile in real Observer exports -
 # percentile_for_display is empty for every occurrence - so a YAML bin
@@ -84,6 +81,11 @@ class TermBinFactory:
         "OFD": "occipitofrontal_diameter",
         "CRL": "crown_rump_length",
         "NT": "nuchal_translucency",
+        "Tibia": "tibia_length",
+        "Fibula": "fibula_length",
+        "Radius": "radius_length",
+        "Ulna": "ulna_length",
+        "Foot": "foot_length",
     }
 
     def __init__(self, mappings_path: Optional[Path] = None) -> None:

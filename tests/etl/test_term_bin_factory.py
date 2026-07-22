@@ -154,6 +154,78 @@ class TestTermBinFactory:
         assert term_bin is None
 
     @pytest.mark.parametrize(
+        "name,low_percentile,expected_low_hpo,expected_low_label,mid_hpo,mid_label",
+        [
+            (
+                "Tibia",
+                1.9,
+                "HP:0005736",
+                "Short tibia",
+                "HP:0002992",
+                "Abnormal tibia morphology",
+            ),
+            (
+                "Fibula",
+                1.9,
+                "HP:0003038",
+                "Fibular hypoplasia",
+                "HP:0002991",
+                "Abnormal fibula morphology",
+            ),
+            (
+                "Radius",
+                1.9,
+                "HP:0002984",
+                "Hypoplasia of the radius",
+                "HP:0002818",
+                "Abnormal morphology of the radius",
+            ),
+            (
+                "Ulna",
+                0.1,
+                "HP:0003022",
+                "Hypoplasia of the ulna",
+                "HP:0040071",
+                "Abnormal morphology of ulna",
+            ),
+            (
+                "Foot",
+                0.1,
+                "HP:0001773",
+                "Short foot",
+                "HP:0001760",
+                "Abnormal foot morphology",
+            ),
+        ],
+    )
+    def test_create_term_bin_long_bone_and_foot_measurements(
+        self,
+        factory,
+        name,
+        low_percentile,
+        expected_low_hpo,
+        expected_low_label,
+        mid_hpo,
+        mid_label,
+    ):
+        """Tibia/Fibula/Radius/Ulna/Foot each have a real percentile in real
+        Observer exports, so - unlike Cisterna Magna/Nasal Bone/Lateral
+        Vent/Biorbit above - these get real YAML bins."""
+        low_bin = factory.create_term_bin(
+            name=name, value_mm=42.0, percentile=low_percentile
+        )
+        assert low_bin is not None
+        assert low_bin.hpo_id == expected_low_hpo
+        assert low_bin.hpo_label == expected_low_label
+        assert low_bin.normal is False
+
+        mid_bin = factory.create_term_bin(name=name, value_mm=42.0, percentile=50.0)
+        assert mid_bin is not None
+        assert mid_bin.hpo_id == mid_hpo
+        assert mid_bin.hpo_label == mid_label
+        assert mid_bin.normal is True
+
+    @pytest.mark.parametrize(
         "name",
         [
             "Cisterna Magna",
