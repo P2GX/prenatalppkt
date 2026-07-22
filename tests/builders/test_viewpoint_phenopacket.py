@@ -105,6 +105,38 @@ def test_twins_returns_two_phenopackets(hpo_parser, now_ts):
     assert [pp.id for pp in pps] == ["twin-fetus-1", "twin-fetus-2"]
 
 
+_TWIN_ANATOMY_HL7 = """
+MSH|^~\\&|ViewPoint|Hospital|||20260115120000||ORU^R01|123456|P|2.4
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+OBX|4|ST|BrainFetus.CerebellumAppearance^Cerebellum appearance|Fetus1|abnormal
+OBX|5|ST|BrainFetus.CerebellumDetails^Cerebellum details|Fetus1|cerebellar hypoplasia
+OBX|6|ST|Fetus.Identifier^Fetus Identifier|Fetus2|B
+OBX|7|NM|SkullFetus.HeadCircumference^HC|Fetus2|170^170.0|mm&millimeters^mm&millimeters
+OBX|8|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus2|45^45%|%&percent^fmt&formatted
+OBX|9|ST|BrainFetus.LateralVentricleLAppearance^Left lateral ventricle appearance|Fetus2|abnormal
+OBX|10|ST|BrainFetus.LateralVentricleLDetails^Left lateral ventricle details|Fetus2|ventriculomegaly
+"""
+
+
+def test_twin_each_fetus_keeps_its_own_anatomy_finding(hpo_parser, now_ts):
+    """A twin ViewPoint HL7 message's fetuses each carry their own
+    anatomy OBX segments (tagged Fetus1/Fetus2, the same sub-id biometry
+    segments use) - fetus 2 must not inherit fetus 1's anomaly."""
+    pps = build_viewpoint_phenopacket(
+        _TWIN_ANATOMY_HL7, hpo_parser, now_ts, accession_id="TWIN"
+    )
+
+    assert len(pps) == 2
+    fetus1_hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    fetus2_hpo_ids = {pf.type.id for pf in pps[1].phenotypic_features}
+    assert "HP:0001321" in fetus1_hpo_ids  # Cerebellar hypoplasia
+    assert "HP:0002119" not in fetus1_hpo_ids  # Ventriculomegaly is fetus 2's only
+    assert "HP:0002119" in fetus2_hpo_ids  # Ventriculomegaly
+    assert "HP:0001321" not in fetus2_hpo_ids  # Cerebellar hypoplasia is fetus 1's only
+
+
 def test_single_fetus_fixture_complete_findings(hpo_parser, now_ts):
     """viewpoint_hl7_test.txt end-to-end - pure normal biometry, no
     narrative text, so the complete expected HPO set is exactly the

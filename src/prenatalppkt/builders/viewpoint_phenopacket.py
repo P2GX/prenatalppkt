@@ -8,14 +8,6 @@ fetuses that yielded no phenotypic features.
 
 GA-resolution, feature-construction, dedup, and id-formatting helpers live
 in `builders/_shared.py`, shared with the Observer builder.
-
-TODO @VarenyaJ: parse_fetal_anatomy is computed once for the whole
-message and applied to every fetus below - unlike the Observer builder
-(fixed to read each fetus's own anatomy data), the ViewPoint HL7 anatomy
-parser has no per-fetus split yet, so a twin exam's second fetus would
-inherit the first fetus's anatomy findings the same way Observer's used
-to. Needs HL7 segment-level fetus disambiguation (e.g. by OBR set ID) to
-fix properly, not just an index parameter - real work, not done here.
 """
 
 from __future__ import annotations
@@ -68,14 +60,20 @@ def build_viewpoint_phenopacket(
     bins_by_fetus = viewpoint_hl7.extract_all_fetuses(data)
     dating = parse_pregnancy_dating(data, "viewpoint_hl7")
     impression = parse_clinical_impression(data, "viewpoint_hl7", hpo_cr=hpo_cr)
-    anatomy = parse_fetal_anatomy(data, "viewpoint_hl7", hpo_cr=hpo_cr)
 
     hp_resource = hpo_resource(hpo_parser)
     impression_terms = impression.get("hpo_terms", [])
-    anatomy_terms = anatomy.get("hpo_terms", [])
 
     phenopackets: list[pps2.Phenopacket] = []
     for fetus_number, term_bins in bins_by_fetus.items():
+        # Anatomy OBX segments carry the same "Fetus1"/"Fetus2" sub-id
+        # biometry segments do, so each fetus reads only its own findings -
+        # a twin exam's second fetus must not inherit the first fetus's.
+        anatomy = parse_fetal_anatomy(
+            data, "viewpoint_hl7", hpo_cr=hpo_cr, fetus_number=fetus_number
+        )
+        anatomy_terms = anatomy.get("hpo_terms", [])
+
         subject_ga = resolve_subject_ga(dating, term_bins)
         features: list[pps2.PhenotypicFeature] = [
             biometry_feature(tb) for tb in term_bins
