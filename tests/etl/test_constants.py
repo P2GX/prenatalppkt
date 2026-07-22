@@ -45,13 +45,24 @@ class TestBiometryMeasurement:
         """Test all_values returns all canonical names."""
         values = BiometryMeasurement.all_values()
         assert isinstance(values, set)
-        # 8 T2/T3 + 2 T1 (CRL, NT)
-        assert len(values) == 10
+        # 8 T2/T3 + 2 T1 (CRL, NT) + 11 newly-recognized labels
+        assert len(values) == 21
         assert "HC" in values
         assert "BPD" in values
         assert "Femur" in values
         assert "CRL" in values
         assert "NT" in values
+        assert "Tibia" in values
+        assert "Fibula" in values
+        assert "Radius" in values
+        assert "Ulna" in values
+        assert "Foot" in values
+        assert "Cisterna Magna" in values
+        assert "Nasal Bone" in values
+        assert "Lateral Vent left" in values
+        assert "Lateral Vent right" in values
+        assert "Biorbit" in values
+        assert "Mean Gest Sac" in values
 
 
 class TestSectionHeader:
@@ -161,13 +172,25 @@ class TestNameMaps:
     def test_observer_map_completeness(self):
         """Test that Observer map has all measurements."""
         # 8 T2/T3 + 2 T1 (CRL, NT) + "FL" alias for Femur
-        assert len(OBSERVER_NAME_MAP) == 11
+        # + 11 newly-recognized labels
+        assert len(OBSERVER_NAME_MAP) == 22
         assert "HC" in OBSERVER_NAME_MAP
         assert "BPD" in OBSERVER_NAME_MAP
         assert "Femur" in OBSERVER_NAME_MAP
         assert "FL" in OBSERVER_NAME_MAP
         assert "CRL" in OBSERVER_NAME_MAP
         assert "NT" in OBSERVER_NAME_MAP
+        assert "Tibia" in OBSERVER_NAME_MAP
+        assert "Fibula" in OBSERVER_NAME_MAP
+        assert "Radius" in OBSERVER_NAME_MAP
+        assert "Ulna" in OBSERVER_NAME_MAP
+        assert "Foot" in OBSERVER_NAME_MAP
+        assert "Cisterna Magna" in OBSERVER_NAME_MAP
+        assert "Nasal Bone" in OBSERVER_NAME_MAP
+        assert "Lateral Vent left" in OBSERVER_NAME_MAP
+        assert "Lateral Vent right" in OBSERVER_NAME_MAP
+        assert "Biorbit" in OBSERVER_NAME_MAP
+        assert "Mean Gest Sac" in OBSERVER_NAME_MAP
 
     def test_viewpoint_text_map_completeness(self):
         """Test that ViewPoint text map has all measurements."""

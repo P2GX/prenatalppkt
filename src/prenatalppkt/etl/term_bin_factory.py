@@ -21,7 +21,23 @@ logging.basicConfig(level=logging.DEBUG)
 REQUIRED_MEASUREMENTS: Set[str] = {"HC", "BPD", "AC", "Femur"}
 
 # Optional measurements (may or may not be present)
-OPTIONAL_MEASUREMENTS: Set[str] = {"Nuchal Fold", "Cerebellum", "Humerus", "OFD"}
+OPTIONAL_MEASUREMENTS: Set[str] = {
+    "Nuchal Fold",
+    "Cerebellum",
+    "Humerus",
+    "OFD",
+    "Tibia",
+    "Fibula",
+    "Radius",
+    "Ulna",
+    "Foot",
+    "Cisterna Magna",
+    "Nasal Bone",
+    "Lateral Vent left",
+    "Lateral Vent right",
+    "Biorbit",
+    "Mean Gest Sac",
+}
 
 # Default path to YAML mappings file
 DEFAULT_MAPPINGS_PATH = (
@@ -38,6 +54,18 @@ DEFAULT_MAPPINGS_PATH = (
 # - Humerus length abnormalities
 # - OFD (Occipitofrontal Diameter) abnormalities
 # These should map to more general skull/bone morphology terms for now
+#
+# TODO(@VarenyaJ): Tibia, Fibula, Radius, Ulna, Foot have verified general HPO
+# terms lined up and will get real YAML bins + _NAME_TO_YAML entries next.
+#
+# TODO(@VarenyaJ): Cisterna Magna, Nasal Bone, Lateral Vent left/right, and
+# Biorbit never carry a percentile in real Observer exports -
+# percentile_for_display is empty for every occurrence - so a YAML bin
+# would be unreachable dead code until a percentile source exists for
+# these measurement types (real growth-reference computation, or an
+# absolute-value fallback like nuchal_translucency's 3.5mm note). Mean Gest
+# Sac is dating-only (Observer flags it include_in_avg_ga_calc) and should
+# never get an HPO mapping at all.
 
 
 class TermBinFactory:

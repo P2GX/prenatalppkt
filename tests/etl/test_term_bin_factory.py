@@ -153,6 +153,28 @@ class TestTermBinFactory:
 
         assert term_bin is None
 
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "Cisterna Magna",
+            "Nasal Bone",
+            "Lateral Vent left",
+            "Lateral Vent right",
+            "Biorbit",
+            "Mean Gest Sac",
+        ],
+    )
+    def test_create_term_bin_no_percentile_source_measurements(self, factory, name):
+        """
+        These labels are recognized (BiometryMeasurement/OBSERVER_NAME_MAP) but
+        never carry a percentile in real Observer exports, so there is
+        deliberately no YAML mapping yet - same "recognized, not yet mapped"
+        shape as Nuchal Fold/Cerebellum/Humerus above.
+        """
+        term_bin = factory.create_term_bin(name=name, value_mm=10.0, percentile=50.0)
+
+        assert term_bin is None
+
     def test_create_term_bin_all_required_measurements(self, factory):
         """
         Test that all required measurements have HPO mappings.

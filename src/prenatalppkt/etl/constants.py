@@ -25,6 +25,17 @@ class BiometryMeasurement(Enum):
     HUMERUS_LENGTH = "Humerus"
     CROWN_RUMP_LENGTH = "CRL"
     NUCHAL_TRANSLUCENCY = "NT"
+    TIBIA_LENGTH = "Tibia"
+    FIBULA_LENGTH = "Fibula"
+    RADIUS_LENGTH = "Radius"
+    ULNA_LENGTH = "Ulna"
+    FOOT_LENGTH = "Foot"
+    CISTERNA_MAGNA = "Cisterna Magna"
+    NASAL_BONE = "Nasal Bone"
+    LATERAL_VENTRICLE_LEFT = "Lateral Vent left"
+    LATERAL_VENTRICLE_RIGHT = "Lateral Vent right"
+    BIORBITAL_DIAMETER = "Biorbit"
+    MEAN_GESTATIONAL_SAC = "Mean Gest Sac"
 
     @classmethod
     def from_string(cls, s: str) -> "BiometryMeasurement":
@@ -112,6 +123,17 @@ OBSERVER_NAME_MAP: Dict[str, BiometryMeasurement] = {
     "Humerus": BiometryMeasurement.HUMERUS_LENGTH,
     "CRL": BiometryMeasurement.CROWN_RUMP_LENGTH,
     "NT": BiometryMeasurement.NUCHAL_TRANSLUCENCY,
+    "Tibia": BiometryMeasurement.TIBIA_LENGTH,
+    "Fibula": BiometryMeasurement.FIBULA_LENGTH,
+    "Radius": BiometryMeasurement.RADIUS_LENGTH,
+    "Ulna": BiometryMeasurement.ULNA_LENGTH,
+    "Foot": BiometryMeasurement.FOOT_LENGTH,
+    "Cisterna Magna": BiometryMeasurement.CISTERNA_MAGNA,
+    "Nasal Bone": BiometryMeasurement.NASAL_BONE,
+    "Lateral Vent left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "Lateral Vent right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    "Biorbit": BiometryMeasurement.BIORBITAL_DIAMETER,
+    "Mean Gest Sac": BiometryMeasurement.MEAN_GESTATIONAL_SAC,
 }
 
 VIEWPOINT_TEXT_NAME_MAP: Dict[str, BiometryMeasurement] = {
