@@ -151,6 +151,29 @@ Plain meaning:
 
 > `TermObservation` is the older interpreted-measurement result object.
 
+## Shared builder helpers
+
+Module:
+
+```text
+prenatalppkt.builders._shared
+```
+
+The Observer and ViewPoint builders build one Phenopacket per fetus from a
+term-bin list plus narrative HPO terms, so this logic is identical between
+them and lives in one place instead of two:
+
+| Name | Meaning |
+|---|---|
+| `parse_ga_from_description(description)` | Finds gestational age in a `TermBin` description |
+| `resolve_subject_ga(dating, term_bins)` | Chooses the subject gestational age |
+| `biometry_feature(tb)` | Converts one `TermBin` to a Phenopacket feature |
+| `narrative_feature(term, description_prefix, subject_ga)` | Converts one narrative HPO term to a feature |
+| `dedup_by_hpo_id(features)` | Removes duplicate HPO ids |
+| `hpo_resource(hpo_parser)` | Builds HPO metadata (also reused by the gyn builder) |
+| `phenopacket_id(accession_id, fetus_number)` | Builds the Phenopacket id |
+| `subject_id(accession_id, fetus_number)` | Builds the subject id |
+
 ## Observer Phenopacket builder
 
 Module:
@@ -165,20 +188,14 @@ Public function:
 |---|---|---|
 | `build_observer_phenopacket(data, hpo_parser, created_at, accession_id=None)` | function | Builds one Phenopacket per fetus from Observer JSON |
 
-Helper functions:
-
-| Name | Meaning |
-|---|---|
-| `_parse_ga_from_description(description)` | Finds gestational age in a `TermBin` description |
-| `_resolve_subject_ga(dating, term_bins)` | Chooses the subject gestational age |
-| `_biometry_feature(tb)` | Converts one `TermBin` to a Phenopacket feature |
-| `_narrative_feature(term, description_prefix, subject_ga)` | Converts one narrative HPO term to a feature |
-| `_dedup_by_hpo_id(features)` | Removes duplicate HPO ids |
-| `_hpo_resource(hpo_parser)` | Builds HPO metadata |
-| `_phenopacket_id(accession_id, fetus_number)` | Builds the Phenopacket id |
+This module imports its GA-resolution, feature-construction, dedup, and
+id-formatting logic from `builders._shared` above rather than defining its
+own copies.
 
 Plain meaning:
 
 > The builder is the main assembly point. It turns parsed data into the final
-> GA4GH object.
+> GA4GH object. Each fetus in a twin/multi-fetus exam gets its own anatomy
+> findings - the anatomy section parser is called once per fetus, keyed by
+> that fetus's own list position, not once for the whole exam.
 

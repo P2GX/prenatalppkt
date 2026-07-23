@@ -52,7 +52,7 @@ prenatalppkt.etl.sections
 | `parse_clinical_indication(data, source_format)` | Reason for exam |
 | `parse_pregnancy_dating(data, source_format)` | LMP, EDD, gestational age |
 | `parse_clinical_impression(data, source_format, hpo_cr=None)` | Impression text and optional HPO terms |
-| `parse_fetal_anatomy(data, source_format, hpo_cr=None)` | Anatomy structures, anomalies, and optional HPO terms |
+| `parse_fetal_anatomy(data, source_format, hpo_cr=None, fetus_index=0, fetus_number=1)` | Anatomy structures, anomalies, and optional HPO terms - `fetus_index`/`fetus_number` select which fetus's own data to read (Observer/ViewPoint HL7 respectively) in a multi-fetus exam |
 | `parse_estimated_fetal_weight(data, source_format)` | EFW grams, percentile, method, growth category |
 | `parse_fetal_ratios(data, source_format)` | Ratio values and proportionality assessment |
 | `parse_maternal_history(data, source_format="viewpoint_text")` | Maternal history placeholder |

@@ -30,6 +30,17 @@ Members:
 | `HUMERUS_LENGTH` | `Humerus` |
 | `CROWN_RUMP_LENGTH` | `CRL` |
 | `NUCHAL_TRANSLUCENCY` | `NT` |
+| `TIBIA_LENGTH` | `Tibia` |
+| `FIBULA_LENGTH` | `Fibula` |
+| `RADIUS_LENGTH` | `Radius` |
+| `ULNA_LENGTH` | `Ulna` |
+| `FOOT_LENGTH` | `Foot` |
+| `CISTERNA_MAGNA` | `Cisterna Magna` |
+| `NASAL_BONE` | `Nasal Bone` |
+| `LATERAL_VENTRICLE_LEFT` | `Lateral Vent left` |
+| `LATERAL_VENTRICLE_RIGHT` | `Lateral Vent right` |
+| `BIORBITAL_DIAMETER` | `Biorbit` |
+| `MEAN_GESTATIONAL_SAC` | `Mean Gest Sac` |
 
 Methods:
 
