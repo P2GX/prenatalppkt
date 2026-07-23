@@ -68,9 +68,18 @@ def _extract_one_fetus(
     CRL/NT-only fetus yields T1 bins rather than failing the T2/T3 biometry
     requirement.
 
+    A fetus with some but not all of HC/BPD/AC/Femur (a targeted follow-up
+    scan re-checking one prior finding, rather than a full anatomy survey)
+    still returns whatever measurements are present and mappable - it does
+    not raise just because the full set isn't there. Real Observer exports
+    include exactly this: a scan re-measuring only BPD/HC to follow up a
+    ventriculomegaly finding, or only the limb bones to follow up a
+    suspected skeletal dysplasia. Only a fetus with no measurements at all
+    still raises.
+
     Raises:
-        UnsupportedScanTypeError: if the fetus is UNKNOWN, or classified T1 but
-            no CRL/NT measurement parsed.
+        UnsupportedScanTypeError: if the fetus has no measurements at all,
+            or is classified T1 but no CRL/NT measurement parsed.
     """
     fetus_number = _get_fetus_number(fetus_data)
     scan_type = classify_fetus(fetus_data)
@@ -84,13 +93,14 @@ def _extract_one_fetus(
             )
         return term_bins
 
-    if scan_type is ScanType.UNKNOWN:
-        raise UnsupportedScanTypeError(
-            "Unrecognised scan type; missing the full HC/BPD/AC/Femur biometry set"
-        )
+    if not (fetus_data.get("measurements") or []):
+        raise UnsupportedScanTypeError("No measurements present for this fetus")
 
     term_bins = _parse_measurements(fetus_data, fetus_number, factory)
-    validate_required_measurements(term_bins)
+    try:
+        validate_required_measurements(term_bins)
+    except ValueError as e:
+        logger.warning("Fetus %d: %s", fetus_number, e)
     return term_bins
 
 

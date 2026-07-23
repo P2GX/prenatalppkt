@@ -73,7 +73,18 @@ class GestationalAge:
         elif isinstance(weeks, float):
             w = math.floor(weeks)
             week_frac = weeks - w
-            d = int(week_frac * 7)
+            # Truncate to completed days (not round to nearest - a
+            # genuinely partial day, e.g. weeks=12.5, deliberately
+            # truncates to 3 days, not 4), but round to 6 decimal places
+            # first to absorb floating-point noise: float subtraction/
+            # multiplication here can land a hair under the intended
+            # whole number (e.g. a value that should give exactly 1 day
+            # computes as 0.9999999999999964), which int() alone would
+            # truncate down to 0, silently losing a day.
+            d = int(round(week_frac * 7, 6))
+            if d == 7:  # rounding pushed the fraction up into the next week
+                w += 1
+                d = 0
             return GestationalAge(weeks=w, days=d)
         raise TypeError("weeks must be int or float")
 

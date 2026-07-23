@@ -13,7 +13,11 @@ from typing import Dict, List, Union
 
 
 def parse_fetal_anatomy(
-    data: Union[str, Dict], source_format: str, hpo_cr=None
+    data: Union[str, Dict],
+    source_format: str,
+    hpo_cr=None,
+    fetus_index: int = 0,
+    fetus_number: int = 1,
 ) -> Dict:
     """
     Parse fetal anatomy section.
@@ -29,6 +33,13 @@ def parse_fetal_anatomy(
         source_format: One of "observer_json", "viewpoint_text", "viewpoint_hl7"
         hpo_cr: Optional concept recognizer for HPO term extraction.
                 If provided, will extract HPO terms from anomaly descriptions.
+        fetus_index: For observer_json, which fetus's own anatomy data to
+                read (a twin/multi-fetus exam carries separate anatomy data
+                per fetus, 0-based list position). Ignored for other formats.
+        fetus_number: For viewpoint_hl7, which fetus's OBX segments to read
+                (1-based, matching the "Fetus1"/"Fetus2" OBX-4 sub-id every
+                OBX segment carries - the same field biometry extraction
+                already groups by). Ignored for other formats.
 
     Returns:
         Dict with keys:
@@ -43,7 +54,7 @@ def parse_fetal_anatomy(
     if source_format == "observer_json":
         if isinstance(data, str):
             data = json.loads(data)
-        return _parse_observer_anatomy(data, hpo_cr)
+        return _parse_observer_anatomy(data, hpo_cr, fetus_index)
 
     elif source_format == "viewpoint_text":
         if not isinstance(data, str):
@@ -53,7 +64,7 @@ def parse_fetal_anatomy(
     elif source_format == "viewpoint_hl7":
         if not isinstance(data, str):
             raise ValueError("viewpoint_hl7 data must be a string")
-        return _parse_viewpoint_hl7_anatomy(data, hpo_cr)
+        return _parse_viewpoint_hl7_anatomy(data, hpo_cr, fetus_number)
 
     else:
         raise ValueError(f"Unsupported source_format: {source_format}")
@@ -129,11 +140,12 @@ def _extract_hpo_terms(anatomy_text: str, anomalies: List[Dict], hpo_cr) -> List
     return hpo_cr.parse(combined_text)
 
 
-def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
+def _parse_observer_anatomy(json_data: Dict, hpo_cr=None, fetus_index: int = 0) -> Dict:
     """
     Extract anatomy findings from Observer JSON.
 
-    Paths:
+    Paths (per fetus - a twin exam's fetuses each carry their own anatomy
+    and anatomy_text, not a shared exam-level value):
     - fetuses[i].fetus.anatomy_text - free text narrative
     - fetuses[i].anatomy[] - structured findings (sibling of "fetus", not
       nested inside it)
@@ -145,10 +157,10 @@ def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
       - anomalies[].abnormal_or_normal_variant - classification
     """
     fetuses = json_data.get("fetuses", [])
-    if not fetuses:
+    if not fetuses or fetus_index >= len(fetuses):
         return _empty_result("observer_json")
 
-    fetus_block = fetuses[0].get("fetus", {})
+    fetus_block = fetuses[fetus_index].get("fetus", {})
     anatomy_text = fetus_block.get("anatomy_text", "")
 
     normal_structures: List[str] = []
@@ -156,7 +168,7 @@ def _parse_observer_anatomy(json_data: Dict, hpo_cr=None) -> Dict:
     not_visualized: List[str] = []
     anomalies: List[Dict] = []
 
-    for item in fetuses[0].get("anatomy", []):
+    for item in fetuses[fetus_index].get("anatomy", []):
         _process_anatomy_item(
             item, normal_structures, abnormal_structures, not_visualized, anomalies
         )
@@ -269,7 +281,22 @@ _HL7_ANATOMY_STATE_MAP: Dict[str, str] = {
 }
 
 
-def _parse_viewpoint_hl7_anatomy(hl7: str, hpo_cr=None) -> Dict:
+_FETUS_NUMBER_PATTERN = re.compile(r"(\d+)$")
+
+
+def _obx_fetus_number(fields: List[str]) -> int:
+    """OBX-4 sub-id (e.g. "Fetus2") -> its int fetus number.
+
+    Missing/empty OBX-4 defaults to fetus 1, matching how
+    etl/extractors/viewpoint_hl7.py's biometry grouping treats an
+    absent sub-id.
+    """
+    fetus_id = fields[4] if len(fields) > 4 and fields[4] else "Fetus1"
+    match = _FETUS_NUMBER_PATTERN.search(fetus_id)
+    return int(match.group(1)) if match else 1
+
+
+def _parse_viewpoint_hl7_anatomy(hl7: str, hpo_cr=None, fetus_number: int = 1) -> Dict:
     """
     Extract anatomy from HL7 ORU^R01 messages.
 
@@ -285,10 +312,11 @@ def _parse_viewpoint_hl7_anatomy(hl7: str, hpo_cr=None) -> Dict:
     `hpo_terms` (the same role Observer's `anomalies[].description`
     plays). No `anatomy_text` narrative exists in HL7 - that's ViewPoint
     text's Impression section, handled by `parse_clinical_impression`.
-    Not fetus-aware, matching `_parse_observer_anatomy`'s own behavior
-    (it only reads `fetuses[0]` and the caller applies the same terms to
-    every fetus) - a multi-fetus exam's anatomy OBX lines aren't
-    per-fetus tagged in the same way biometry's are anyway.
+
+    Only segments carrying the requested fetus_number's OBX-4 sub-id are
+    read - confirmed against a real fixture that anatomy OBX segments
+    carry the same "Fetus1"/"Fetus2" sub-id biometry segments do, so a
+    twin exam's fetuses don't have to share anatomy findings.
     """
     obx_segments = [
         line.strip() for line in hl7.split("\n") if line.strip().startswith("OBX|")
@@ -302,6 +330,9 @@ def _parse_viewpoint_hl7_anatomy(hl7: str, hpo_cr=None) -> Dict:
     for segment in obx_segments:
         fields = segment.split("|")
         if len(fields) < 6:
+            continue
+
+        if _obx_fetus_number(fields) != fetus_number:
             continue
 
         identifier = fields[3].split("^")[0].split(".")[-1]

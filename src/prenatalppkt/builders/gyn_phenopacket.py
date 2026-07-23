@@ -14,6 +14,7 @@ from typing import Optional
 import phenopackets.schema.v2 as pps2
 from google.protobuf.timestamp_pb2 import Timestamp
 
+from prenatalppkt.builders._shared import hpo_resource
 from prenatalppkt.etl.sections import parse_clinical_impression
 from prenatalppkt.hpo import HpoParser
 
@@ -28,17 +29,6 @@ def _gyn_phenopacket_id(accession_id: Optional[str]) -> str:
     if accession_id:
         return accession_id.lower().replace("_", "-")
     return "gyn-exam"
-
-
-def _hpo_resource(hpo_parser: HpoParser) -> pps2.Resource:
-    return pps2.Resource(
-        id="hp",
-        name="human phenotype ontology",
-        url="http://purl.obolibrary.org/obo/hp.owl",
-        version=hpo_parser.get_version() or "unknown",
-        namespace_prefix="HP",
-        iri_prefix="http://purl.obolibrary.org/obo/HP_",
-    )
 
 
 def _narrative_feature(term) -> pps2.PhenotypicFeature:
@@ -112,7 +102,7 @@ def build_gyn_phenopacket(
         meta_data=pps2.MetaData(
             created=created_at,
             created_by="prenatalppkt",
-            resources=[_hpo_resource(hpo_parser)],
+            resources=[hpo_resource(hpo_parser)],
             phenopacket_schema_version="2.0",
         ),
     )

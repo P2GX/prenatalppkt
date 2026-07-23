@@ -167,8 +167,10 @@ def test_extract_all_fetuses_discordant_twins():
     assert len(result[2]) == 1
 
 
-def test_extract_all_fetuses_unknown_twin_is_empty(caplog):
-    """An UNKNOWN twin (partial biometry) surfaces as [] without aborting the rest."""
+def test_extract_all_fetuses_partial_twin_still_returns_what_it_has(caplog):
+    """A twin with partial biometry (a targeted follow-up scan, not a full
+    anatomy survey) still returns its one mappable measurement, with a
+    warning about the missing core measurements - not an empty list."""
     data = {
         "exam": {"fetus_count": 2},
         "fetuses": [_fetus_full_biometry(1), _fetus_partial(2)],
@@ -181,8 +183,12 @@ def test_extract_all_fetuses_unknown_twin_is_empty(caplog):
 
     assert set(result.keys()) == {1, 2}
     assert len(result[1]) == 4
-    assert result[2] == []
-    assert any("Fetus 2 skipped" in record.message for record in caplog.records)
+    assert len(result[2]) == 1
+    assert result[2][0].description.startswith("HC:")
+    assert any(
+        "Missing required biometry measurements" in record.message
+        for record in caplog.records
+    )
 
 
 def test_extract_all_fetuses_from_file(tmp_path):

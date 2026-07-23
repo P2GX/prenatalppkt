@@ -23,15 +23,22 @@ def now_ts() -> Timestamp:
 
 
 def test_gyn_phenopacket_uses_patient_as_subject(hpo_parser, now_ts):
+    """Checks the complete, specific expected HPO set rather than
+    "produced something." Gwen's note also says "No adnexal masses
+    identified" - HPO has no term for "adnexal mass" generically (only
+    the narrower "Ovarian mass," HP:0034879), so correctly finding
+    nothing for that sentence is expected, not a gap."""
     raw = json.loads((DATA_DIR / "Gwen_Sally_pretty.json").read_text())
 
     pp = build_gyn_phenopacket(raw, hpo_parser, now_ts, accession_id="GYN00001_G_1")
 
     assert pp.subject.id == "gyn00001"
     assert pp.subject.time_at_last_encounter.age.iso8601duration == "P41Y"
-    assert pp.phenotypic_features
     for pf in pp.phenotypic_features:
         assert pf.type.id.startswith("HP:")
+
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {"HP:0000126"}  # Hydronephrosis (ruled out)
 
 
 def test_gyn_subject_id_ignores_exam_count():

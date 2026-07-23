@@ -7,7 +7,7 @@ fail loudly. Mirrors the existing fixture-driven pattern at
 
 Four T2/T3 fixtures (Apple, Blue, Charm, Eclair) succeed and produce 4
 LOINC-coded TermBins each. Diva is first-trimester (CRL only); the extractor
-emits T1 bins (CRL) for it - these carry no LOINC biometry code.
+emits T1 bins (CRL) for it, now carrying CRL's own verified LOINC code.
 """
 
 from __future__ import annotations
@@ -158,8 +158,7 @@ def test_corpus_fixture_phenotypic_exporter_emits_measurements(fixture_name):
 def test_corpus_diva_first_trimester_extracts_t1_bins():
     """Diva is CRL-only (T1); the extractor emits T1 bins rather than raising.
 
-    CRL is a first-trimester measurement with no LOINC biometry code, so the
-    resulting bins carry ``loinc_code is None``.
+    CRL now carries a verified LOINC biometry code (LOINC:11957-8).
     """
     fixture = DATA_DIR / "Diva_Sally_pretty.json"
     if not fixture.exists():
@@ -167,4 +166,4 @@ def test_corpus_diva_first_trimester_extracts_t1_bins():
 
     term_bins = observer.extract_from_file(fixture)
     assert len(term_bins) >= 1
-    assert all(tb.loinc_code is None for tb in term_bins)
+    assert all(tb.loinc_code == "LOINC:11957-8" for tb in term_bins)

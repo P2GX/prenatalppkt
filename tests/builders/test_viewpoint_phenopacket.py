@@ -105,6 +105,77 @@ def test_twins_returns_two_phenopackets(hpo_parser, now_ts):
     assert [pp.id for pp in pps] == ["twin-fetus-1", "twin-fetus-2"]
 
 
+_TWIN_ANATOMY_HL7 = """
+MSH|^~\\&|ViewPoint|Hospital|||20260115120000||ORU^R01|123456|P|2.4
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+OBX|4|ST|BrainFetus.CerebellumAppearance^Cerebellum appearance|Fetus1|abnormal
+OBX|5|ST|BrainFetus.CerebellumDetails^Cerebellum details|Fetus1|cerebellar hypoplasia
+OBX|6|ST|Fetus.Identifier^Fetus Identifier|Fetus2|B
+OBX|7|NM|SkullFetus.HeadCircumference^HC|Fetus2|170^170.0|mm&millimeters^mm&millimeters
+OBX|8|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus2|45^45%|%&percent^fmt&formatted
+OBX|9|ST|BrainFetus.LateralVentricleLAppearance^Left lateral ventricle appearance|Fetus2|abnormal
+OBX|10|ST|BrainFetus.LateralVentricleLDetails^Left lateral ventricle details|Fetus2|ventriculomegaly
+"""
+
+
+def test_twin_each_fetus_keeps_its_own_anatomy_finding(hpo_parser, now_ts):
+    """A twin ViewPoint HL7 message's fetuses each carry their own
+    anatomy OBX segments (tagged Fetus1/Fetus2, the same sub-id biometry
+    segments use) - fetus 2 must not inherit fetus 1's anomaly."""
+    pps = build_viewpoint_phenopacket(
+        _TWIN_ANATOMY_HL7, hpo_parser, now_ts, accession_id="TWIN"
+    )
+
+    assert len(pps) == 2
+    fetus1_hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    fetus2_hpo_ids = {pf.type.id for pf in pps[1].phenotypic_features}
+    assert "HP:0001321" in fetus1_hpo_ids  # Cerebellar hypoplasia
+    assert "HP:0002119" not in fetus1_hpo_ids  # Ventriculomegaly is fetus 2's only
+    assert "HP:0002119" in fetus2_hpo_ids  # Ventriculomegaly
+    assert "HP:0001321" not in fetus2_hpo_ids  # Cerebellar hypoplasia is fetus 1's only
+
+
+def test_single_fetus_fixture_complete_findings(hpo_parser, now_ts):
+    """viewpoint_hl7_test.txt end-to-end - pure normal biometry, no
+    narrative text, so the complete expected HPO set is exactly the
+    three core biometry terms, all ruled out (normal readings)."""
+    data = (DATA_DIR / "viewpoint_hl7_test.txt").read_text()
+
+    pps = build_viewpoint_phenopacket(data, hpo_parser, now_ts, accession_id="TEST")
+
+    assert len(pps) == 1
+    pp = pps[0]
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0000240",  # Abnormality of skull size (HC, normal)
+    }
+    assert all(pf.excluded for pf in pp.phenotypic_features)
+
+
+def test_discrete_hl7_sample_fixture_complete_findings(hpo_parser, now_ts):
+    """Discrete_HL7_Messages_Sample.txt end-to-end - a GE ViewPoint
+    vendor demo export with joke placeholder patient data (confirmed
+    not real PHI), but real-shaped biometry OBX segments. Same shape as
+    viewpoint_hl7_test.txt: pure normal biometry, no narrative text."""
+    data = (DATA_DIR / "Discrete_HL7_Messages_Sample.txt").read_text()
+
+    pps = build_viewpoint_phenopacket(data, hpo_parser, now_ts, accession_id="DISC")
+
+    assert len(pps) == 1
+    pp = pps[0]
+    hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    assert hpo_ids == {
+        "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
+        "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0000240",  # Abnormality of skull size (HC, normal)
+    }
+    assert all(pf.excluded for pf in pp.phenotypic_features)
+
+
 def test_full_exam_fixture_has_biometry_and_anatomy_features(hpo_parser, now_ts):
     """End-to-end on a fixture with both biometry and the 16 anatomy fields.
 
@@ -125,6 +196,42 @@ def test_full_exam_fixture_has_biometry_and_anatomy_features(hpo_parser, now_ts)
     assert any(d == "Fetal anatomy" for d in descriptions)
     hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
     assert "HP:0001321" in hpo_ids  # Cerebellar hypoplasia, from the Details field
+
+
+_BIOMETRY_WITH_AORTIC_ARCH_HL7 = """
+MSH|^~\\&|ViewPoint|Hospital|||20260115130000||ORU^R01|123456|P|2.4
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+OBX|4|ST|ChestFetus.ChestAppearance^Chest appearance|Fetus1|abnormal
+OBX|5|ST|ChestFetus.ThoracicDescAortaDetails^Thoracic descending aorta details|Fetus1|mild aortic arch narrowing
+"""
+
+
+@pytest.mark.xfail(
+    reason=(
+        "Known fenominal gap (see tests/etl/sections/test_fetal_anatomy.py::"
+        "test_aortic_arch_narrowing_recognized_from_details_field for the "
+        "section-parser-level version) threads all the way through the full "
+        "builder pipeline: real biometry plus the real "
+        "ThoracicDescAortaDetails text never reaches the final Phenopacket. "
+        "Remove once fenominal (or a fallback) recognizes the phrase."
+    ),
+    strict=True,
+)
+def test_aortic_arch_narrowing_reaches_final_phenopacket(hpo_parser, now_ts):
+    """Known gap, not a hidden bug: proves the missing finding isn't just
+    a section-parser quirk - it's genuinely absent from the final, built
+    Phenopacket a real caller would receive. Needed its own synthetic
+    message since the real anatomy-only fixture has no biometry and so
+    produces zero Phenopackets through the full builder."""
+    pps = build_viewpoint_phenopacket(
+        _BIOMETRY_WITH_AORTIC_ARCH_HL7, hpo_parser, now_ts, accession_id="AORTIC"
+    )
+
+    assert len(pps) == 1
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert "HP:0001680" in hpo_ids  # Coarctation of aorta
 
 
 def test_round_trips_through_message_to_json(hpo_parser, now_ts):
