@@ -198,6 +198,42 @@ def test_full_exam_fixture_has_biometry_and_anatomy_features(hpo_parser, now_ts)
     assert "HP:0001321" in hpo_ids  # Cerebellar hypoplasia, from the Details field
 
 
+_BIOMETRY_WITH_AORTIC_ARCH_HL7 = """
+MSH|^~\\&|ViewPoint|Hospital|||20260115130000||ORU^R01|123456|P|2.4
+OBX|1|ST|Fetus.Identifier^Fetus Identifier|Fetus1|A
+OBX|2|NM|SkullFetus.HeadCircumference^HC|Fetus1|175^175.0|mm&millimeters^mm&millimeters
+OBX|3|NM|SkullFetus.VP_HeadCircumference_Percentile|Fetus1|50^50%|%&percent^fmt&formatted
+OBX|4|ST|ChestFetus.ChestAppearance^Chest appearance|Fetus1|abnormal
+OBX|5|ST|ChestFetus.ThoracicDescAortaDetails^Thoracic descending aorta details|Fetus1|mild aortic arch narrowing
+"""
+
+
+@pytest.mark.xfail(
+    reason=(
+        "Known fenominal gap (see tests/etl/sections/test_fetal_anatomy.py::"
+        "test_aortic_arch_narrowing_recognized_from_details_field for the "
+        "section-parser-level version) threads all the way through the full "
+        "builder pipeline: real biometry plus the real "
+        "ThoracicDescAortaDetails text never reaches the final Phenopacket. "
+        "Remove once fenominal (or a fallback) recognizes the phrase."
+    ),
+    strict=True,
+)
+def test_aortic_arch_narrowing_reaches_final_phenopacket(hpo_parser, now_ts):
+    """Known gap, not a hidden bug: proves the missing finding isn't just
+    a section-parser quirk - it's genuinely absent from the final, built
+    Phenopacket a real caller would receive. Needed its own synthetic
+    message since the real anatomy-only fixture has no biometry and so
+    produces zero Phenopackets through the full builder."""
+    pps = build_viewpoint_phenopacket(
+        _BIOMETRY_WITH_AORTIC_ARCH_HL7, hpo_parser, now_ts, accession_id="AORTIC"
+    )
+
+    assert len(pps) == 1
+    hpo_ids = {pf.type.id for pf in pps[0].phenotypic_features}
+    assert "HP:0001680" in hpo_ids  # Coarctation of aorta
+
+
 def test_round_trips_through_message_to_json(hpo_parser, now_ts):
     data = (DATA_DIR / "viewpoint_hl7_full_exam_test.txt").read_text()
     pp = build_viewpoint_phenopacket(
