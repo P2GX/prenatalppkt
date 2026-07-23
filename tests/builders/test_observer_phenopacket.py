@@ -219,9 +219,9 @@ def test_apple_sally_real_fixture_smoke(hpo_parser, now_ts):
     Checks the complete, specific set of expected findings rather than
     just "produced something" - this is the exact list confirmed by
     hand against the fixture's raw measurements and impression/anatomy
-    text on 2026-07-21. If this list ever needs to change, that's a
-    real behavior change worth a human looking at, not just a passing
-    "non-empty" check quietly continuing to pass through it."""
+    text. If this list ever needs to change, that's a real behavior
+    change worth a human looking at, not just a passing "non-empty"
+    check quietly continuing to pass through it."""
     raw = json.loads((DATA_DIR / "Apple_Sally_pretty.json").read_text())
 
     pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="applesally")
@@ -252,7 +252,7 @@ def test_apple_sally_real_fixture_smoke(hpo_parser, now_ts):
         "section-parser-level version of this test) threads all the way "
         "through the full builder pipeline: Apple Sally's impression text "
         "names Dandy-Walker malformation exactly, but it never reaches the "
-        "final Phenopacket. Confirmed 2026-07-21. Remove once fenominal (or "
+        "final Phenopacket. Remove once fenominal (or "
         "a fallback) recognizes the phrase."
     ),
     strict=True,
@@ -272,7 +272,7 @@ def test_apple_sally_dandy_walker_reaches_final_phenopacket(hpo_parser, now_ts):
 def test_blue_sally_real_fixture_complete_findings(hpo_parser, now_ts):
     """Same treatment as Apple: the complete, specific expected HPO set
     for a second real fixture, confirmed by hand against its raw
-    measurements and impression/anatomy text on 2026-07-21."""
+    measurements and impression/anatomy text."""
     raw = json.loads((DATA_DIR / "Blue_Sally_pretty.json").read_text())
 
     pps = build_observer_phenopacket(raw, hpo_parser, now_ts, accession_id="bluesally")
@@ -296,7 +296,7 @@ def test_blue_sally_real_fixture_complete_findings(hpo_parser, now_ts):
         "unicornuate or bicornuate uterus' - only 'bicornuate' is "
         "recognized. 'unicornuate uterus' tested alone IS recognized as "
         "HP:0031909, so it's specifically the combined sentence that "
-        "defeats recognition. Confirmed 2026-07-21. Remove once fenominal "
+        "defeats recognition. Remove once fenominal "
         "(or a fallback) recognizes the phrase in context."
     ),
     strict=True,
@@ -392,7 +392,7 @@ def test_eclair_sally_real_fixture_complete_findings(hpo_parser, now_ts):
         "right-heart finding never appears. 'right ventricular "
         "hypertrophy' and 'cardiomegaly' tested alone ARE recognized, so "
         "it's the full-sentence context that defeats recognition, not "
-        "missing vocabulary. Confirmed 2026-07-21. Remove once fenominal "
+        "missing vocabulary. Remove once fenominal "
         "(or a fallback) recognizes the phrase in context."
     ),
     strict=True,

@@ -66,7 +66,7 @@ def build_observer_phenopacket(
     # to read, so it is computed once and applied to every fetus below.
     impression = parse_clinical_impression(data, "observer_json", hpo_cr=hpo_cr)
     parse_estimated_fetal_weight(data, "observer_json")  # Plan 2 hook
-    # TODO(@VarenyaJ): #90a Measurement enrichment (deferred 2026-07-13) -
+    # TODO(@VarenyaJ): Measurement enrichment -
     # emitting Measurement is unblocked, but turning an abnormal reading
     # into a PhenotypicFeature needs a percentile/z-score threshold from
     # Ron/Michael/Peter, and TermBin only stores a binned PercentileRange

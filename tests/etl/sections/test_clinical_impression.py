@@ -75,7 +75,7 @@ class TestClinicalImpressionViewPointHL7:
 
 
 # ---------------------------------------------------------------------
-# Real Observer fixtures - ground truth confirmed by hand 2026-07-21
+# Real Observer fixtures - ground truth confirmed by hand
 # against each fixture's real impression text. Section-parser-level
 # companions to the builder-level tests in
 # tests/builders/test_observer_phenopacket.py.
@@ -99,7 +99,7 @@ class TestClinicalImpressionRealFixtures:
             "bicornuate uterus' - only 'bicornuate' is recognized. "
             "'unicornuate uterus' tested alone IS recognized as "
             "HP:0031909, so it's specifically the combined sentence that "
-            "defeats recognition. Confirmed 2026-07-21; see the matching "
+            "defeats recognition. See the matching "
             "builder-level test in test_observer_phenopacket.py. Remove "
             "once fenominal (or a fallback) recognizes the phrase in "
             "context."
@@ -151,8 +151,8 @@ class TestClinicalImpressionRealFixtures:
             "heart morphology' parent term survives. 'Cardiomegaly' "
             "tested alone (the closest match for 'enlarged...chambers') "
             "IS recognized, so it's the full-sentence context that "
-            "defeats recognition, not missing vocabulary. Confirmed "
-            "2026-07-21; see the matching builder-level test in "
+            "defeats recognition, not missing vocabulary. See "
+            "the matching builder-level test in "
             "test_observer_phenopacket.py. Remove once fenominal (or a "
             "fallback) recognizes the phrase in context."
         ),

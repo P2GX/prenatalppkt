@@ -23,8 +23,8 @@ from prenatalppkt.measurements.efw_measurement import (
 
 DATA_DIR = Path("tests/data")
 
-# Verified by running parse_estimated_fetal_weight() over each fixture on
-# 2026-06-09; pinned here so changes to the EFW parser surface as test diffs.
+# Verified by running parse_estimated_fetal_weight() over each fixture;
+# pinned here so changes to the EFW parser surface as test diffs.
 EXPECTED_EFW_GRAMS = {
     "Apple_Sally_pretty.json": 1014.8,
     "Blue_Sally_pretty.json": 598.2,
