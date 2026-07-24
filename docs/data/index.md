@@ -217,6 +217,3 @@ Important files:
 | `clusters.yaml` | Clinician-readable field groupings |
 | `extract_all.py` | Build data dictionary rows |
 | `render_readme.py` | Render Markdown docs |
-
-The data dictionary is documentation and field discovery support. It is not
-the main Phenopacket builder.

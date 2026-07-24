@@ -346,7 +346,3 @@ git push -u origin vj/my-change
 ```
 
 Open a pull request on GitHub.
-
-Do not use `--no-verify` to bypass hooks. Fix the issue and make a new commit.
-
-Do not add `Co-Authored-By` lines.
