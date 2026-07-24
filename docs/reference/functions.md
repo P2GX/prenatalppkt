@@ -93,8 +93,8 @@ prenatalppkt.biometry_reference
 | `get_id_to_label_map()` | `HpoParser` | Builds HPO id to label map |
 | `get_hpo_concept_recognizer()` | `HpoParser` | Returns text-to-HPO recognizer |
 | `get_version()` | `HpoParser` | Returns HPO version |
-| `HpoExactConceptRecognizer.parse(text)` | `prenatalppkt.hpo.hpo_exact_cr` | Exact text matching to HPO |
-| `FenominalConceptRecognizer.parse(text)` | Fenominal branch | Fenominal text matching with negation |
+| `HpoConceptRecognizer.parse(text)` | `prenatalppkt.hpo.hpo_cr` | Abstract base class - `parse()` is the extension point for any text-to-HPO backend |
+| `FenominalConceptRecognizer.parse(text)` | `prenatalppkt.hpo.fenominal_cr` | The one concrete implementation - fenominal text matching with negation |
 
 ## Genomics scaffold
 
