@@ -1,7 +1,7 @@
 """
 render_readme.py
 
-Read `docs/data_dictionary/comparison.csv` (or, when the real corpus
+Read `docs/data_dictionary/comparison.csv` (or, when the real data
 isn't available, `comparison.local.csv` - see paths.py) and emit three
 docs alongside it:
 
@@ -58,8 +58,8 @@ def render_readme(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
     lines.append("")
     lines.append(
         "Cross-source field inventory for the prenatalppkt ETL. Every "
-        "leaf path in the CUIMC Observer JSON corpus and every OBX-3 "
-        "identifier in the EVMS GE HL7 v2.4 corpus appears here, "
+        "leaf path in the CUIMC Observer JSON files and every OBX-3 "
+        "identifier in the EVMS GE HL7 v2.4 files appears here, "
         "grouped into clinical clusters, with Observer rows split per "
         "measurement label and Observer + HL7 fields paired on the "
         "same row whenever a label token and value class match."

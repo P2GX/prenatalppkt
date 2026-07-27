@@ -1,7 +1,7 @@
 """
 extract_all.py
 
-Walk both source corpora (CUIMC Observer JSON + EVMS GE HL7 v2.4),
+Walk both source data sets (CUIMC Observer JSON + EVMS GE HL7 v2.4),
 attach a per-row semantic value class, propagate Observer list
 labels (so `fetuses[].measurements[].value` splits into one row per
 label: BPD / AC / HC / Femur / ...), pair Observer rows with HL7
@@ -17,7 +17,7 @@ Inputs:
     When the external prenatal-site-data checkout isn't present, falls
     back to this repo's own synthetic fixtures under tests/data/ and
     writes to `.local` suffixed output files instead (see paths.py) -
-    never overwrites the real corpus-derived comparison.csv.
+    never overwrites the real data-derived comparison.csv.
 
 Output:
     prenatalppkt/docs/data_dictionary/comparison.csv (16 columns;

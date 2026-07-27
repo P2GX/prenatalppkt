@@ -1,9 +1,8 @@
-"""LOINC workflow corpus test - one expected output per Observer JSON fixture.
+"""LOINC workflow test - one expected output per Observer JSON fixture.
 
 Encodes how the Observer ETL + LOINC layer is expected to process each file
 in ``tests/data/*_pretty.json`` so changes that drift from these expectations
-fail loudly. Mirrors the existing fixture-driven pattern at
-``tests/parser/observer/fetuses/test_fetus_measurements_parser.py``.
+fail loudly.
 
 Four T2/T3 fixtures (Apple, Blue, Charm, Eclair) succeed and produce 4
 LOINC-coded TermBins each. Diva is first-trimester (CRL only); the extractor

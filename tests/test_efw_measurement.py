@@ -1,4 +1,4 @@
-"""Tests for the EFW Measurement builder + corpus expectations.
+"""Tests for the EFW Measurement builder + real-fixture expectations.
 
 Parallels `tests/test_loinc_workflow_corpus.py` in structure: declarative
 expected outputs per fixture so the EFW pipeline's behaviour is encoded as

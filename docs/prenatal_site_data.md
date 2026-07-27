@@ -1,4 +1,4 @@
-# prenatal-site-data corpus reference
+# prenatal-site-data reference
 
 Background reading for anyone (human or agent) about to parse, lint,
 or transform the prenatal data flowing through this library.
@@ -25,7 +25,7 @@ PreGen/
       |- ... (7 phenotype files total)
 ```
 
-All patient identifiers in the corpus are fictional (Sally Apple,
+All patient identifiers in this data are fictional (Sally Apple,
 Sally Blue, Sally Charm, Sally Diva, Sally Eclair; HL7 Phenotype
 Test 1-7). Safe to reference in code hosts and public artifacts.
 Refresh the sibling dir from the upstream private mirror when new
@@ -96,7 +96,7 @@ Each `fetuses[].measurements[]` entry has this shape:
 }
 ```
 
-Labels observed in this corpus: `AC`, `BPD`, `Cerebellum`, `Femur`,
+Labels observed in this data: `AC`, `BPD`, `Cerebellum`, `Femur`,
 `HC`, `Nuchal Fold`, `CRL`, `Humerus`. Same shape applies to
 `ratios[]` (label = `HC/AC`, `FL/AC`, `FL/BPD`) and `efws[]`
 (label = `EFW (AC, FL, HC)` etc.).
@@ -140,7 +140,7 @@ The first `^`-segment of OBX-3 is the primary identifier
 (`SkullFetus.HeadCircumference`); short label and long label live
 in the remaining segments and are typically discarded.
 
-### Type distribution in this corpus
+### Type distribution in this data
 
 | OBX-2 type | Count | Example |
 |---|---|---|
@@ -166,7 +166,7 @@ The `<BodyPart>Fetus` pattern is the anatomy-region grouping; the
 non-suffixed names (`Exam`, `PatientHistory`, etc.) carry
 encounter / demographic data.
 
-## Cross-corpus quirks worth remembering
+## Cross-format quirks worth remembering
 
 - **Numeric percentiles**: Observer stores percentile both as a
   float (`calculated_percentile = 55.6`) and as a `%`-suffixed
