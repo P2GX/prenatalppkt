@@ -67,7 +67,7 @@ prenatalppkt.etl.sections
 | `BiometryMappingLoader.load(path)` | `prenatalppkt.mapping_loader` | Reads YAML mapping rules |
 | `TermBinFactory.create_term_bin(...)` | `prenatalppkt.etl.term_bin_factory` | Creates one mapped `TermBin` |
 | `validate_required_measurements(term_bins)` | `prenatalppkt.etl.term_bin_factory` | Checks HC, BPD, AC, and Femur are present |
-| `normalize_measurement_name(raw_name, format_map=None)` | `prenatalppkt.etl.constants` | Maps raw labels to canonical names |
+| `normalize_measurement_name(raw_name, format_map=None)` | `prenatalppkt.etl.constants` | Maps raw labels to standard names |
 | `is_target_measurement(raw_name, format_map=None)` | `prenatalppkt.etl.constants` | Checks if a raw label is recognized |
 
 ## Reference lookup

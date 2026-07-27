@@ -66,7 +66,7 @@ def render_readme(rows: list[dict[str, str]], cluster_order: list[str]) -> str:
     )
     lines.append("")
     lines.append(
-        f"`{IN_CSV.relative_to(PPKT_ROOT)}` is the canonical artifact "
+        f"`{IN_CSV.relative_to(PPKT_ROOT)}` is the primary artifact "
         f"({total_rows} rows: {obs_rows} carry an Observer field, "
         f"{vp_rows} carry an HL7 field, {paired} pair both on one "
         "row). These docs are generated from it; edit "

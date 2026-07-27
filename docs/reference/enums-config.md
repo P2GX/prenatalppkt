@@ -46,8 +46,8 @@ Methods:
 
 | Method | Meaning |
 |---|---|
-| `from_string(s)` | Convert canonical string to enum member |
-| `all_values()` | Return all canonical measurement strings |
+| `from_string(s)` | Convert standard string to enum member |
+| `all_values()` | Return all standard measurement strings |
 
 ## Biometry type enum
 
@@ -151,7 +151,7 @@ prenatalppkt.etl.constants
 | `VIEWPOINT_HL7_NAME_MAP` | Maps ViewPoint HL7 names to `BiometryMeasurement` |
 | `GENERIC_NAME_MAP` | Catches common label variations |
 
-These maps let different source systems feed the same canonical measurement
+These maps let different source systems feed the same standard measurement
 names.
 
 ## HPO mapping config

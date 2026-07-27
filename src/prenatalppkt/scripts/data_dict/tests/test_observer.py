@@ -27,7 +27,7 @@ from prenatalppkt.scripts.data_dict.extract.observer import (
     ],
 )
 def test_json_type_canonical_shapes(value, expected):
-    """All canonical JSON value shapes classify into the right raw token."""
+    """All standard JSON value shapes classify into the right raw token."""
     assert json_type(value) == expected
 
 

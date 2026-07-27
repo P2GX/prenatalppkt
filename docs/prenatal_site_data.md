@@ -35,7 +35,7 @@ site exports arrive.
 
 Five `*_pretty.json` files, ~1,700 lines each. Each file is one
 exam encounter for one patient, exported from the Observer system
-at CUIMC. The pretty-printed variant is the canonical parsing
+at CUIMC. The pretty-printed variant is the parsing
 target; the raw `.json` siblings are byte-equivalent without the
 indentation.
 

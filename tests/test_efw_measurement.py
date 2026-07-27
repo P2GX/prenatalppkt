@@ -34,7 +34,7 @@ EXPECTED_EFW_GRAMS = {
 
 
 def test_builder_shape():
-    """Builder emits the canonical Phenopacket v2 Measurement dict."""
+    """Builder emits the standard Phenopacket v2 Measurement dict."""
     msmt = build_efw_measurement({"efw_grams": 1014.8})
 
     assert msmt == {

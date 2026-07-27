@@ -27,10 +27,10 @@ T2T3_REQUIRED_LABELS = frozenset({"AC", "BPD", "HC", "Femur"})
 
 
 def _canonical_labels(measurements: list[dict[str, Any]]) -> set[str]:
-    """Collect canonical measurement names from a fetus's measurement list.
+    """Collect standard measurement names from a fetus's measurement list.
 
     Each raw label/name is mapped through OBSERVER_NAME_MAP when known; unknown
-    labels are kept as-is so they simply fail to match the canonical sets.
+    labels are kept as-is so they simply fail to match the standard sets.
     """
     canonical: set[str] = set()
     for m in measurements:

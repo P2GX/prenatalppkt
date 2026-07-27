@@ -486,7 +486,7 @@ class TestObserverT1:
             observer.extract(_t1_fixture(crl_no_pct, nt_no_pct))
 
     def test_corpus_diva_returns_termbins(self):
-        # Diva is the canonical T1 fixture: CRL only, percentile=0 -> <1%.
+        # Diva is the reference T1 fixture: CRL only, percentile=0 -> <1%.
         # Previously raised; now lands in the IUGR bin via the unified dispatch.
         path = (
             Path(__file__).resolve().parents[3]
