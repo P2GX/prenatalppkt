@@ -1,12 +1,12 @@
 """
 Shared path resolution for extract_all.py and render_readme.py.
 
-Prefers the real EVMS/CUIMC corpus (external prenatal-site-data
+Prefers the real EVMS/CUIMC data (external prenatal-site-data
 checkout, sibling to this repo). When that checkout isn't present, falls
 back to this repo's own synthetic fixtures under tests/data/, writing
 output to `.local` suffixed files instead of the real filenames - so a
-regeneration run without the real corpus never overwrites the real
-corpus-derived comparison.csv/README.md/schema.md/clusters.md.
+regeneration run without the real data never overwrites the real
+data-derived comparison.csv/README.md/schema.md/clusters.md.
 """
 
 from __future__ import annotations
@@ -36,9 +36,20 @@ _REAL_HL7_DIR = (
     / "GE_export_of_EVMS_test_cases"
 )
 
-USING_REAL_CORPUS = _REAL_OBSERVER_DIR.is_dir() and _REAL_HL7_DIR.is_dir()
 
-if USING_REAL_CORPUS:
+def _has_matching_files(directory: Path, pattern: str) -> bool:
+    """True only if the directory exists AND actually contains a file
+    matching pattern - a directory that exists but is empty or not yet
+    populated should fall through to the synthetic fixtures below, not
+    be treated as usable real data."""
+    return directory.is_dir() and any(directory.glob(pattern))
+
+
+USING_REAL_DATA = _has_matching_files(
+    _REAL_OBSERVER_DIR, "*_pretty.json"
+) and _has_matching_files(_REAL_HL7_DIR, "phenotype_*.txt")
+
+if USING_REAL_DATA:
     OBSERVER_DIR = _REAL_OBSERVER_DIR
     HL7_DIR = _REAL_HL7_DIR
     HL7_GLOBS = ["phenotype_*.txt"]

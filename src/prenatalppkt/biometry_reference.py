@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 RESOURCES_DIR = Path(__file__).resolve().parents[2] / "data" / "parsed"
 
 # -----------------------
-# Supported measures (canonical: long form)
+# Supported measures (standard: long form)
 # -----------------------
 
 SUPPORTED_MEASURES = {
@@ -277,7 +277,7 @@ class FetalGrowthPercentiles:
 
         # Match each supported measurement
         for long_key, label in SUPPORTED_MEASURES.items():
-            # Exact match on normalized canonical name
+            # Exact match on normalized standard name
             canonical_lower = label.lower()
             subset = df[df[measure_col] == canonical_lower]
 

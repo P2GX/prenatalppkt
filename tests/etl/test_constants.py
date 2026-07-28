@@ -42,7 +42,7 @@ class TestBiometryMeasurement:
             BiometryMeasurement.from_string("InvalidMeasurement")
 
     def test_all_values(self):
-        """Test all_values returns all canonical names."""
+        """Test all_values returns all standard names."""
         values = BiometryMeasurement.all_values()
         assert isinstance(values, set)
         # 8 T2/T3 + 2 T1 (CRL, NT) + 11 newly-recognized labels
@@ -132,7 +132,7 @@ class TestNormalizeMeasurementName:
         result = normalize_measurement_name("Femur", OBSERVER_NAME_MAP)
         assert result == "Femur"
 
-        # Real Observer 7 exports emit "FL"; normalize to the canonical "Femur".
+        # Real Observer 7 exports emit "FL"; normalize to the standard "Femur".
         result = normalize_measurement_name("FL", OBSERVER_NAME_MAP)
         assert result == "Femur"
 

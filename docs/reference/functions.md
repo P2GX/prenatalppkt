@@ -67,7 +67,7 @@ prenatalppkt.etl.sections
 | `BiometryMappingLoader.load(path)` | `prenatalppkt.mapping_loader` | Reads YAML mapping rules |
 | `TermBinFactory.create_term_bin(...)` | `prenatalppkt.etl.term_bin_factory` | Creates one mapped `TermBin` |
 | `validate_required_measurements(term_bins)` | `prenatalppkt.etl.term_bin_factory` | Checks HC, BPD, AC, and Femur are present |
-| `normalize_measurement_name(raw_name, format_map=None)` | `prenatalppkt.etl.constants` | Maps raw labels to canonical names |
+| `normalize_measurement_name(raw_name, format_map=None)` | `prenatalppkt.etl.constants` | Maps raw labels to standard names |
 | `is_target_measurement(raw_name, format_map=None)` | `prenatalppkt.etl.constants` | Checks if a raw label is recognized |
 
 ## Reference lookup
@@ -93,8 +93,8 @@ prenatalppkt.biometry_reference
 | `get_id_to_label_map()` | `HpoParser` | Builds HPO id to label map |
 | `get_hpo_concept_recognizer()` | `HpoParser` | Returns text-to-HPO recognizer |
 | `get_version()` | `HpoParser` | Returns HPO version |
-| `HpoExactConceptRecognizer.parse(text)` | `prenatalppkt.hpo.hpo_exact_cr` | Exact text matching to HPO |
-| `FenominalConceptRecognizer.parse(text)` | Fenominal branch | Fenominal text matching with negation |
+| `HpoConceptRecognizer.parse(text)` | `prenatalppkt.hpo.hpo_cr` | Abstract base class - `parse()` is the extension point for any text-to-HPO backend |
+| `FenominalConceptRecognizer.parse(text)` | `prenatalppkt.hpo.fenominal_cr` | The one concrete implementation - fenominal text matching with negation |
 
 ## Genomics scaffold
 

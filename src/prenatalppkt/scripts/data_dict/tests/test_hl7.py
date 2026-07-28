@@ -13,7 +13,7 @@ from prenatalppkt.scripts.data_dict.extract.hl7 import (
 
 
 def test_parse_obx_keeps_identifier_short_long_and_value():
-    """A canonical OBX-3 splits into (type, identifier, short_label, long_label, value)."""
+    """A standard OBX-3 splits into (type, identifier, short_label, long_label, value)."""
     parsed = parse_obx_line(
         "OBX|1|NM|SkullFetus.BiparietalDiameter^BPD^Biparietal diameter"
         "|Fetus1|62.1^62.1|mm&millimeters||||||||20250923"

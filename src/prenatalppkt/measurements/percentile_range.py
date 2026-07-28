@@ -36,7 +36,7 @@ class PercentileRange:
     @property
     def bin_key(self) -> str:
         """
-        Return a canonical bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p')
+        Return a standard bin label (e.g. 'below_3p', 'between_5p_10p', 'above_97p')
         that identifies the percentile interval of this measurement result.
 
         This property is used by higher-level evaluators (e.g., SonographicMeasurement)
@@ -148,7 +148,7 @@ class PercentileRange:
         Return a minimal default mapping from percentile intervals to qualitative labels.
 
         This is a placeholder used by some early subclasses or experimental adapters
-        (e.g., mapping only 'low' or 'high' extremes). The canonical eight-bin mapping
+        (e.g., mapping only 'low' or 'high' extremes). The standard eight-bin mapping
         and HPO assignment logic now live in YAML and `TermObservation`.
 
         Returns

@@ -28,4 +28,3 @@ This library integrates two major sources of fetal growth standards:
 ## Observer & Viewpoint Context
 - **Observer** datasets may be U.S.-centric and align with NICHD tables.
 - **Viewpoint** datasets may be global and better matched to INTERGROWTH.
-- This library supports both, with explicit source control.

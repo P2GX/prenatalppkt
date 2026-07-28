@@ -127,7 +127,7 @@ class TestViewPointHL7Extract:
         - ViewPoint uses different field names in different contexts
         - VIEWPOINT_HL7_NAME_MAP in constants.py handles this mapping
 
-        Why this matters: Real HL7 files use 'FemurUndefinedLength' instead of 'FemurLength'. The extractor must normalize these variants to canonical names (HC, BPD, AC, Femur).
+        Why this matters: Real HL7 files use 'FemurUndefinedLength' instead of 'FemurLength'. The extractor must normalize these variants to standard names (HC, BPD, AC, Femur).
 
         Real test file (viewpoint_hl7_test.txt) DOES use FemurUndefinedLength, so this test validates real-world naming.
         """

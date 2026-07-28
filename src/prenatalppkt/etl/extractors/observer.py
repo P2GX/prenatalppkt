@@ -280,7 +280,7 @@ def _parse_single_measurement(
         logger.debug(f"Skipping {label}: not a target measurement")
         return None
 
-    # Normalize label to canonical name
+    # Normalize label to standard name
     canonical_name = OBSERVER_NAME_MAP[label].value
 
     # Extract required fields

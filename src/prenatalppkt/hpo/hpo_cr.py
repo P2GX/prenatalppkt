@@ -7,8 +7,7 @@ Abstract base class for HPO concept recognizers
 import abc
 from typing import List
 
-# from .hp_term import HpTerm
-from .simple_term import SimpleTerm  # Changed from HpTerm
+from .simple_term import SimpleTerm
 
 
 class HpoConceptRecognizer(metaclass=abc.ABCMeta):

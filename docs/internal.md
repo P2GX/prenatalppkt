@@ -92,15 +92,18 @@ Important classes:
 
 ```python
 HpoParser
-HpoExactConceptRecognizer
+HpoConceptRecognizer
+FenominalConceptRecognizer
 SimpleTerm
 ```
 
 Current branch:
 
 - `HpoParser` loads HPO.
-- `get_hpo_concept_recognizer()` returns an exact text matcher.
-- The matcher returns `SimpleTerm` objects.
+- `HpoConceptRecognizer` is an abstract base class; `FenominalConceptRecognizer`
+  is its one concrete implementation, wrapping fenominal.
+- `get_hpo_concept_recognizer()` returns a `FenominalConceptRecognizer`.
+- The recognizer returns `SimpleTerm` objects.
 
 Fenominal branch:
 

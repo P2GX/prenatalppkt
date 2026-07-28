@@ -12,7 +12,7 @@ class BiometryMeasurement(Enum):
     """
     Standardized biometry measurement names across all input formats.
 
-    Values represent the canonical name used throughout the ETL pipeline.
+    Values represent the standard name used throughout the ETL pipeline.
     """
 
     HEAD_CIRCUMFERENCE = "HC"
@@ -40,7 +40,7 @@ class BiometryMeasurement(Enum):
     @classmethod
     def from_string(cls, s: str) -> "BiometryMeasurement":
         """
-        Return the enum member whose canonical name matches the given string.
+        Return the enum member whose standard name matches the given string.
 
         Args:
             s: String representation of measurement name
@@ -59,7 +59,7 @@ class BiometryMeasurement(Enum):
 
     @classmethod
     def all_values(cls) -> Set[str]:
-        """Return set of all canonical measurement names."""
+        """Return set of all standard measurement names."""
         return {member.value for member in cls}
 
 
@@ -108,7 +108,7 @@ class SectionHeader(Enum):
 
 
 # Mapping of input-specific names to standardized BiometryMeasurement
-# This allows each extractor to map its format-specific names to canonical names
+# This allows each extractor to map its format-specific names to standard names
 
 OBSERVER_NAME_MAP: Dict[str, BiometryMeasurement] = {
     # Observer JSON uses these exact labels in measurements array
@@ -211,7 +211,7 @@ def normalize_measurement_name(
     raw_name: str, format_map: Dict[str, BiometryMeasurement] = None
 ) -> str:
     """
-    Normalize a raw measurement name to canonical form.
+    Normalize a raw measurement name to standard form.
 
     First tries format-specific mapping (if provided), then falls back to generic mapping.
 

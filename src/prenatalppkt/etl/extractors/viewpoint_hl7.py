@@ -240,7 +240,7 @@ def _parse_measurement_code(code: str) -> Optional[Tuple[str, str]]:
         code: OBX code field (e.g., "SkullFetus.HeadCircumference^HC")
 
     Returns:
-        Tuple of (canonical_name, field_type) or None
+        Tuple of (the standardized name, field_type) or None
     """
     # Extract measurement code (before ^), then strip the leading
     # "<Namespace>." segment (e.g. "SkullFetus.") - OBX-3 identifiers are
@@ -264,10 +264,10 @@ def _parse_measurement_code(code: str) -> Optional[Tuple[str, str]]:
 
     logger.debug(f"    Parsed code: base={base_code}, type={field_type}")
 
-    # Map to canonical name
+    # Map to standard name
     if base_code in VIEWPOINT_HL7_NAME_MAP:
         canonical_name = VIEWPOINT_HL7_NAME_MAP[base_code].value
-        logger.debug(f"    Mapped to canonical: {canonical_name}")
+        logger.debug(f"    Mapped to standard name: {canonical_name}")
         return (canonical_name, field_type)
 
     logger.debug(f"    Base code not in mapping: {base_code}")
