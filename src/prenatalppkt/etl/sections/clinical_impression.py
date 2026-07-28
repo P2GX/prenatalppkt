@@ -139,8 +139,8 @@ def _parse_viewpoint_hl7_impression(hl7: str) -> str:
     """
     Extract impression from HL7 ORU^R01 messages.
 
-    Looks for OBX segments containing "Impression" or "Interpretation"
-    in the observation identifier field.
+    Looks for OBX segments containing "Impression", "Interpretation", or
+    "RelevantClinicalInfo" in the observation identifier field.
     """
     lines: List[str] = []
 
@@ -155,7 +155,11 @@ def _parse_viewpoint_hl7_impression(hl7: str) -> str:
         obs_id = fields[3]
         value = fields[5].split("^")[0].strip()
 
-        if "Impression" in obs_id or "Interpretation" in obs_id:
+        if (
+            "Impression" in obs_id
+            or "Interpretation" in obs_id
+            or "RelevantClinicalInfo" in obs_id
+        ):
             if value:
                 lines.append(value)
 
