@@ -73,6 +73,20 @@ class TestClinicalImpressionViewPointHL7:
         assert "Appropriate" in result["impression_text"]
         assert result["growth_assessment"] == "AGA"
 
+    def test_relevant_clinical_info_extracted(self, hpo_cr):
+        """RequestedProcedure.RelevantClinicalInfo used to be silently
+        dropped - it matches neither "Impression" nor "Interpretation".
+        Real OBX line shape from tests/data/viewpoint_hl7_test.txt."""
+        hl7 = (
+            "OBX|118|ST|RequestedProcedure.RelevantClinicalInfo^Relevant "
+            "clinical info^Relevant clinical information|1|Suspected "
+            "Dandy-Walker malformation|||||||||20251230162536\n"
+        )
+
+        result = parse_clinical_impression(hl7, "viewpoint_hl7", hpo_cr=hpo_cr)
+
+        assert "Dandy-Walker malformation" in result["impression_text"]
+
 
 # ---------------------------------------------------------------------
 # Real Observer fixtures - ground truth confirmed by hand
