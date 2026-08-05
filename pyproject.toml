@@ -57,6 +57,10 @@ dev = [
 ocr = [
  "docling==2.53.0", # lxml version that already has prebuilt binary wheels; pulls in torch/CUDA (~3GB)
 ]
+fast_hpo_cr = [
+ "FastHPOCR==0.1.4",
+ "pronto==2.7.3", # FastHPOCR's own PyPI release omits this real runtime dependency (requires_dist is empty)
+]
 docs = [
     "sphinx>=7.4,<9",
     "myst-parser>=3.0,<5",
