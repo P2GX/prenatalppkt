@@ -61,6 +61,9 @@ fast_hpo_cr = [
  "FastHPOCR==0.1.4",
  "pronto==2.7.3", # FastHPOCR's own PyPI release omits this real runtime dependency (requires_dist is empty)
 ]
+ferrific = [
+ "ferrific==0.2.0",
+]
 docs = [
     "sphinx>=7.4,<9",
     "myst-parser>=3.0,<5",

@@ -6,8 +6,6 @@ Concept recognizer backed by the ferrific text -> HPO engine.
 
 import typing
 
-from ferrific import Ferrific
-
 from .hpo_cr import HpoConceptRecognizer
 from .simple_term import SimpleTerm
 
@@ -25,6 +23,11 @@ class FerrificConceptRecognizer(HpoConceptRecognizer):
     """
 
     def __init__(self, hp_json_path: str) -> None:
+        # Imported here, not at module level, so importing this module never
+        # requires ferrific to be installed unless this class is actually
+        # instantiated.
+        from ferrific import Ferrific
+
         self._ferrific = Ferrific(hp_json_path)
 
     def parse(self, cell_contents, custom_d=None) -> typing.List[SimpleTerm]:
