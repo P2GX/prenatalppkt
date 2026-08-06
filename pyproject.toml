@@ -28,7 +28,7 @@ classifiers = [
 
 # inherited from requirements/requirements.txt and requirements/requirements_test.txt
 dependencies = [
- "click==8.2.1",
+ "click==8.3.3",
  #"hpo-toolkit==0.7.0",
  "hpo-toolkit==0.5.5",
  "ijson==3.4.0",
@@ -49,7 +49,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
- "pytest==8.4.0",
+ "pytest==9.0.3",
  "ruff==0.12.4",
  "ipykernel",
  "pre-commit>=3.7",
