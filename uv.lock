@@ -694,12 +694,12 @@ wheels = [
 
 [[package]]
 name = "ferrific"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/fe/f3ceb0a9ac11098310fe9c1d948406087d6c2dd71477967b7025e1868743/ferrific-0.2.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:000b542bbbbf8645e45aabffe2f0c39af86b00e878a035acdbe201ec22acf127", size = 725974, upload-time = "2026-08-05T23:34:32.199Z" },
-    { url = "https://files.pythonhosted.org/packages/14/e1/0407fb4b4855724725914c36dd90ec9c985193bdb324f3cf218d5a565d88/ferrific-0.2.0-cp38-abi3-manylinux_2_39_x86_64.whl", hash = "sha256:66a561eb8aa23c199fa0064295255f1de16a40d4155e585b3faa37245111a669", size = 839479, upload-time = "2026-08-05T23:34:33.717Z" },
-    { url = "https://files.pythonhosted.org/packages/c0/05/0e846224421ece734c64985bc6c2de6e99ada92500a3a2f54e946b68e884/ferrific-0.2.0-cp38-abi3-win_amd64.whl", hash = "sha256:d71fbf5f6cc97c3d5f08531c2b66ff0ea333fe63acdf4f8f6b9e581dfc6e2d67", size = 647928, upload-time = "2026-08-05T23:34:35.044Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/7b/6b5270935c190647eaa5ba376a301efdabde2b718396ab6a009015a4644a/ferrific-0.2.1-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:c8482e0c6dda48dc963ff4136b4a25f271559d600f7d2f8693470f81d7002f04", size = 725264, upload-time = "2026-08-13T14:15:31.156Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/97/da9219e29ea8a15580ab6ea9fe091de432e7ec412ade2211274988425dd5/ferrific-0.2.1-cp38-abi3-manylinux_2_39_x86_64.whl", hash = "sha256:7a3a174ded4332de4c24139ff5d69643f549a787f0efcaa471dd2cbc3c64d7df", size = 841000, upload-time = "2026-08-13T14:15:32.677Z" },
+    { url = "https://files.pythonhosted.org/packages/62/04/889ed1014e335123259637c81996eebb8ae29a4d2523723a295783bf9db0/ferrific-0.2.1-cp38-abi3-win_amd64.whl", hash = "sha256:df7b2fdbf6f6506c8552da3cb4870d2dbd7412176461ef5dd2bbb01e314e1cf6", size = 647580, upload-time = "2026-08-13T14:15:33.939Z" },
 ]
 
 [[package]]
@@ -2213,7 +2213,7 @@ requires-dist = [
     { name = "docling", marker = "extra == 'ocr'", specifier = "==2.53.0" },
     { name = "fasthpocr", marker = "extra == 'fast-hpo-cr'", specifier = "==0.1.4" },
     { name = "fenominal", specifier = "==0.2.17" },
-    { name = "ferrific", marker = "extra == 'ferrific'", specifier = "==0.2.0" },
+    { name = "ferrific", marker = "extra == 'ferrific'", specifier = "==0.2.1" },
     { name = "hpo-toolkit", specifier = "==0.5.5" },
     { name = "ijson", specifier = "==3.4.0" },
     { name = "ipykernel", marker = "extra == 'dev'" },
