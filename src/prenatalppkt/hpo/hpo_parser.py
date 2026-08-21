@@ -3,9 +3,16 @@ import logging
 import os
 import typing
 from hpotk.store import OntologyType
-from prenatalppkt.hpo.fenominal_cr import FenominalConceptRecognizer
+
+from prenatalppkt.hpo.composite_cr import CompositeConceptRecognizer
+from prenatalppkt.hpo.hpo_cr import HpoConceptRecognizer
 
 logger = logging.getLogger(__name__)
+
+#: Valid names for the `concept_recognizer` constructor parameter - the
+#: single source of truth `_make_recognizer`'s dispatch, its ValueError
+#: message, and any future CLI surface all read from.
+AVAILABLE_RECOGNIZERS = ("fenominal", "ferrific", "fast_hpo_cr")
 
 
 class HpoParser:
@@ -21,12 +28,17 @@ class HpoParser:
     :param hpo_json_file: a `str` with a URL pointing to a remote `hp.json` (only ``http`` and ``https`` protocols
     are supported (no ``file``, ``ftp``)) or a path to a local `hp.json` file.
     :param release: an optional `str` with the HPO release tag or `None` if the latest HPO release should be used.
+    :param concept_recognizer: one of ``AVAILABLE_RECOGNIZERS``, or an ordered sequence of them to
+    chain via ``CompositeConceptRecognizer`` (each later engine only runs if the ones before it
+    returned no hits). Defaults to ``"fenominal"``, matching every caller's behavior before this
+    parameter existed.
     """
 
     def __init__(
         self,
         hpo_json_file: typing.Optional[str] = None,
         release: typing.Optional[str] = None,
+        concept_recognizer: typing.Union[str, typing.Sequence[str]] = "fenominal",
     ):
         if release is not None:
             store = hpotk.configure_ontology_store()
@@ -48,9 +60,42 @@ class HpoParser:
             self._ontology = store.load_hpo()
             self._hpo_json_file = store.resolve_store_path(OntologyType.HPO)
 
-        # Build the recognizer now, while hp.json is present; fenominal loads the
-        # file into memory here, so the file may be removed afterwards.
-        self._concept_recognizer = FenominalConceptRecognizer(self._hpo_json_file)
+        # Build the recognizer(s) now, while hp.json is present; fenominal/ferrific
+        # load the file into memory here, so the file may be removed afterwards.
+        self._concept_recognizer = self._build_recognizer(concept_recognizer)
+
+    def _build_recognizer(
+        self, spec: typing.Union[str, typing.Sequence[str]]
+    ) -> HpoConceptRecognizer:
+        names = [spec] if isinstance(spec, str) else list(spec)
+        if len(names) != len(set(names)):
+            raise ValueError(
+                f"concept_recognizer has duplicate names: {names!r} - each engine's "
+                "output is deterministic, so repeating one is always wasted work"
+            )
+        recognizers = [self._make_recognizer(name) for name in names]
+        if len(recognizers) == 1:
+            return recognizers[0]
+        return CompositeConceptRecognizer(recognizers)
+
+    def _make_recognizer(self, name: str) -> HpoConceptRecognizer:
+        # Imported here, not at module level, so selecting one engine never
+        # requires the other two's (optional) packages to be installed.
+        if name == "fenominal":
+            from prenatalppkt.hpo.fenominal_cr import FenominalConceptRecognizer
+
+            return FenominalConceptRecognizer(self._hpo_json_file)
+        if name == "ferrific":
+            from prenatalppkt.hpo.ferrific_cr import FerrificConceptRecognizer
+
+            return FerrificConceptRecognizer(self._hpo_json_file)
+        if name == "fast_hpo_cr":
+            from prenatalppkt.hpo.fast_hpo_cr_cr import FastHpoCrConceptRecognizer
+
+            return FastHpoCrConceptRecognizer()
+        raise ValueError(
+            f"unknown concept_recognizer {name!r}; choose from {AVAILABLE_RECOGNIZERS}"
+        )
 
     def get_ontology(self) -> hpotk.Ontology:
         """
@@ -70,7 +115,7 @@ class HpoParser:
 
         return id_to_label_d
 
-    def get_hpo_concept_recognizer(self) -> FenominalConceptRecognizer:
+    def get_hpo_concept_recognizer(self) -> HpoConceptRecognizer:
         """
         Return initialized HPO concept recognizer
         """

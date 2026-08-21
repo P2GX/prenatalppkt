@@ -28,7 +28,7 @@ classifiers = [
 
 # inherited from requirements/requirements.txt and requirements/requirements_test.txt
 dependencies = [
- "click==8.2.1",
+ "click==8.3.3",
  #"hpo-toolkit==0.7.0",
  "hpo-toolkit==0.5.5",
  "ijson==3.4.0",
@@ -49,13 +49,20 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
- "pytest==8.4.0",
+ "pytest==9.0.3",
  "ruff==0.12.4",
  "ipykernel",
  "pre-commit>=3.7",
 ]
 ocr = [
  "docling==2.53.0", # lxml version that already has prebuilt binary wheels; pulls in torch/CUDA (~3GB)
+]
+fast_hpo_cr = [
+ "FastHPOCR==0.1.4",
+ "pronto==2.7.3", # FastHPOCR's own PyPI release omits this real runtime dependency (requires_dist is empty)
+]
+ferrific = [
+ "ferrific==0.2.1",
 ]
 docs = [
     "sphinx>=7.4,<9",
