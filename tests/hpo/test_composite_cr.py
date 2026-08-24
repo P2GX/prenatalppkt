@@ -79,6 +79,11 @@ def test_returns_empty_when_every_recognizer_returns_nothing():
 
 @pytest.fixture(scope="session")
 def fenominal_then_ferrific(hp_json_path) -> CompositeConceptRecognizer:
+    # Guards only this fixture, not the whole module - the stub-based
+    # tests above never touch ferrific and must keep running even when
+    # it isn't installed (the default case in a clean CI install).
+    # TODO(@VarenyaJ): same shared-conftest consolidation note as test_ferrific_cr.py.
+    pytest.importorskip("ferrific")
     return CompositeConceptRecognizer(
         [
             FenominalConceptRecognizer(hp_json_path),

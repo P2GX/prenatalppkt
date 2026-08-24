@@ -1,11 +1,25 @@
-"""Tests for prenatalppkt.hpo.ferrific_cr."""
+"""Tests for prenatalppkt.hpo.ferrific_cr.
+
+Skips entirely if the optional ferrific extra isn't installed (the
+default case - ferrific is never installed by default), same pattern
+as test_fast_hpo_cr_cr.py.
+
+TODO: this per-file importorskip is duplicated across
+test_ferrific_cr.py, test_fast_hpo_cr_cr.py, and (per-test) test_hpo_
+parser.py/test_composite_cr.py - worth a shared tests/hpo/conftest.py
+fixture or marker down the line so a future fourth optional recognizer
+doesn't have to rediscover this pattern (or skip it, the way this file
+did until CI caught it on a clean install).
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from prenatalppkt.hpo.ferrific_cr import FerrificConceptRecognizer
-from prenatalppkt.hpo.simple_term import SimpleTerm
+pytest.importorskip("ferrific")
+
+from prenatalppkt.hpo.ferrific_cr import FerrificConceptRecognizer  # noqa: E402
+from prenatalppkt.hpo.simple_term import SimpleTerm  # noqa: E402
 
 
 @pytest.fixture(scope="session")
