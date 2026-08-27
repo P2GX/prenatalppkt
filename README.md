@@ -112,6 +112,27 @@ notebook's kernel. If that kernel doesn't appear after reloading, select the
 interpreter directly instead: "Select Another Kernel" → "Python Environments" →
 the `.venv/bin/python3` inside this repo.
 
+**Environment variables in a notebook kernel:** a kernel started by
+VSCode/VSCodium does not inherit variables `export`ed in a terminal - it
+starts from the editor's own environment, not a shell that sourced your
+`~/.bashrc`/`~/.zshrc`. If a notebook needs an environment variable set, put
+it in a `.env` file at the repo root (already gitignored). **Don't rely on
+the editor to inject it automatically** - the Python extension's
+`python.envFile` setting only applies to kernels it launches through its
+own interpreter tracking; a kernel registered standalone via `ipykernel
+install` (the command above) is launched directly via its own `kernel.json`
+`argv` and never sees it, confirmed by this failing even with a
+correctly-populated `.env` and the right kernel selected. Instead, have the
+notebook's first cell read `.env` itself with a small stdlib-only loader
+(no new dependency needed) before checking `os.environ` - that works
+regardless of which frontend or kernel-launch mechanism is involved.
+
+VSCodium's Jupyter extension has also been observed rewriting a notebook's
+`metadata.kernelspec` back to a generic `{"name": "python3", "display_name":
+".venv"}` on save, even when it ran under the correctly-named kernel - if a
+notebook's kernel keeps needing to be re-selected, check whether a prior
+save reset this and re-pin it in the `.ipynb` JSON before committing.
+
 **hp.json:** The repo root may contain `hp.json`, a version-pinned HPO ontology snapshot
 used by tests. Do not delete or re-download it unless intentionally updating the
 ontology version — it is pinned for reproducibility.
