@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from google.protobuf.json_format import MessageToJson, Parse
 from phenopackets import AcmgPathogenicityClassification, Interpretation, Phenopacket
 
@@ -109,6 +110,36 @@ class TestBuildGenomicInterpretation:
         assert interp.id == "interp-1"
         assert interp.progress_status == Interpretation.ProgressStatus.UNKNOWN_PROGRESS
         assert len(interp.diagnosis.genomic_interpretations) == 0
+
+    def test_accepts_real_acmg_classifications(self):
+        variants = [_variant(), _variant(pos=300, alt="G")]
+        interp = build_genomic_interpretation(
+            variants,
+            subject_id="fetus-1",
+            interpretation_id="interp-1",
+            acmg_classifications=[
+                AcmgPathogenicityClassification.PATHOGENIC,
+                AcmgPathogenicityClassification.LIKELY_PATHOGENIC,
+            ],
+        )
+        gis = interp.diagnosis.genomic_interpretations
+        assert (
+            gis[0].variant_interpretation.acmg_pathogenicity_classification
+            == AcmgPathogenicityClassification.PATHOGENIC
+        )
+        assert (
+            gis[1].variant_interpretation.acmg_pathogenicity_classification
+            == AcmgPathogenicityClassification.LIKELY_PATHOGENIC
+        )
+
+    def test_raises_when_acmg_classifications_length_mismatches_variants(self):
+        with pytest.raises(ValueError, match="1:1"):
+            build_genomic_interpretation(
+                [_variant(), _variant(pos=300, alt="G")],
+                subject_id="fetus-1",
+                interpretation_id="interp-1",
+                acmg_classifications=[AcmgPathogenicityClassification.PATHOGENIC],
+            )
 
     def test_round_trips_through_json_on_a_phenopacket(self):
         """File + Interpretation survive MessageToJson -> Parse on a Phenopacket."""
