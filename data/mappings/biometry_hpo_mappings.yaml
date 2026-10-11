@@ -358,13 +358,15 @@ crown_rump_length:
 nuchal_translucency:
   loinc:
     id: "LOINC:33069-6"
-    label: "Fetal Nuchal fold Thickness US"
+    label: "Fetal nuchal translucency measured by US"
   # TODO(@VarenyaJ): clinical review needed. NT is clinically considered
   # elevated above ~3.5mm absolute or above the 95th percentile. The
   # percentile bins below approximate the threshold but don't account
   # for the absolute-mm fallback. HP:0010880 "Increased nuchal
-  # translucency" is the canonical HPO term; low NT is clinically normal
-  # so all low/mid bins are marked normal=true.
+  # translucency" is the standard HPO term; low NT is clinically normal
+  # so all low/mid bins are marked normal=true. Observer exports NT without
+  # a calculated percentile, so these bins only apply to sources that
+  # report one.
   bins:
     - min: 0
       max: 3
@@ -409,8 +411,7 @@ nuchal_translucency:
 
 # ---------------------------------------------------------------------------
 # Long-bone and foot measurements. These carry a genuine percentile in real
-# Observer exports (unlike Cisterna Magna, Nasal Bone, Lateral Vent, and
-# Biorbit, which never carry one at all - not mapped here for that reason).
+# Observer exports.
 #
 # TODO(@VarenyaJ): the HPO bin assignments below are SCAFFOLDING only, same
 # caveat as the first-trimester section above - general "Abnormal X
@@ -634,3 +635,425 @@ foot_length:
       id: "HP:0001760" # Need a specific HPO ID & Term here
       label: "Abnormal foot morphology" # Need a specific HPO ID & Term here
       normal: false
+
+# ---------------------------------------------------------------------------
+# Further optional measurements recognised in Observer and/or ViewPoint
+# exports. Of these, only Humerus carries a real percentile in Observer
+# exports; Observer exports Nuchal Fold, Cerebellum, Cisterna Magna, Nasal
+# Bone, the lateral ventricles and Biorbit with its "not calculated"
+# placeholder (percentile 0, empty display text), which the Observer
+# extractor skips. ViewPoint does calculate some of them (Cerebellum and
+# Cisterna Magna percentiles appear in ViewPoint text exports), and both
+# platforms are configurable per site, so all of them are mapped here.
+#
+# LOINC codes were checked against the NLM Clinical Tables LOINC search
+# (https://clinicaltables.nlm.nih.gov/api/loinc_items/v3/search) and HPO
+# terms against hp.json.
+#
+# TODO(@VarenyaJ): the bin assignments below are SCAFFOLDING only, same
+# caveat as the sections above - they need clinical review.
+# ---------------------------------------------------------------------------
+
+humerus_length:
+  loinc:
+    id: "LOINC:11966-9"
+    label: "Fetal Humerus diaphysis [Length] US"
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0005792"
+      label: "Short humerus"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0005792"
+      label: "Short humerus"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0031095"
+      label: "Abnormal humerus morphology"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0031095"
+      label: "Abnormal humerus morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0031095"
+      label: "Abnormal humerus morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0031095"
+      label: "Abnormal humerus morphology"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0031095"
+      label: "Abnormal humerus morphology"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0031095"
+      label: "Abnormal humerus morphology"
+      normal: false
+
+nuchal_fold:
+  loinc:
+    id: "LOINC:12146-7"
+    label: "Fetal Nuchal fold Thickness US"
+  # TODO(@VarenyaJ): clinical review needed, same shape as nuchal_translucency's
+  # own cutoff TODO above - thickened NF is clinically a concern at the high
+  # end only; low/mid NF is normal, so low/mid bins are marked normal=true.
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: true
+    - min: 3
+      max: 5
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: true
+    - min: 5
+      max: 10
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: true
+    - min: 10
+      max: 50
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0000474" # TODO: confirm 90th vs 95th cutoff with clinician
+      label: "Thickened nuchal skin fold"
+      normal: true
+    - min: 95
+      max: 97
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0000474"
+      label: "Thickened nuchal skin fold"
+      normal: false
+
+cerebellum:
+  loinc:
+    id: "LOINC:11863-8"
+    label: "Fetal Cerebellum Diameter transverse US"
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0001321"
+      label: "Cerebellar hypoplasia"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0001321"
+      label: "Cerebellar hypoplasia"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0001317"
+      label: "Abnormal cerebellum morphology"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0001317"
+      label: "Abnormal cerebellum morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0001317"
+      label: "Abnormal cerebellum morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0001317"
+      label: "Abnormal cerebellum morphology"
+      normal: false
+    - min: 95
+      max: 97
+      id: "HP:0001317"
+      label: "Abnormal cerebellum morphology"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0001317"
+      label: "Abnormal cerebellum morphology"
+      normal: false
+
+cisterna_magna:
+  loinc:
+    id: "LOINC:11860-4"
+    label: "Fetal Cisterna magna Diameter.sagittal US"
+  # TODO(@VarenyaJ): clinical review needed. hp.json has no
+  # "small/obliterated cisterna magna" term - only the enlarged direction
+  # has a specific term, so
+  # low/mid bins reuse it with normal=true (same convention as NT/NF
+  # above: excluded=true in the output Phenopacket, i.e. "checked, not
+  # present" - not a claim the finding is absent from the ontology).
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: true
+    - min: 3
+      max: 5
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: true
+    - min: 5
+      max: 10
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: true
+    - min: 10
+      max: 50
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: true
+    - min: 95
+      max: 97
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0011427"
+      label: "Enlarged fetal cisterna magna"
+      normal: false
+
+nasal_bone:
+  loinc:
+    id: "LOINC:53697-9"
+    label: "Fetal Nasal bone diaphysis [Length] US"
+  # TODO(@VarenyaJ): clinical review needed. Short/absent nasal bone (low
+  # bins) is a real, specific aneuploidy marker; a "too long" nasal bone
+  # has no known clinical significance, so mid/high bins use the generic
+  # term with normal=true throughout rather than inventing a high-end
+  # concern that isn't real.
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0025707"
+      label: "Hypoplastic fetal nasal bone"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0025707"
+      label: "Hypoplastic fetal nasal bone"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0025707"
+      label: "Hypoplastic fetal nasal bone"
+      normal: false
+    - min: 10
+      max: 50
+      id: "HP:0010939"
+      label: "Abnormal nasal bone morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0010939"
+      label: "Abnormal nasal bone morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0010939"
+      label: "Abnormal nasal bone morphology"
+      normal: true
+    - min: 95
+      max: 97
+      id: "HP:0010939"
+      label: "Abnormal nasal bone morphology"
+      normal: true
+    - min: 97
+      max: 100
+      id: "HP:0010939"
+      label: "Abnormal nasal bone morphology"
+      normal: true
+
+# TODO(@VarenyaJ): no LOINC code sourced yet for left lateral ventricle -
+# searched the NLM Clinical Tables API for "Lateral cerebral ventricle
+# left Transverse", "Fetal Lateral cerebral ventricle left", and "cerebral
+# ventricle width left fetal" - all returned zero results.
+# LOINC appears to only have a right-side-specific code
+# (53680-5, used for lateral_ventricle_right below); no left-side
+# equivalent exists today. Leave without a loinc: block rather than
+# guessing one - revisit if LOINC adds one in a future release.
+lateral_ventricle_left:
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 3
+      max: 5
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 5
+      max: 10
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 10
+      max: 50
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 95
+      max: 97
+      id: "HP:0002119"
+      label: "Ventriculomegaly"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0002119"
+      label: "Ventriculomegaly"
+      normal: false
+
+lateral_ventricle_right:
+  loinc:
+    id: "LOINC:53680-5"
+    label: "Fetal Lateral cerebral ventricle - right Transverse width US"
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 3
+      max: 5
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 5
+      max: 10
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 10
+      max: 50
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0030047"
+      label: "Abnormal lateral ventricle morphology"
+      normal: true
+    - min: 95
+      max: 97
+      id: "HP:0002119"
+      label: "Ventriculomegaly"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0002119"
+      label: "Ventriculomegaly"
+      normal: false
+
+biorbital_diameter:
+  loinc:
+    id: "LOINC:11629-3"
+    label: "Fetal Head Binocular distance US"
+  # TODO(@VarenyaJ): clinical review needed. Two real, directionally
+  # opposite terms exist (Hypotelorism/Hypertelorism) rather than one
+  # generic bidirectional term - split the range down the middle rather
+  # than reusing a single term across all 8 bins.
+  bins:
+    - min: 0
+      max: 3
+      id: "HP:0000601"
+      label: "Hypotelorism"
+      normal: false
+    - min: 3
+      max: 5
+      id: "HP:0000601"
+      label: "Hypotelorism"
+      normal: false
+    - min: 5
+      max: 10
+      id: "HP:0000601"
+      label: "Hypotelorism"
+      normal: true
+    - min: 10
+      max: 50
+      id: "HP:0000601"
+      label: "Hypotelorism"
+      normal: true
+    - min: 50
+      max: 90
+      id: "HP:0000316"
+      label: "Hypertelorism"
+      normal: true
+    - min: 90
+      max: 95
+      id: "HP:0000316"
+      label: "Hypertelorism"
+      normal: true
+    - min: 95
+      max: 97
+      id: "HP:0000316"
+      label: "Hypertelorism"
+      normal: false
+    - min: 97
+      max: 100
+      id: "HP:0000316"
+      label: "Hypertelorism"
+      normal: false
+
+# TODO(@VarenyaJ): Mean Gest Sac (BiometryMeasurement.MEAN_GESTATIONAL_SAC,
+# LOINC code real and verified: LOINC:11850-5 "Gestational sac Mean
+# diameter US") is deliberately NOT mapped here. hp.json has no term for
+# "gestational sac" at all, and Observer never calculates its percentile
+# either. Unlike every other measurement in this file,
+# mean gestational sac diameter is a first-trimester dating/viability
+# check, not a dysmorphology-percentile concept - it may genuinely not
+# belong in this file's model at all. Revisit if a future HPO release
+# adds a usable term, or if this measurement turns out to need a
+# different representation (e.g. a plain quantitative Measurement with
+# no HPO term, mirroring efw_measurement.py's pattern) rather than a
+# percentile-to-HPO-term bin.

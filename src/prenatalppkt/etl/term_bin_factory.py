@@ -47,22 +47,12 @@ DEFAULT_MAPPINGS_PATH = (
     / "biometry_hpo_mappings.yaml"
 )
 
-# TODO(@VarenyaJ): Add HPO mappings for optional measurements
-# Current HPO does not have specific terms for:
-# - Nuchal Fold thickness abnormalities
-# - Cerebellar size abnormalities
-# - Humerus length abnormalities
-# - OFD (Occipitofrontal Diameter) abnormalities
-# These should map to more general skull/bone morphology terms for now
-#
-# TODO(@VarenyaJ): Cisterna Magna, Nasal Bone, Lateral Vent left/right, and
-# Biorbit never carry a percentile in real Observer exports -
-# percentile_for_display is empty for every occurrence - so a YAML bin
-# would be unreachable dead code until a percentile source exists for
-# these measurement types (real growth-reference computation, or an
-# absolute-value fallback like nuchal_translucency's 3.5mm note). Mean Gest
-# Sac is dating-only (Observer flags it include_in_avg_ga_calc) and should
-# never get an HPO mapping at all.
+# TODO(@VarenyaJ): Observer exports no calculated percentile for OFD, NT,
+# Nuchal Fold, Cerebellum, Cisterna Magna, Nasal Bone, the lateral
+# ventricles, Biorbit or Mean Gest Sac, and the Observer extractor skips
+# them, so their bins only apply to sources that report a percentile
+# (ViewPoint does for some). An absolute-value fallback (e.g.
+# nuchal_translucency's 3.5mm note) would let Observer exams use them too.
 
 
 class TermBinFactory:
@@ -86,6 +76,16 @@ class TermBinFactory:
         "Radius": "radius_length",
         "Ulna": "ulna_length",
         "Foot": "foot_length",
+        # See biometry_hpo_mappings.yaml for sourcing and the scaffolding
+        # caveat on these.
+        "Humerus": "humerus_length",
+        "Nuchal Fold": "nuchal_fold",
+        "Cerebellum": "cerebellum",
+        "Cisterna Magna": "cisterna_magna",
+        "Nasal Bone": "nasal_bone",
+        "Lateral Vent left": "lateral_ventricle_left",
+        "Lateral Vent right": "lateral_ventricle_right",
+        "Biorbit": "biorbital_diameter",
     }
 
     def __init__(self, mappings_path: Optional[Path] = None) -> None:

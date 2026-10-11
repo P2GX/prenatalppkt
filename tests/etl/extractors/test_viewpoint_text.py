@@ -92,12 +92,9 @@ BPD     68.0    mm      26w 0d      55%     Hadlock
         """
         term_bins = viewpoint_text.extract(data)
 
-        # TODO(@VarenyaJ): When HPO mapping added, change to 5
-        assert len(term_bins) == 4  # Only required measurements
-
-        # Don't check for Nuchal Fold yet
-        # nf = next(tb for tb in term_bins if "Nuchal Fold" in tb.description)
-        # assert nf is not None
+        assert len(term_bins) == 5
+        nf = next(tb for tb in term_bins if tb.description.startswith("Nuchal Fold"))
+        assert nf.value_mm == 4.5
 
     def test_extract_skips_subheaders(self):
         """Test that sub-headers are skipped during parsing."""

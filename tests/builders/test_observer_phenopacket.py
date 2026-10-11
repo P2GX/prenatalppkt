@@ -74,12 +74,14 @@ def _fetus_t1(fetus_number: int) -> dict:
 
 
 def _fetus_unknown(fetus_number: int) -> dict:
-    """A fetus carrying no recognised label - classifier returns UNKNOWN."""
+    """A fetus with neither T1 nor T2/T3 required labels - classifier returns
+    UNKNOWN. Mean Gest Sac is used because it is recognised but has no HPO
+    mapping, so it produces no biometry feature either."""
     return {
         "fetus": {"fetus_number": fetus_number},
         "measurements": [
             {
-                "label": "Cerebellum",
+                "label": "Mean Gest Sac",
                 "value": 2.1,
                 "unit_of_measure": "cm",
                 "calculated_percentile": 50.0,
@@ -283,6 +285,7 @@ def test_blue_sally_real_fixture_complete_findings(hpo_parser, now_ts):
         "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
         "HP:0000240",  # Abnormality of skull size (BPD, normal)
         "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+        "HP:0031095",  # Abnormal humerus morphology (Humerus, normal)
         "HP:0000122",  # Unilateral renal agenesis (clinical impression, present)
         "HP:0000813",  # Bicornuate uterus (clinical impression, present)
         "HP:0045005",  # Neural tube defect (fetal anatomy narrative, ruled out)
@@ -329,6 +332,7 @@ def test_charm_sally_real_fixture_complete_findings(hpo_parser, now_ts):
             "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
             "HP:0000240",  # Abnormality of skull size (BPD, genuinely abnormal - >97th percentile)
             "HP:0002823",  # Abnormal femur morphology (Femur, normal)
+            "HP:0031095",  # Abnormal humerus morphology (Humerus, normal)
             "HP:0010866",  # Abdominal wall defect (clinical impression, present)
             "HP:0001539",  # Omphalocele (clinical impression + fetal anatomy, present)
             "HP:0045005",  # Neural tube defect (fetal anatomy narrative, ruled out)
