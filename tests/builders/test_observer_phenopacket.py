@@ -352,9 +352,13 @@ def test_diva_sally_real_fixture_complete_findings(hpo_parser, now_ts):
     assert len(pps) == 1
     pp = pps[0]
     hpo_ids = {pf.type.id for pf in pp.phenotypic_features}
+    # Diva Sally's only biometry (CRL) is exported as percentile 0 with an
+    # empty display string - Observer's "not calculated" placeholder - so no
+    # CRL biometry finding is emitted, only the narrative one.
+    # TODO(@VarenyaJ): add a T1 fixture whose CRL carries a real Observer
+    # percentile, so the T1 biometry path has a real end-to-end fixture.
     assert hpo_ids == {
-        "HP:0001511",  # Intrauterine growth retardation (CRL biometry, present)
-        "HP:0030716",  # Acrania (clinical impression + fetal anatomy, present)
+        "HP:0030716"  # Acrania (clinical impression + fetal anatomy, present)
     }
     # build_observer_phenopacket doesn't populate pp.measurements for any
     # fixture yet (verified: even Apple, whose four core biometries all
