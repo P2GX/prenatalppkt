@@ -10,7 +10,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from prenatalppkt.etl.constants import (
+    BiometryMeasurement,
+    GENERIC_NAME_MAP,
+    OBSERVER_NAME_MAP,
+    VIEWPOINT_HL7_NAME_MAP,
+    VIEWPOINT_TEXT_NAME_MAP,
+)
 from prenatalppkt.etl.term_bin_factory import (
+    DELIBERATELY_UNMAPPED_MEASUREMENTS,
     TermBinFactory,
     validate_required_measurements,
 )
@@ -365,6 +373,91 @@ class TestTermBinFactory:
         )
         assert high_bin.hpo_id == "HP:0000256"  # Macrocephaly
         assert high_bin.normal is False
+
+
+class TestBiometryMeasurementCompleteness:
+    """
+    Every BiometryMeasurement member must be recognisable from real data
+    and have a deliberate fate (real YAML bins, or a reviewed reason for
+    having none), so a half-wired measurement - recognised but silently
+    skipped - fails here instead of only logging a warning at runtime.
+    """
+
+    def test_every_measurement_is_recognized_by_at_least_one_alias_map(self):
+        """Every enum member's value must appear in at least one of the
+        four alias maps, or nothing could ever recognize it from real
+        Observer/ViewPoint data in the first place."""
+        all_alias_values = (
+            set(OBSERVER_NAME_MAP.values())
+            | set(VIEWPOINT_TEXT_NAME_MAP.values())
+            | set(VIEWPOINT_HL7_NAME_MAP.values())
+            | set(GENERIC_NAME_MAP.values())
+        )
+        unrecognized = [m for m in BiometryMeasurement if m not in all_alias_values]
+        assert not unrecognized, (
+            f"These BiometryMeasurement members have no alias in any "
+            f"name map, so nothing can ever recognize them from real "
+            f"data: {[m.name for m in unrecognized]}"
+        )
+
+    def test_every_measurement_has_a_documented_fate(self):
+        """Every enum member must either (a) have real YAML bins
+        (TermBinFactory._NAME_TO_YAML maps it), or (b) be explicitly
+        and individually listed in DELIBERATELY_UNMAPPED_MEASUREMENTS
+        with its own reviewed reason. Being in OPTIONAL_MEASUREMENTS is
+        deliberately not enough: optional-but-unmapped measurements are
+        exactly the silent gap this guards against."""
+        undocumented = [
+            m.value
+            for m in BiometryMeasurement
+            if m.value not in TermBinFactory._NAME_TO_YAML
+            and m.value not in DELIBERATELY_UNMAPPED_MEASUREMENTS
+        ]
+        assert not undocumented, (
+            f"These measurements have neither a YAML mapping nor an "
+            f"individually-reviewed DELIBERATELY_UNMAPPED_MEASUREMENTS "
+            f"entry - either add a real YAML mapping, or add the "
+            f"measurement here with a reviewed reason (not a guess): "
+            f"{undocumented}"
+        )
+
+    def test_every_yaml_mapped_measurement_has_full_percentile_coverage(self, factory):
+        """Every measurement with real YAML bins must cover the full
+        0-100 percentile range with no gaps - create_term_bin() hard-
+        errors (raises ValueError) if a real percentile doesn't land in
+        any bin. Samples every bin boundary (lower-inclusive/upper-
+        exclusive, confirmed via PercentileRange.contains()) plus one
+        interior point per bin, so a gap anywhere in the range fails
+        this test rather than surfacing later as a runtime crash on
+        real data."""
+        boundaries = [
+            0.0,
+            1.5,
+            3.0,
+            4.0,
+            5.0,
+            7.5,
+            10.0,
+            30.0,
+            50.0,
+            70.0,
+            90.0,
+            92.5,
+            95.0,
+            96.0,
+            97.0,
+            99.0,
+            100.0,
+        ]
+        for short_name, yaml_key in TermBinFactory._NAME_TO_YAML.items():
+            bins = factory._mappings.get(yaml_key)
+            assert bins, f"{short_name} -> {yaml_key} has no bins at all"
+            for percentile in boundaries:
+                matching = [b for b in bins if b.fits(percentile)]
+                assert matching, (
+                    f"{short_name} ({yaml_key}): no bin covers percentile "
+                    f"{percentile} - gap in percentile coverage"
+                )
 
 
 class TestValidateRequiredMeasurements:

@@ -39,6 +39,21 @@ OPTIONAL_MEASUREMENTS: Set[str] = {
     "Mean Gest Sac",
 }
 
+# Measurements deliberately excluded from _NAME_TO_YAML - not "not mapped
+# yet" but "no real mapping is possible", each with its own reason. Being
+# in OPTIONAL_MEASUREMENTS alone does not qualify a measurement for this
+# list: an optional measurement with no YAML mapping and no entry here is
+# a gap the completeness tests catch. Add an entry only after a real
+# hp.json/LOINC search comes up empty, not on a guess.
+DELIBERATELY_UNMAPPED_MEASUREMENTS: Set[str] = {
+    # Mean Gest Sac: a real LOINC code exists (LOINC:11850-5, "Gestational
+    # sac Mean diameter US"), but hp.json has no term for "gestational sac"
+    # at all. It's a first-trimester dating/viability check, not a
+    # dysmorphology-percentile concept, so it may not belong in this
+    # file's model at all. See biometry_hpo_mappings.yaml's own comment.
+    "Mean Gest Sac"
+}
+
 # Default path to YAML mappings file
 DEFAULT_MAPPINGS_PATH = (
     Path(__file__).parent.parent.parent.parent
