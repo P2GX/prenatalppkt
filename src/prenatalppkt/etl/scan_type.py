@@ -18,12 +18,15 @@ from enum import Enum
 from typing import Any
 
 from prenatalppkt.etl.constants import OBSERVER_NAME_MAP
+from prenatalppkt.etl.measurement_registry import REGISTRY
 
 # Canonical measurement names (BiometryMeasurement values). Raw Observer labels
 # are normalized through OBSERVER_NAME_MAP before comparison, so wire-label
 # variants like "FL" (femur) classify the same as "Femur".
-T1_LABELS = frozenset({"CRL", "NT"})
-T2T3_REQUIRED_LABELS = frozenset({"AC", "BPD", "HC", "Femur"})
+T1_LABELS = frozenset(name for name, spec in REGISTRY.items() if spec.role == "t1")
+T2T3_REQUIRED_LABELS = frozenset(
+    name for name, spec in REGISTRY.items() if spec.role == "required"
+)
 
 
 def _canonical_labels(measurements: list[dict[str, Any]]) -> set[str]:
