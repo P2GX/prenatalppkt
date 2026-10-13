@@ -1,0 +1,208 @@
+# One entry per biometry measurement, keyed by its standard name (the
+# BiometryMeasurement value). Every per-format name table, the
+# required/optional lists and the YAML-key lookup in the ETL code are built
+# from this file, so a new measurement is added here once.
+#
+# Fields:
+#   role            required (T2/T3 scans need it), t1 (first-trimester),
+#                   or optional
+#   yaml_key        the measurement's key in biometry_hpo_mappings.yaml
+#   unmapped_reason used instead of yaml_key when no HPO mapping is possible
+#   aliases         the label each export format uses, per source:
+#                   observer, viewpoint_text, viewpoint_hl7, and generic
+#                   (lowercase spelling variants used as a fallback)
+#
+# Percentile ranges, HPO terms and LOINC codes stay in
+# biometry_hpo_mappings.yaml.
+
+HC:
+  role: required
+  yaml_key: head_circumference
+  aliases:
+    observer: [HC]
+    viewpoint_text: [HC]
+    viewpoint_hl7: [HeadCircumference]
+    generic: [hc, head_circumference, "head circumference", headcircumference]
+
+BPD:
+  role: required
+  yaml_key: biparietal_diameter
+  aliases:
+    observer: [BPD]
+    viewpoint_text: [BPD]
+    viewpoint_hl7: [BiParietalDiameter]
+    generic: [bpd, biparietal_diameter, "biparietal diameter", biparietaldiameter]
+
+AC:
+  role: required
+  yaml_key: abdominal_circumference
+  aliases:
+    observer: [AC]
+    viewpoint_text: [AC]
+    viewpoint_hl7: [AbdominalCircumference]
+    generic: [ac, abdominal_circumference, "abdominal circumference", abdominalcircumference]
+
+Femur:
+  role: required
+  yaml_key: femur_length
+  aliases:
+    observer: [Femur, FL]
+    viewpoint_text: [Femur]
+    viewpoint_hl7: [FemurUndefinedLength, FemurLength]
+    generic: [femur, fl, femur_length, "femur length", femurlength, femurundefinedlength]
+
+CRL:
+  role: t1
+  yaml_key: crown_rump_length
+  aliases:
+    observer: [CRL]
+
+NT:
+  role: t1
+  yaml_key: nuchal_translucency
+  aliases:
+    observer: [NT]
+
+"Nuchal Fold":
+  role: optional
+  yaml_key: nuchal_fold
+  aliases:
+    observer: ["Nuchal Fold"]
+    viewpoint_text: ["Nuchal Fold"]
+    viewpoint_hl7: [NuchalFold]
+    # "nuchal" alone covers ViewPoint text's single-word label
+    generic: [nuchal, nuchal_fold, "nuchal fold", nuchalfold]
+
+Cerebellum:
+  role: optional
+  yaml_key: cerebellum
+  aliases:
+    observer: [Cerebellum]
+    # TODO(@VarenyaJ): real ViewPoint text exports label this
+    # "Cerebellum tr"; the line parser needs to accept it first.
+    viewpoint_text: [Cerebellum]
+    viewpoint_hl7: [Cerebellum]
+    generic: [cerebellum]
+
+OFD:
+  role: optional
+  yaml_key: occipitofrontal_diameter
+  aliases:
+    observer: [OFD]
+    viewpoint_text: [OFD]
+    viewpoint_hl7: [OccipitofrontalDiameter]
+    generic:
+      - ofd
+      - occipitofrontal_diameter
+      - "occipitofrontal diameter"
+      - "occipito-frontal diameter"
+      - occipitofrontaldiameter
+
+Humerus:
+  role: optional
+  yaml_key: humerus_length
+  aliases:
+    observer: [Humerus]
+    viewpoint_text: [Humerus]
+    viewpoint_hl7: [HumerusLength]
+    generic: [humerus, hl, humerus_length, "humerus length", humeruslength]
+
+Tibia:
+  role: optional
+  yaml_key: tibia_length
+  aliases:
+    observer: [Tibia]
+
+Fibula:
+  role: optional
+  yaml_key: fibula_length
+  aliases:
+    observer: [Fibula]
+
+Radius:
+  role: optional
+  yaml_key: radius_length
+  aliases:
+    observer: [Radius]
+
+Ulna:
+  role: optional
+  yaml_key: ulna_length
+  aliases:
+    observer: [Ulna]
+
+Foot:
+  role: optional
+  yaml_key: foot_length
+  aliases:
+    observer: [Foot]
+
+# The viewpoint_text, viewpoint_hl7 and generic aliases below are guessed
+# from the patterns above; none has been seen in a real ViewPoint export
+# yet. Update them if a real export uses a different string.
+
+"Cisterna Magna":
+  role: optional
+  yaml_key: cisterna_magna
+  aliases:
+    observer: ["Cisterna Magna"]
+    # TODO(@VarenyaJ): real ViewPoint text exports label this "CM".
+    viewpoint_text: ["Cisterna Magna"]
+    viewpoint_hl7: [CisternaMagna]
+    generic: ["cisterna magna", cisterna_magna, cisternamagna]
+
+"Nasal Bone":
+  role: optional
+  yaml_key: nasal_bone
+  aliases:
+    observer: ["Nasal Bone"]
+    viewpoint_text: ["Nasal Bone"]
+    viewpoint_hl7: [NasalBone]
+    generic: ["nasal bone", nasal_bone, nasalbone]
+
+"Lateral Vent left":
+  role: optional
+  yaml_key: lateral_ventricle_left
+  aliases:
+    observer: ["Lateral Vent left"]
+    viewpoint_text: ["Lateral Vent left"]
+    viewpoint_hl7: [LateralVentricleLeft]
+    generic:
+      - "lateral vent left"
+      - "lateral ventricle left"
+      - lateral_ventricle_left
+      - lateralventricleleft
+
+"Lateral Vent right":
+  role: optional
+  yaml_key: lateral_ventricle_right
+  aliases:
+    observer: ["Lateral Vent right"]
+    viewpoint_text: ["Lateral Vent right"]
+    viewpoint_hl7: [LateralVentricleRight]
+    generic:
+      - "lateral vent right"
+      - "lateral ventricle right"
+      - lateral_ventricle_right
+      - lateralventricleright
+
+Biorbit:
+  role: optional
+  yaml_key: biorbital_diameter
+  aliases:
+    observer: [Biorbit]
+    viewpoint_text: [Biorbit]
+    viewpoint_hl7: [BiorbitalDiameter]
+    generic: [biorbit, biorbital, biorbital_diameter, "biorbital diameter", biorbitaldiameter]
+
+"Mean Gest Sac":
+  role: optional
+  unmapped_reason: >-
+    A real LOINC code exists (LOINC:11850-5, "Gestational sac Mean
+    diameter US"), but hp.json has no term for "gestational sac" at all.
+    It's a first-trimester dating/viability check, not a
+    dysmorphology-percentile concept, so it may not belong in the
+    biometry mappings' model at all. See biometry_hpo_mappings.yaml's own
+    comment.
+  aliases:
+    observer: ["Mean Gest Sac"]
