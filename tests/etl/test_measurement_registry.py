@@ -23,6 +23,7 @@ class TestShippedRegistry:
     def test_every_entry_lists_every_source(self):
         for spec in REGISTRY.values():
             assert tuple(spec.aliases) == SOURCES
+            assert tuple(spec.guessed_aliases) == SOURCES
 
 
 class TestLoadRegistry:
@@ -45,6 +46,28 @@ class TestLoadRegistry:
         assert spec.aliases["observer"] == ("HC",)
         assert spec.aliases["generic"] == ("hc", "head circumference")
         assert spec.aliases["viewpoint_hl7"] == ()
+        assert spec.guessed_aliases["observer"] == ()
+
+    def test_guessed_aliases_are_kept_apart_but_looked_up(self, tmp_path):
+        path = _write(
+            tmp_path,
+            """
+            Femur:
+              role: required
+              yaml_key: femur_length
+              aliases:
+                viewpoint_hl7: [FemurUndefinedLength]
+              guessed_aliases:
+                viewpoint_hl7: [FemurLength]
+            """,
+        )
+        spec = load_registry(path)["Femur"]
+        assert spec.aliases["viewpoint_hl7"] == ("FemurUndefinedLength",)
+        assert spec.guessed_aliases["viewpoint_hl7"] == ("FemurLength",)
+        assert spec.all_aliases("viewpoint_hl7") == (
+            "FemurUndefinedLength",
+            "FemurLength",
+        )
 
     @pytest.mark.parametrize(
         "body, message",
@@ -58,10 +81,19 @@ class TestLoadRegistry:
             ("role: optional\n  yaml_key: x\n  colour: red", "unknown fields"),
             (
                 "role: optional\n  yaml_key: x\n  aliases:\n    fax: [X]",
-                "unknown alias sources",
+                "unknown sources in aliases",
+            ),
+            (
+                "role: optional\n  yaml_key: x\n  guessed_aliases:\n    fax: [X]",
+                "unknown sources in guessed_aliases",
             ),
             (
                 "role: optional\n  yaml_key: x\n  aliases:\n    observer: [X, X]",
+                "duplicate observer alias",
+            ),
+            (
+                "role: optional\n  yaml_key: x\n  aliases:\n    observer: [X]\n"
+                "  guessed_aliases:\n    observer: [X]",
                 "duplicate observer alias",
             ),
         ],
@@ -85,6 +117,25 @@ class TestLoadRegistry:
               role: optional
               yaml_key: foot_length
               aliases:
+                observer: [FL]
+            """,
+        )
+        with pytest.raises(ValueError, match="'FL' used by both Femur and Foot"):
+            load_registry(path)
+
+    def test_guessed_alias_shared_by_two_measurements_raises(self, tmp_path):
+        path = _write(
+            tmp_path,
+            """
+            Femur:
+              role: required
+              yaml_key: femur_length
+              aliases:
+                observer: [FL]
+            Foot:
+              role: optional
+              yaml_key: foot_length
+              guessed_aliases:
                 observer: [FL]
             """,
         )
