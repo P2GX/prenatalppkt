@@ -157,8 +157,8 @@ class TestLoadRegistry:
         assert load_registry(path)["HC"].aliases["viewpoint_text"] == ("HC",)
 
 
-# Literal copies of every name table as it stood before the tables were built
-# from the registry. A change here is a behavior change, not a refactor.
+# Literal copies of every name table. A change here is a behavior change, so
+# it should only ever come with a registry edit that means it.
 
 _OBSERVER_NAME_MAP = {
     "HC": "HC",
@@ -201,7 +201,16 @@ _VIEWPOINT_TEXT_NAME_MAP = {
 }
 _VIEWPOINT_HL7_NAME_MAP = {
     "HeadCircumference": "HC",
+    "BiparietalDiameter": "BPD",
     "BiParietalDiameter": "BPD",
+    "OccipitoFrontalDiameter": "OFD",
+    "HumerusUndefinedLength": "Humerus",
+    "TibiaUndefinedLength": "Tibia",
+    "FibulaUndefinedLength": "Fibula",
+    "TranscerebellarDiameter": "Cerebellum",
+    "CrownRumpLength": "CRL",
+    "NuchalTranslucency": "NT",
+    "NuchalFoldThickness": "Nuchal Fold",
     "AbdominalCircumference": "AC",
     "FemurUndefinedLength": "Femur",
     "FemurLength": "Femur",

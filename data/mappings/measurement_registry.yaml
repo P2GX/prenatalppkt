@@ -34,6 +34,7 @@ BPD:
   aliases:
     observer: [BPD]
     viewpoint_text: [BPD]
+    viewpoint_hl7: [BiparietalDiameter]
     generic: [bpd, biparietal_diameter, "biparietal diameter", biparietaldiameter]
   guessed_aliases:
     viewpoint_hl7: [BiParietalDiameter]
@@ -63,12 +64,14 @@ CRL:
   yaml_key: crown_rump_length
   aliases:
     observer: [CRL]
+    viewpoint_hl7: [CrownRumpLength]
 
 NT:
   role: t1
   yaml_key: nuchal_translucency
   aliases:
     observer: [NT]
+    viewpoint_hl7: [NuchalTranslucency]
 
 "Nuchal Fold":
   role: optional
@@ -76,6 +79,7 @@ NT:
   aliases:
     observer: ["Nuchal Fold"]
     viewpoint_text: ["Nuchal Fold"]
+    viewpoint_hl7: [NuchalFoldThickness]
     # "nuchal" alone covers ViewPoint text's single-word label
     generic: [nuchal, nuchal_fold, "nuchal fold", nuchalfold]
   guessed_aliases:
@@ -89,6 +93,7 @@ Cerebellum:
     # TODO(@VarenyaJ): real ViewPoint text exports label this
     # "Cerebellum tr"; the line parser needs to accept it first.
     viewpoint_text: [Cerebellum]
+    viewpoint_hl7: [TranscerebellarDiameter]
     generic: [cerebellum]
   guessed_aliases:
     viewpoint_hl7: [Cerebellum]
@@ -99,6 +104,7 @@ OFD:
   aliases:
     observer: [OFD]
     viewpoint_text: [OFD]
+    viewpoint_hl7: [OccipitoFrontalDiameter]
     generic:
       - ofd
       - occipitofrontal_diameter
@@ -114,6 +120,7 @@ Humerus:
   aliases:
     observer: [Humerus]
     viewpoint_text: [Humerus]
+    viewpoint_hl7: [HumerusUndefinedLength]
     generic: [humerus, hl, humerus_length, "humerus length", humeruslength]
   guessed_aliases:
     viewpoint_hl7: [HumerusLength]
@@ -123,12 +130,14 @@ Tibia:
   yaml_key: tibia_length
   aliases:
     observer: [Tibia]
+    viewpoint_hl7: [TibiaUndefinedLength]
 
 Fibula:
   role: optional
   yaml_key: fibula_length
   aliases:
     observer: [Fibula]
+    viewpoint_hl7: [FibulaUndefinedLength]
 
 Radius:
   role: optional

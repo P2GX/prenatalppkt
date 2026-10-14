@@ -523,6 +523,49 @@ class TestViewPointHL7UnitFieldParsing:
         assert "HC" in term_bins[0].description
 
 
+# Identifiers as GE ViewPoint 6 writes them in its discrete HL7 export,
+# namespace included. Values in the tests below are made up.
+_GE_VIEWPOINT6_IDS = [
+    ("SkullFetus", "BiparietalDiameter", "BPD"),
+    ("SkullFetus", "OccipitoFrontalDiameter", "OFD"),
+    ("ExtremitiesFetus", "HumerusUndefinedLength", "Humerus"),
+    ("ExtremitiesFetus", "TibiaUndefinedLength", "Tibia"),
+    ("ExtremitiesFetus", "FibulaUndefinedLength", "Fibula"),
+    ("BrainFetus", "TranscerebellarDiameter", "Cerebellum"),
+    ("EmbryonicStructuresFetus", "CrownRumpLength", "CRL"),
+    ("NeckSkinFetus", "NuchalTranslucency", "NT"),
+    ("NeckSkinFetus", "NuchalFoldThickness", "Nuchal Fold"),
+]
+
+
+class TestViewPointHL7GeViewPoint6Identifiers:
+    """GE ViewPoint 6 spellings resolve to the standard measurement names."""
+
+    @pytest.mark.parametrize("namespace, identifier, name", _GE_VIEWPOINT6_IDS)
+    def test_value_and_percentile_codes_resolve(self, namespace, identifier, name):
+        from prenatalppkt.etl.extractors.viewpoint_hl7 import _parse_measurement_code
+
+        assert _parse_measurement_code(f"{namespace}.{identifier}") == (name, "value")
+        assert _parse_measurement_code(f"{namespace}.VP_{identifier}_Percentile") == (
+            name,
+            "percentile",
+        )
+
+    def test_extract_all_fetuses_reads_every_identifier(self):
+        lines = ["MSH|^~\\&|GE|ViewPoint|||20260101120000||ORU^R01|1|P|2.4"]
+        for i, (namespace, identifier, _) in enumerate(_GE_VIEWPOINT6_IDS):
+            lines.append(
+                f"OBX|{2 * i + 1}|NM|{namespace}.{identifier}^x|Fetus1|20^20|mm&millimeters"
+            )
+            lines.append(
+                f"OBX|{2 * i + 2}|NM|{namespace}.VP_{identifier}_Percentile^x|Fetus1"
+                "|50^50%|%&percent^fmt&formatted"
+            )
+        bins = viewpoint_hl7.extract_all_fetuses("\r\n".join(lines))[1]
+        names = {tb.description.split(":")[0] for tb in bins}
+        assert names == {name for _, _, name in _GE_VIEWPOINT6_IDS}
+
+
 HL7_TWINS_TEST_FILE = TEST_DIR / "data" / "viewpoint_hl7_twins_test.txt"
 
 
