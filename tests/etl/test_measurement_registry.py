@@ -1,13 +1,16 @@
 """Tests for the measurement registry and the name tables built from it."""
 
 import textwrap
+from pathlib import Path
 
 import pytest
+import yaml
 
 from prenatalppkt.etl import constants, scan_type, term_bin_factory
 from prenatalppkt.etl.constants import BiometryMeasurement
 from prenatalppkt.etl.measurement_registry import REGISTRY, SOURCES, load_registry
 from prenatalppkt.etl.term_bin_factory import TermBinFactory
+from prenatalppkt.scripts import data_dict
 
 
 def _write(tmp_path, text):
@@ -357,3 +360,39 @@ class TestTablesMatchRegistry:
     )
     def test_name_sets(self, table, expected):
         assert table == expected
+
+
+# The data dictionary's concept_aliases.yaml lists ViewPoint ids per concept
+# independently of the registry. Each biometry measurement concept's ids must
+# resolve, through the registry, to that concept's measurement.
+_CONCEPT_ALIASES_PATH = Path(data_dict.__file__).parent / "concept_aliases.yaml"
+_BIOMETRY_CONCEPT_MEASUREMENT = {
+    "bpd": "BPD",
+    "ac": "AC",
+    "hc": "HC",
+    "crl": "CRL",
+    "femur": "Femur",
+    "humerus": "Humerus",
+    "nuchal_fold": "Nuchal Fold",
+}
+
+
+class TestConceptAliasesAgree:
+    def _measurement_concepts(self):
+        concepts = yaml.safe_load(_CONCEPT_ALIASES_PATH.read_text(encoding="utf-8"))
+        for key, entry in concepts.items():
+            parts = key.split(".")
+            if parts[0] == "biometry" and parts[-1] == "measurement_mm":
+                yield parts[1], (entry or {}).get("viewpoint") or []
+
+    def test_every_biometry_concept_is_known(self):
+        slugs = {slug for slug, _ in self._measurement_concepts()}
+        assert slugs <= set(_BIOMETRY_CONCEPT_MEASUREMENT)
+
+    def test_viewpoint_ids_resolve_to_the_concept_measurement(self):
+        for slug, identifiers in self._measurement_concepts():
+            for identifier in identifiers:
+                base = identifier.split(".")[-1]
+                resolved = constants.VIEWPOINT_HL7_NAME_MAP.get(base)
+                assert resolved is not None, f"{identifier} is not in the registry"
+                assert resolved.value == _BIOMETRY_CONCEPT_MEASUREMENT[slug], identifier
