@@ -2,8 +2,9 @@
 
 Turns scanned `VcfVariant`s into the GA4GH genomic surfaces - `VcfRecord`,
 `VariationDescriptor`, and an inert `Interpretation` scaffold - plus a
-files-by-URI `File` entry. These are scaffolds: no VRS normalization and no real
-ACMG / pathogenicity calls. The inert markers make that explicit downstream.
+files-by-URI `File` entry. These are scaffolds: no VRS normalization, and no
+ACMG / pathogenicity calls unless the caller supplies real ones. The inert
+markers make the no-call default explicit downstream.
 """
 
 from __future__ import annotations
@@ -75,20 +76,38 @@ def build_genomic_interpretation(
     subject_id: str,
     interpretation_id: str,
     disease: OntologyClass | None = None,
+    acmg_classifications: list[AcmgPathogenicityClassification.ValueType] | None = None,
 ) -> Interpretation:
-    """Build an inert genomic `Interpretation` scaffold from scanned variants.
+    """Build a genomic `Interpretation` from scanned variants.
 
     One `GenomicInterpretation` per variant, each carrying the variant as a
-    `VariationDescriptor`. Inert markers (`UNKNOWN_PROGRESS`, `CANDIDATE`,
-    `NOT_PROVIDED`) make clear no real diagnosis or pathogenicity is asserted.
-    `disease` is left unset unless supplied, to avoid a placeholder CURIE.
+    `VariationDescriptor`. `interpretation_status` stays `CANDIDATE` and
+    `progress_status` stays `UNKNOWN_PROGRESS` regardless - this builds the
+    variant-level interpretation shape, not a diagnosis.
+
+    `acmg_classifications`, if given, must be the same length as `variants`
+    (one classification per variant, same order) - a real classification a
+    caller has already computed (e.g. from a variant-prioritisation tool).
+    Omitted or `None` keeps every variant `NOT_PROVIDED`, the original inert
+    default. `disease` is left unset unless supplied, to avoid a placeholder
+    CURIE.
     """
+    if acmg_classifications is not None and len(acmg_classifications) != len(variants):
+        raise ValueError(
+            f"acmg_classifications has {len(acmg_classifications)} entries, "
+            f"variants has {len(variants)} - must match 1:1"
+        )
+
     genomic_interpretations = [
         GenomicInterpretation(
             subject_or_biosample_id=subject_id,
             interpretation_status=_STATUS_CANDIDATE,
             variant_interpretation=VariantInterpretation(
-                acmg_pathogenicity_classification=_ACMG_NOT_PROVIDED,
+                acmg_pathogenicity_classification=(
+                    acmg_classifications[i]
+                    if acmg_classifications is not None
+                    else _ACMG_NOT_PROVIDED
+                ),
                 variation_descriptor=to_variation_descriptor(
                     variant, descriptor_id=f"{interpretation_id}-var-{i + 1}"
                 ),

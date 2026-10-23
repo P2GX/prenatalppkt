@@ -58,6 +58,7 @@ measurement/occipitofrontal_diameter
 
 data/reference_data
 data/fetal_growth_methods
+data/exomiser-input-shape
 data_dictionary/README
 data_dictionary/schema
 data_dictionary/clusters
