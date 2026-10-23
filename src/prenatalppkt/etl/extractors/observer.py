@@ -255,6 +255,26 @@ def _parse_measurements(
     return term_bins
 
 
+def _percentile_not_calculated(m: Dict[str, Any]) -> bool:
+    """
+    True when Observer exported a percentile it never actually calculated.
+
+    Observer writes ``calculated_percentile: 0`` together with an empty
+    ``percentile_for_display`` when it has no growth chart for a measurement
+    (OFD, NT, Nuchal Fold, Cerebellum, Cisterna Magna, Nasal Bone, the lateral
+    ventricles, Biorbit and Mean Gest Sac never get one). A genuinely low
+    reading always carries display text such as ``"<3%"``, so this exact pair
+    is a placeholder, not a 0th-percentile result. Records without a
+    ``percentile_for_display`` key are not treated as placeholders.
+
+    TODO(@VarenyaJ): measurements Observer never calculates a percentile for
+    can still be judged from the raw value against an absolute cutoff (e.g. NT
+    >= 3.5mm). Add that fallback, with clinically sourced cutoffs, instead of
+    dropping them entirely.
+    """
+    return m.get("calculated_percentile") == 0 and m.get("percentile_for_display") == ""
+
+
 def _parse_single_measurement(
     m: Dict[str, Any], fetus_number: int, factory: TermBinFactory
 ) -> TermBin:
@@ -294,10 +314,12 @@ def _parse_single_measurement(
     percentile = m.get("calculated_percentile")
     ega = m.get("calculated_ega")
 
-    # IMPORTANT FIX: Allow percentile=0 (means <1%), but skip if truly missing
-    # In Observer JSON, percentile=0 is valid data, not missing data
     if percentile is None:
         logger.debug(f"Skipping {label}: percentile is None (missing)")
+        return None
+
+    if _percentile_not_calculated(m):
+        logger.debug(f"Skipping {label}: Observer did not calculate a percentile")
         return None
 
     # If percentile is a number, validate it's in valid range
@@ -307,7 +329,6 @@ def _parse_single_measurement(
                 f"Skipping {label}: invalid percentile {percentile} (negative)"
             )
             return None
-        # percentile=0 is valid! Means <1%
         logger.debug(f"{label} has percentile={percentile}% (valid)")
 
     # Convert units
@@ -360,6 +381,9 @@ def _parse_t1_measurements(
         percentile = m.get("calculated_percentile")
         if percentile is None:
             logger.debug(f"Skipping {label}: no percentile")
+            continue
+        if _percentile_not_calculated(m):
+            logger.debug(f"Skipping {label}: Observer did not calculate a percentile")
             continue
         if isinstance(percentile, (int, float)) and percentile < 0:
             logger.warning(f"Skipping {label}: invalid percentile {percentile}")

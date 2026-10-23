@@ -485,21 +485,102 @@ class TestObserverT1:
         ):
             observer.extract(_t1_fixture(crl_no_pct, nt_no_pct))
 
-    def test_corpus_diva_returns_termbins(self):
-        # Diva is the reference T1 fixture: CRL only, percentile=0 -> <1%.
-        # Previously raised; now lands in the IUGR bin via the unified dispatch.
-        path = (
-            Path(__file__).resolve().parents[3]
-            / "tests"
-            / "data"
-            / "Diva_Sally_pretty.json"
+    def test_corpus_diva_crl_not_calculated_raises(self):
+        # Diva is the only T1 fixture, and its sole measurement (CRL) is
+        # exported as percentile 0 with empty display text - Observer's "not
+        # calculated" placeholder - so nothing parses and the T1 path raises.
+        path = DATA_DIR / "Diva_Sally_pretty.json"
+        with pytest.raises(
+            observer.UnsupportedScanTypeError, match="no CRL or NT measurement parsed"
+        ):
+            observer.extract_from_file(path)
+
+
+def _required_with_display() -> list[dict]:
+    """HC/BPD/AC/Femur with real percentiles and their display text."""
+    return [
+        {
+            "label": label,
+            "value": value,
+            "unit_of_measure": "cm",
+            "calculated_percentile": pct,
+            "percentile_for_display": f"{round(pct)}%",
+        }
+        for label, value, pct in [
+            ("HC", 25.0, 42.5),
+            ("BPD", 6.68, 51.2),
+            ("AC", 22.62, 55.6),
+            ("Femur", 5.01, 46.8),
+        ]
+    ]
+
+
+def _not_calculated(label: str, value: float = 4.0) -> dict:
+    """A measurement in the exact shape Observer exports when it has no
+    growth chart for it: percentile 0 with empty display text."""
+    return {
+        "label": label,
+        "value": value,
+        "unit_of_measure": "mm",
+        "calculated_percentile": 0,
+        "percentile_for_display": "",
+    }
+
+
+class TestObserverPercentileNotCalculated:
+    """Observer's "0 with empty display" placeholder is never read as a real
+    0th-percentile result, on either the T2/T3 or the T1 path."""
+
+    @pytest.mark.parametrize("label", ["OFD", "Tibia", "HC"])
+    def test_t2t3_placeholder_is_skipped(self, label):
+        measurements = [m for m in _required_with_display() if m["label"] != label] + [
+            _not_calculated(label)
+        ]
+        bins = observer.extract(
+            {"fetuses": [{"fetus": {"fetus_number": 1}, "measurements": measurements}]}
         )
-        bins = observer.extract_from_file(path)
-        assert len(bins) >= 1
-        crl_bin = next((b for b in bins if "CRL" in b.description), None)
-        assert crl_bin is not None
-        assert crl_bin.hpo_id == "HP:0001511"
-        assert crl_bin.normal is False
+        names = {b.description.split(":")[0].strip() for b in bins}
+        assert label not in names
+
+    def test_t1_nt_placeholder_is_skipped_crl_kept(self):
+        bins = observer.extract(_t1_fixture(_CRL_OK, _not_calculated("NT", 1.8)))
+        assert [b.description.split(":")[0] for b in bins] == ["CRL"]
+
+    def test_t1_crl_placeholder_is_skipped_nt_kept(self):
+        bins = observer.extract(_t1_fixture(_not_calculated("CRL", 45.0), _NT_OK))
+        assert [b.description.split(":")[0] for b in bins] == ["NT"]
+
+    def test_t1_only_placeholders_raises(self):
+        with pytest.raises(
+            observer.UnsupportedScanTypeError, match="no CRL or NT measurement parsed"
+        ):
+            observer.extract(
+                _t1_fixture(_not_calculated("CRL", 45.0), _not_calculated("NT", 1.8))
+            )
+
+    @pytest.mark.parametrize(
+        "percentile,display",
+        [
+            (0, "<1%"),  # zero, but with display text
+            (0.1, "<1%"),  # real low reading
+            (0.1, ""),  # non-zero, empty display
+        ],
+    )
+    def test_real_low_readings_are_kept(self, percentile, display):
+        nt = {
+            **_NT_OK,
+            "calculated_percentile": percentile,
+            "percentile_for_display": display,
+        }
+        bins = observer.extract(_t1_fixture(nt))
+        assert len(bins) == 1
+
+    def test_zero_without_display_key_is_kept(self):
+        # No percentile_for_display key at all: not the placeholder shape.
+        nt = {**_NT_OK, "calculated_percentile": 0}
+        assert "percentile_for_display" not in nt
+        bins = observer.extract(_t1_fixture(nt))
+        assert len(bins) == 1
 
 
 class TestObserverCorpus:
@@ -514,7 +595,6 @@ class TestObserverCorpus:
         "Blue_Sally_pretty.json": (4, {"HC"}),
         "Charm_Sally_pretty.json": (4, {"BPD"}),
         "Eclair_Sally_pretty.json": (4, set()),
-        "Diva_Sally_pretty.json": (1, {"CRL"}),
     }
 
     @pytest.mark.parametrize("fixture_name", sorted(EXPECTED))

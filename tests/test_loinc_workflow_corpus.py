@@ -154,15 +154,29 @@ def test_corpus_fixture_phenotypic_exporter_emits_measurements(fixture_name):
         assert m["value"]["quantity"]["unit"]["id"] == "UO:0000016"
 
 
-def test_corpus_diva_first_trimester_extracts_t1_bins():
-    """Diva is CRL-only (T1); the extractor emits T1 bins rather than raising.
+def test_first_trimester_crl_bin_carries_loinc():
+    """A T1 CRL with a real Observer percentile yields a LOINC-coded bin.
 
-    CRL now carries a verified LOINC biometry code (LOINC:11957-8).
+    Diva Sally can't serve here: its CRL is exported with Observer's "not
+    calculated" placeholder (percentile 0, empty display), so it is skipped.
     """
-    fixture = DATA_DIR / "Diva_Sally_pretty.json"
-    if not fixture.exists():
-        pytest.skip("Diva_Sally_pretty.json not found")
-
-    term_bins = observer.extract_from_file(fixture)
-    assert len(term_bins) >= 1
-    assert all(tb.loinc_code == "LOINC:11957-8" for tb in term_bins)
+    data = {
+        "fetuses": [
+            {
+                "fetus": {"fetus_number": 1},
+                "measurements": [
+                    {
+                        "label": "CRL",
+                        "value": 45.0,
+                        "unit_of_measure": "mm",
+                        "calculated_percentile": 50.0,
+                        "percentile_for_display": "50%",
+                        "calculated_ega": 11.3,
+                    }
+                ],
+            }
+        ]
+    }
+    term_bins = observer.extract(data)
+    assert len(term_bins) == 1
+    assert term_bins[0].loinc_code == "LOINC:11957-8"
