@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import ClassVar, Dict, List, Optional, Set
 
+from prenatalppkt.etl.measurement_registry import REGISTRY
 from prenatalppkt.gestational_age import GestationalAge
 from prenatalppkt.mapping_loader import BiometryMappingLoader
 from prenatalppkt.measurements.term_bin import TermBin
@@ -18,40 +19,22 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 # Required measurements that MUST be present in biometry data
-REQUIRED_MEASUREMENTS: Set[str] = {"HC", "BPD", "AC", "Femur"}
+REQUIRED_MEASUREMENTS: Set[str] = {
+    name for name, spec in REGISTRY.items() if spec.role == "required"
+}
 
 # Optional measurements (may or may not be present)
 OPTIONAL_MEASUREMENTS: Set[str] = {
-    "Nuchal Fold",
-    "Cerebellum",
-    "Humerus",
-    "OFD",
-    "Tibia",
-    "Fibula",
-    "Radius",
-    "Ulna",
-    "Foot",
-    "Cisterna Magna",
-    "Nasal Bone",
-    "Lateral Vent left",
-    "Lateral Vent right",
-    "Biorbit",
-    "Mean Gest Sac",
+    name for name, spec in REGISTRY.items() if spec.role == "optional"
 }
 
 # Measurements deliberately excluded from _NAME_TO_YAML - not "not mapped
-# yet" but "no real mapping is possible", each with its own reason. Being
-# in OPTIONAL_MEASUREMENTS alone does not qualify a measurement for this
-# list: an optional measurement with no YAML mapping and no entry here is
-# a gap the completeness tests catch. Add an entry only after a real
-# hp.json/LOINC search comes up empty, not on a guess.
+# yet" but "no real mapping is possible", each with its own reason (the
+# registry's unmapped_reason). An optional measurement with no YAML mapping
+# and no reason is a gap the completeness tests catch. Add a reason only
+# after a real hp.json/LOINC search comes up empty, not on a guess.
 DELIBERATELY_UNMAPPED_MEASUREMENTS: Set[str] = {
-    # Mean Gest Sac: a real LOINC code exists (LOINC:11850-5, "Gestational
-    # sac Mean diameter US"), but hp.json has no term for "gestational sac"
-    # at all. It's a first-trimester dating/viability check, not a
-    # dysmorphology-percentile concept, so it may not belong in this
-    # file's model at all. See biometry_hpo_mappings.yaml's own comment.
-    "Mean Gest Sac"
+    name for name, spec in REGISTRY.items() if spec.unmapped_reason is not None
 }
 
 # Default path to YAML mappings file
@@ -79,28 +62,9 @@ class TermBinFactory:
 
     # Map ETL short names to YAML keys
     _NAME_TO_YAML: ClassVar[Dict[str, str]] = {
-        "HC": "head_circumference",
-        "BPD": "biparietal_diameter",
-        "AC": "abdominal_circumference",
-        "Femur": "femur_length",
-        "OFD": "occipitofrontal_diameter",
-        "CRL": "crown_rump_length",
-        "NT": "nuchal_translucency",
-        "Tibia": "tibia_length",
-        "Fibula": "fibula_length",
-        "Radius": "radius_length",
-        "Ulna": "ulna_length",
-        "Foot": "foot_length",
-        # See biometry_hpo_mappings.yaml for sourcing and the scaffolding
-        # caveat on these.
-        "Humerus": "humerus_length",
-        "Nuchal Fold": "nuchal_fold",
-        "Cerebellum": "cerebellum",
-        "Cisterna Magna": "cisterna_magna",
-        "Nasal Bone": "nasal_bone",
-        "Lateral Vent left": "lateral_ventricle_left",
-        "Lateral Vent right": "lateral_ventricle_right",
-        "Biorbit": "biorbital_diameter",
+        name: spec.yaml_key
+        for name, spec in REGISTRY.items()
+        if spec.yaml_key is not None
     }
 
     def __init__(self, mappings_path: Optional[Path] = None) -> None:

@@ -7,6 +7,8 @@ Provides standardized names and mappings across different input formats.
 from enum import Enum
 from typing import Dict, Set
 
+from prenatalppkt.etl.measurement_registry import REGISTRY
+
 
 class BiometryMeasurement(Enum):
     """
@@ -107,145 +109,23 @@ class SectionHeader(Enum):
         raise ValueError(f"{s!r} is not a valid {cls.__name__}")
 
 
-# Mapping of input-specific names to standardized BiometryMeasurement
-# This allows each extractor to map its format-specific names to standard names
+# Mapping of input-specific names to standardized BiometryMeasurement, one map
+# per input format, plus GENERIC_NAME_MAP for common spelling variants. All
+# four are built from the measurement registry, which is where names are added.
 
-OBSERVER_NAME_MAP: Dict[str, BiometryMeasurement] = {
-    # Observer JSON uses these exact labels in measurements array
-    "HC": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    "BPD": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    "AC": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    "Femur": BiometryMeasurement.FEMUR_LENGTH,
-    "FL": BiometryMeasurement.FEMUR_LENGTH,
-    "Nuchal Fold": BiometryMeasurement.NUCHAL_FOLD,
-    "Cerebellum": BiometryMeasurement.CEREBELLUM,
-    "OFD": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "Humerus": BiometryMeasurement.HUMERUS_LENGTH,
-    "CRL": BiometryMeasurement.CROWN_RUMP_LENGTH,
-    "NT": BiometryMeasurement.NUCHAL_TRANSLUCENCY,
-    "Tibia": BiometryMeasurement.TIBIA_LENGTH,
-    "Fibula": BiometryMeasurement.FIBULA_LENGTH,
-    "Radius": BiometryMeasurement.RADIUS_LENGTH,
-    "Ulna": BiometryMeasurement.ULNA_LENGTH,
-    "Foot": BiometryMeasurement.FOOT_LENGTH,
-    "Cisterna Magna": BiometryMeasurement.CISTERNA_MAGNA,
-    "Nasal Bone": BiometryMeasurement.NASAL_BONE,
-    "Lateral Vent left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "Lateral Vent right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    "Biorbit": BiometryMeasurement.BIORBITAL_DIAMETER,
-    "Mean Gest Sac": BiometryMeasurement.MEAN_GESTATIONAL_SAC,
-}
 
-VIEWPOINT_TEXT_NAME_MAP: Dict[str, BiometryMeasurement] = {
-    # ViewPoint text uses these labels in Fetal Biometry section
-    "HC": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    "BPD": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    "AC": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    "Femur": BiometryMeasurement.FEMUR_LENGTH,
-    "Nuchal Fold": BiometryMeasurement.NUCHAL_FOLD,
-    "Cerebellum": BiometryMeasurement.CEREBELLUM,
-    "OFD": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "Humerus": BiometryMeasurement.HUMERUS_LENGTH,
-    # Guessed from Observer's labels (every entry above matches Observer's
-    # string); not yet seen in a real ViewPoint text export.
-    # TODO(@VarenyaJ): real ViewPoint text exports label cisterna magna "CM"
-    # and cerebellum "Cerebellum tr"; the line parser needs to accept those
-    # labels before they can be added here.
-    "Cisterna Magna": BiometryMeasurement.CISTERNA_MAGNA,
-    "Nasal Bone": BiometryMeasurement.NASAL_BONE,
-    "Lateral Vent left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "Lateral Vent right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    "Biorbit": BiometryMeasurement.BIORBITAL_DIAMETER,
-}
+def _name_map(source: str) -> Dict[str, BiometryMeasurement]:
+    return {
+        label: BiometryMeasurement(spec.name)
+        for spec in REGISTRY.values()
+        for label in spec.aliases[source]
+    }
 
-VIEWPOINT_HL7_NAME_MAP: Dict[str, BiometryMeasurement] = {
-    # ViewPoint HL7 uses LOINC-style names in OBX segments
-    "HeadCircumference": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    "BiParietalDiameter": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    "AbdominalCircumference": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    "FemurUndefinedLength": BiometryMeasurement.FEMUR_LENGTH,
-    "FemurLength": BiometryMeasurement.FEMUR_LENGTH,
-    "NuchalFold": BiometryMeasurement.NUCHAL_FOLD,
-    "Cerebellum": BiometryMeasurement.CEREBELLUM,
-    "OccipitofrontalDiameter": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "HumerusLength": BiometryMeasurement.HUMERUS_LENGTH,
-    # Guessed from the naming pattern above (PascalCase, spelled out like
-    # OccipitofrontalDiameter); not yet seen in a real ViewPoint HL7 export.
-    # Update if a real OBX-3 identifier uses a different string.
-    "CisternaMagna": BiometryMeasurement.CISTERNA_MAGNA,
-    "NasalBone": BiometryMeasurement.NASAL_BONE,
-    "LateralVentricleLeft": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "LateralVentricleRight": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    "BiorbitalDiameter": BiometryMeasurement.BIORBITAL_DIAMETER,
-}
 
-# Generic name normalization - catches common variations
-GENERIC_NAME_MAP: Dict[str, BiometryMeasurement] = {
-    # Head Circumference variations
-    "hc": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    "head_circumference": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    "head circumference": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    "headcircumference": BiometryMeasurement.HEAD_CIRCUMFERENCE,
-    # Biparietal Diameter variations
-    "bpd": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    "biparietal_diameter": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    "biparietal diameter": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    "biparietaldiameter": BiometryMeasurement.BIPARIETAL_DIAMETER,
-    # Abdominal Circumference variations
-    "ac": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    "abdominal_circumference": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    "abdominal circumference": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    "abdominalcircumference": BiometryMeasurement.ABDOMINAL_CIRCUMFERENCE,
-    # Femur Length variations
-    "femur": BiometryMeasurement.FEMUR_LENGTH,
-    "fl": BiometryMeasurement.FEMUR_LENGTH,
-    "femur_length": BiometryMeasurement.FEMUR_LENGTH,
-    "femur length": BiometryMeasurement.FEMUR_LENGTH,
-    "femurlength": BiometryMeasurement.FEMUR_LENGTH,
-    "femurundefinedlength": BiometryMeasurement.FEMUR_LENGTH,
-    # Nuchal Fold variations (including single-word "nuchal" from ViewPoint text)
-    "nuchal": BiometryMeasurement.NUCHAL_FOLD,
-    "nuchal_fold": BiometryMeasurement.NUCHAL_FOLD,
-    "nuchal fold": BiometryMeasurement.NUCHAL_FOLD,
-    "nuchalfold": BiometryMeasurement.NUCHAL_FOLD,
-    # Cerebellum variations
-    "cerebellum": BiometryMeasurement.CEREBELLUM,
-    # Occipitofrontal Diameter variations
-    "ofd": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "occipitofrontal_diameter": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "occipitofrontal diameter": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "occipito-frontal diameter": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    "occipitofrontaldiameter": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
-    # Humerus Length variations
-    "humerus": BiometryMeasurement.HUMERUS_LENGTH,
-    "hl": BiometryMeasurement.HUMERUS_LENGTH,
-    "humerus_length": BiometryMeasurement.HUMERUS_LENGTH,
-    "humerus length": BiometryMeasurement.HUMERUS_LENGTH,
-    "humeruslength": BiometryMeasurement.HUMERUS_LENGTH,
-    # Cisterna Magna variations (guessed from the patterns above)
-    "cisterna magna": BiometryMeasurement.CISTERNA_MAGNA,
-    "cisterna_magna": BiometryMeasurement.CISTERNA_MAGNA,
-    "cisternamagna": BiometryMeasurement.CISTERNA_MAGNA,
-    # Nasal Bone variations (guessed from the patterns above)
-    "nasal bone": BiometryMeasurement.NASAL_BONE,
-    "nasal_bone": BiometryMeasurement.NASAL_BONE,
-    "nasalbone": BiometryMeasurement.NASAL_BONE,
-    # Lateral Ventricle variations (guessed from the patterns above)
-    "lateral vent left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "lateral ventricle left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "lateral_ventricle_left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "lateralventricleleft": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
-    "lateral vent right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    "lateral ventricle right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    "lateral_ventricle_right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    "lateralventricleright": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
-    # Biorbital Diameter variations (guessed from the patterns above)
-    "biorbit": BiometryMeasurement.BIORBITAL_DIAMETER,
-    "biorbital": BiometryMeasurement.BIORBITAL_DIAMETER,
-    "biorbital_diameter": BiometryMeasurement.BIORBITAL_DIAMETER,
-    "biorbital diameter": BiometryMeasurement.BIORBITAL_DIAMETER,
-    "biorbitaldiameter": BiometryMeasurement.BIORBITAL_DIAMETER,
-}
+OBSERVER_NAME_MAP: Dict[str, BiometryMeasurement] = _name_map("observer")
+VIEWPOINT_TEXT_NAME_MAP: Dict[str, BiometryMeasurement] = _name_map("viewpoint_text")
+VIEWPOINT_HL7_NAME_MAP: Dict[str, BiometryMeasurement] = _name_map("viewpoint_hl7")
+GENERIC_NAME_MAP: Dict[str, BiometryMeasurement] = _name_map("generic")
 
 
 def normalize_measurement_name(
