@@ -194,15 +194,28 @@ class TestNameMaps:
 
     def test_viewpoint_text_map_completeness(self):
         """Test that ViewPoint text map has all measurements."""
-        assert len(VIEWPOINT_TEXT_NAME_MAP) == 8
+        # 8 original + 5 guessed aliases (Cisterna Magna, Nasal Bone,
+        # Lateral Vent left/right, Biorbit) not yet seen in a real
+        # ViewPoint text export.
+        assert len(VIEWPOINT_TEXT_NAME_MAP) == 13
         assert "HC" in VIEWPOINT_TEXT_NAME_MAP
         assert "OFD" in VIEWPOINT_TEXT_NAME_MAP
+        assert "Cisterna Magna" in VIEWPOINT_TEXT_NAME_MAP
+        assert "Nasal Bone" in VIEWPOINT_TEXT_NAME_MAP
+        assert "Lateral Vent left" in VIEWPOINT_TEXT_NAME_MAP
+        assert "Lateral Vent right" in VIEWPOINT_TEXT_NAME_MAP
+        assert "Biorbit" in VIEWPOINT_TEXT_NAME_MAP
 
     def test_viewpoint_hl7_map_completeness(self):
         """Test that ViewPoint HL7 map has all measurements."""
-        assert len(VIEWPOINT_HL7_NAME_MAP) >= 8  # May have variations
+        assert len(VIEWPOINT_HL7_NAME_MAP) >= 13  # May have variations
         assert "HeadCircumference" in VIEWPOINT_HL7_NAME_MAP
         assert "BiParietalDiameter" in VIEWPOINT_HL7_NAME_MAP
+        assert "CisternaMagna" in VIEWPOINT_HL7_NAME_MAP
+        assert "NasalBone" in VIEWPOINT_HL7_NAME_MAP
+        assert "LateralVentricleLeft" in VIEWPOINT_HL7_NAME_MAP
+        assert "LateralVentricleRight" in VIEWPOINT_HL7_NAME_MAP
+        assert "BiorbitalDiameter" in VIEWPOINT_HL7_NAME_MAP
 
     def test_maps_point_to_same_enums(self):
         """Test that all maps point to BiometryMeasurement enums."""

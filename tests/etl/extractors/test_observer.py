@@ -209,43 +209,37 @@ class TestObserverExtract:
         # Should have 4 (not 5) since Nuchal Fold has no percentile
         assert len(term_bins) == 4
 
-    @pytest.mark.skip(
-        reason="TODO(@VarenyaJ): Add HPO mappings for Nuchal Fold and Cerebellum"
-    )
     def test_extract_optional_measurements(self):
-        """Test extraction includes optional measurements when present."""
-        data = {  # noqa: F841
+        """Optional measurements with a real percentile produce bins."""
+        data = {
             "fetuses": [
                 {
                     "fetus": {"fetus_number": 1},
-                    "measurements": [
-                        # ... HC, BPD, AC, Femur with percentiles ...
+                    "measurements": _required_with_display()
+                    + [
                         {
                             "label": "Nuchal Fold",
                             "value": 4.5,
                             "unit_of_measure": "mm",
-                            "calculated_percentile": 10.0,  # Has percentile!
+                            "calculated_percentile": 10.0,
+                            "percentile_for_display": "10%",
                         },
                         {
                             "label": "Cerebellum",
                             "value": 25.0,
                             "unit_of_measure": "mm",
-                            "calculated_percentile": 45.0,  # Has percentile!
+                            "calculated_percentile": 45.0,
+                            "percentile_for_display": "45%",
                         },
                     ],
                 }
             ]
         }
 
-        # TODO(@VarenyaJ): ensure this works in the main file and then fix this part of the test
-        # term_bins = observer.extract(data)
+        term_bins = observer.extract(data)
 
-        # TODO(@VarenyaJ): When HPO mappings added, change to 6: ensure this works in the main file and then fix this part of the test
-        # assert len(term_bins) == 4  # Only required 4 measurements + 2 optional but no HPO exist for those optional)
-
-        # Don't check for optional measurements yet
-        # labels = [tb.description for tb in term_bins]
-        # assert any("Nuchal Fold" in desc for desc in labels)
+        names = {tb.description.split(":")[0] for tb in term_bins}
+        assert names == {"HC", "BPD", "AC", "Femur", "Nuchal Fold", "Cerebellum"}
 
 
 class TestObserverExtractFromFile:
@@ -395,14 +389,9 @@ class TestObserverUnitConversion:
 
         term_bins = observer.extract(data)
 
-        # TODO(@VarenyaJ): Nuchal Fold has no HPO mapping - won't be in results
-        # This test should be updated when HPO mapping is added
-        # For now, expect only 4 required measurements
-        assert len(term_bins) == 4
-
-        # Skip Nuchal Fold assertion until HPO mapping exists
-        # nf = next(tb for tb in term_bins if "Nuchal Fold" in tb.description)
-        # assert "4.5" in nf.description
+        assert len(term_bins) == 5
+        nf = next(tb for tb in term_bins if tb.description.startswith("Nuchal Fold"))
+        assert nf.value_mm == 4.5  # already mm, no conversion
 
 
 # ---------------------------------------------------------------------------
@@ -485,7 +474,7 @@ class TestObserverT1:
         ):
             observer.extract(_t1_fixture(crl_no_pct, nt_no_pct))
 
-    def test_corpus_diva_crl_not_calculated_raises(self):
+    def test_diva_sally_crl_not_calculated_raises(self):
         # Diva is the only T1 fixture, and its sole measurement (CRL) is
         # exported as percentile 0 with empty display text - Observer's "not
         # calculated" placeholder - so nothing parses and the T1 path raises.
@@ -592,8 +581,8 @@ class TestObserverCorpus:
 
     EXPECTED: ClassVar[dict[str, tuple[int, set[str]]]] = {
         "Apple_Sally_pretty.json": (4, set()),
-        "Blue_Sally_pretty.json": (4, {"HC"}),
-        "Charm_Sally_pretty.json": (4, {"BPD"}),
+        "Blue_Sally_pretty.json": (5, {"HC"}),
+        "Charm_Sally_pretty.json": (5, {"BPD"}),
         "Eclair_Sally_pretty.json": (4, set()),
     }
 

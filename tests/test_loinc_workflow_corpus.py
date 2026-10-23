@@ -4,9 +4,10 @@ Encodes how the Observer ETL + LOINC layer is expected to process each file
 in ``tests/data/*_pretty.json`` so changes that drift from these expectations
 fail loudly.
 
-Four T2/T3 fixtures (Apple, Blue, Charm, Eclair) succeed and produce 4
-LOINC-coded TermBins each. Diva is first-trimester (CRL only); the extractor
-emits T1 bins (CRL) for it, now carrying CRL's own verified LOINC code.
+Four T2/T3 fixtures (Apple, Blue, Charm, Eclair) succeed and produce
+LOINC-coded TermBins for HC/BPD/AC/Femur, plus Humerus where Observer
+calculated its percentile (Blue, Charm). Diva is first-trimester and its
+only measurement (CRL) has no calculated percentile, so it yields nothing.
 """
 
 from __future__ import annotations
@@ -28,6 +29,21 @@ EXPECTED_LOINC = {
     "AC": ("LOINC:11979-2", "Fetal Abdomen Circumference US"),
     "Femur": ("LOINC:11963-6", "Fetal Femur diaphysis [Length] US"),
 }
+
+# Optional measurements with a real Observer percentile, per fixture.
+OPTIONAL_LOINC = {"Humerus": ("LOINC:11966-9", "Fetal Humerus diaphysis [Length] US")}
+OPTIONAL_BY_FIXTURE = {
+    "Blue_Sally_pretty.json": {"Humerus"},
+    "Charm_Sally_pretty.json": {"Humerus"},
+}
+
+
+def _expected_loincs(fixture_name: str) -> set[str]:
+    optional = OPTIONAL_BY_FIXTURE.get(fixture_name, set())
+    return {code for code, _ in EXPECTED_LOINC.values()} | {
+        OPTIONAL_LOINC[name][0] for name in optional
+    }
+
 
 # Raw-mm values per fixture (= cm-value * 10). pytest.approx absorbs the
 # IEEE-754 artefacts from the cm->mm conversion in observer._convert_to_mm.
@@ -52,14 +68,14 @@ def _fixture_present(name: str) -> bool:
         "Eclair_Sally_pretty.json",
     ],
 )
-def test_corpus_fixture_yields_four_loinc_termbins(fixture_name):
-    """Each T2/T3 fixture extracts 4 TermBins carrying LOINC + raw mm + GA."""
+def test_corpus_fixture_yields_loinc_termbins(fixture_name):
+    """Each T2/T3 fixture extracts TermBins carrying LOINC + raw mm + GA."""
     if not _fixture_present(fixture_name):
         pytest.skip(f"{fixture_name} not found")
 
     term_bins = observer.extract_from_file(DATA_DIR / fixture_name)
 
-    assert len(term_bins) == 4
+    assert len(term_bins) == len(_expected_loincs(fixture_name))
 
     # Every TermBin must carry the new LOINC + raw-context fields.
     for tb in term_bins:
@@ -68,9 +84,9 @@ def test_corpus_fixture_yields_four_loinc_termbins(fixture_name):
         assert tb.value_mm is not None
         assert tb.gestational_age_weeks is not None
 
-    # The set of LOINC codes across the 4 bins is exactly HC/BPD/AC/Femur.
+    # HC/BPD/AC/Femur, plus any optional measurement Observer calculated.
     loincs_present = {tb.loinc_code for tb in term_bins}
-    assert loincs_present == {code for code, _ in EXPECTED_LOINC.values()}
+    assert loincs_present == _expected_loincs(fixture_name)
 
 
 @pytest.mark.parametrize(
@@ -145,10 +161,10 @@ def test_corpus_fixture_phenotypic_exporter_emits_measurements(fixture_name):
     payload = json.loads(PhenotypicExporter().to_json([], term_bins=term_bins))
 
     assert "measurements" in payload
-    assert len(payload["measurements"]) == 4
+    assert len(payload["measurements"]) == len(_expected_loincs(fixture_name))
 
     loincs = {m["assay"]["id"] for m in payload["measurements"]}
-    assert loincs == {code for code, _ in EXPECTED_LOINC.values()}
+    assert loincs == _expected_loincs(fixture_name)
 
     for m in payload["measurements"]:
         assert m["value"]["quantity"]["unit"]["id"] == "UO:0000016"

@@ -10,7 +10,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from prenatalppkt.etl.constants import (
+    BiometryMeasurement,
+    GENERIC_NAME_MAP,
+    OBSERVER_NAME_MAP,
+    VIEWPOINT_HL7_NAME_MAP,
+    VIEWPOINT_TEXT_NAME_MAP,
+)
 from prenatalppkt.etl.term_bin_factory import (
+    DELIBERATELY_UNMAPPED_MEASUREMENTS,
     TermBinFactory,
     validate_required_measurements,
 )
@@ -146,7 +154,10 @@ class TestTermBinFactory:
         Test that unmapped optional measurement returns None.
         """
         term_bin = factory.create_term_bin(
-            name="Nuchal Fold",  # Optional measurement, no HPO mapping yet
+            # Mean Gest Sac is the one optional measurement with no real
+            # HPO term possible (none exists for "gestational sac");
+            # every other optional measurement has a real mapping.
+            name="Mean Gest Sac",
             value_mm=60.0,
             percentile=50.0,
         )
@@ -154,13 +165,15 @@ class TestTermBinFactory:
         assert term_bin is None
 
     @pytest.mark.parametrize(
-        "name,low_percentile,expected_low_hpo,expected_low_label,mid_hpo,mid_label",
+        "name,concern_percentile,concern_hpo,concern_label,"
+        "reference_percentile,reference_hpo,reference_label",
         [
             (
                 "Tibia",
                 1.9,
                 "HP:0005736",
                 "Short tibia",
+                50.0,
                 "HP:0002992",
                 "Abnormal tibia morphology",
             ),
@@ -169,6 +182,7 @@ class TestTermBinFactory:
                 1.9,
                 "HP:0003038",
                 "Fibular hypoplasia",
+                50.0,
                 "HP:0002991",
                 "Abnormal fibula morphology",
             ),
@@ -177,6 +191,7 @@ class TestTermBinFactory:
                 1.9,
                 "HP:0002984",
                 "Hypoplasia of the radius",
+                50.0,
                 "HP:0002818",
                 "Abnormal morphology of the radius",
             ),
@@ -185,6 +200,7 @@ class TestTermBinFactory:
                 0.1,
                 "HP:0003022",
                 "Hypoplasia of the ulna",
+                50.0,
                 "HP:0040071",
                 "Abnormal morphology of ulna",
             ),
@@ -193,59 +209,136 @@ class TestTermBinFactory:
                 0.1,
                 "HP:0001773",
                 "Short foot",
+                50.0,
                 "HP:0001760",
                 "Abnormal foot morphology",
             ),
+            (
+                "Humerus",
+                1.9,
+                "HP:0005792",
+                "Short humerus",
+                50.0,
+                "HP:0031095",
+                "Abnormal humerus morphology",
+            ),
+            (
+                "Cerebellum",
+                1.9,
+                "HP:0001321",
+                "Cerebellar hypoplasia",
+                50.0,
+                "HP:0001317",
+                "Abnormal cerebellum morphology",
+            ),
+            (
+                "Nuchal Fold",
+                96.0,
+                "HP:0000474",
+                "Thickened nuchal skin fold",
+                50.0,
+                "HP:0000474",
+                "Thickened nuchal skin fold",
+            ),
+            (
+                "Cisterna Magna",
+                96.0,
+                "HP:0011427",
+                "Enlarged fetal cisterna magna",
+                50.0,
+                "HP:0011427",
+                "Enlarged fetal cisterna magna",
+            ),
+            (
+                "Nasal Bone",
+                1.9,
+                "HP:0025707",
+                "Hypoplastic fetal nasal bone",
+                50.0,
+                "HP:0010939",
+                "Abnormal nasal bone morphology",
+            ),
+            (
+                "Lateral Vent left",
+                96.0,
+                "HP:0002119",
+                "Ventriculomegaly",
+                50.0,
+                "HP:0030047",
+                "Abnormal lateral ventricle morphology",
+            ),
+            (
+                "Lateral Vent right",
+                96.0,
+                "HP:0002119",
+                "Ventriculomegaly",
+                50.0,
+                "HP:0030047",
+                "Abnormal lateral ventricle morphology",
+            ),
+            (
+                # Biorbital diameter row A: the low-extreme (Hypotelorism)
+                # direction is the "concern" here.
+                "Biorbit",
+                1.9,
+                "HP:0000601",
+                "Hypotelorism",
+                50.0,
+                "HP:0000316",
+                "Hypertelorism",
+            ),
+            (
+                # Biorbital diameter row B: the high-extreme (Hypertelorism)
+                # direction is the "concern" here. Same reference point as
+                # row A (percentile 50 always resolves to the same bin
+                # regardless of which direction a given row is testing).
+                "Biorbit",
+                96.0,
+                "HP:0000316",
+                "Hypertelorism",
+                50.0,
+                "HP:0000316",
+                "Hypertelorism",
+            ),
         ],
     )
-    def test_create_term_bin_long_bone_and_foot_measurements(
+    def test_create_term_bin_percentile_based_measurements(
         self,
         factory,
         name,
-        low_percentile,
-        expected_low_hpo,
-        expected_low_label,
-        mid_hpo,
-        mid_label,
+        concern_percentile,
+        concern_hpo,
+        concern_label,
+        reference_percentile,
+        reference_hpo,
+        reference_label,
     ):
-        """Tibia/Fibula/Radius/Ulna/Foot each have a real percentile in real
-        Observer exports, so - unlike Cisterna Magna/Nasal Bone/Lateral
-        Vent/Biorbit above - these get real YAML bins."""
-        low_bin = factory.create_term_bin(
-            name=name, value_mm=42.0, percentile=low_percentile
+        """One unified table for every measurement with real percentile
+        bins, regardless of which direction (low, high, or both) is
+        clinically concerning - a "concern" percentile/term pair and a
+        "reference" (usually normal) percentile/term pair per row, same
+        two checks for every row. Humerus/Cerebellum share the long-bone
+        shape unchanged (low=specific hypoplasia term, else=generic
+        bidirectional term); Nuchal Fold/Cisterna Magna are one-
+        directional (high only, same term both places, normal flag
+        differs); Nasal Bone is low-only; Lateral Vent is high-only with
+        a different term than its own reference; Biorbit has two real,
+        opposite-direction terms and gets two rows, one per direction."""
+        concern_bin = factory.create_term_bin(
+            name=name, value_mm=42.0, percentile=concern_percentile
         )
-        assert low_bin is not None
-        assert low_bin.hpo_id == expected_low_hpo
-        assert low_bin.hpo_label == expected_low_label
-        assert low_bin.normal is False
+        assert concern_bin is not None
+        assert concern_bin.hpo_id == concern_hpo
+        assert concern_bin.hpo_label == concern_label
+        assert concern_bin.normal is False
 
-        mid_bin = factory.create_term_bin(name=name, value_mm=42.0, percentile=50.0)
-        assert mid_bin is not None
-        assert mid_bin.hpo_id == mid_hpo
-        assert mid_bin.hpo_label == mid_label
-        assert mid_bin.normal is True
-
-    @pytest.mark.parametrize(
-        "name",
-        [
-            "Cisterna Magna",
-            "Nasal Bone",
-            "Lateral Vent left",
-            "Lateral Vent right",
-            "Biorbit",
-            "Mean Gest Sac",
-        ],
-    )
-    def test_create_term_bin_no_percentile_source_measurements(self, factory, name):
-        """
-        These labels are recognized (BiometryMeasurement/OBSERVER_NAME_MAP) but
-        never carry a percentile in real Observer exports, so there is
-        deliberately no YAML mapping yet - same "recognized, not yet mapped"
-        shape as Nuchal Fold/Cerebellum/Humerus above.
-        """
-        term_bin = factory.create_term_bin(name=name, value_mm=10.0, percentile=50.0)
-
-        assert term_bin is None
+        reference_bin = factory.create_term_bin(
+            name=name, value_mm=42.0, percentile=reference_percentile
+        )
+        assert reference_bin is not None
+        assert reference_bin.hpo_id == reference_hpo
+        assert reference_bin.hpo_label == reference_label
+        assert reference_bin.normal is True
 
     def test_create_term_bin_all_required_measurements(self, factory):
         """
@@ -280,6 +373,91 @@ class TestTermBinFactory:
         )
         assert high_bin.hpo_id == "HP:0000256"  # Macrocephaly
         assert high_bin.normal is False
+
+
+class TestBiometryMeasurementCompleteness:
+    """
+    Every BiometryMeasurement member must be recognisable from real data
+    and have a deliberate fate (real YAML bins, or a reviewed reason for
+    having none), so a half-wired measurement - recognised but silently
+    skipped - fails here instead of only logging a warning at runtime.
+    """
+
+    def test_every_measurement_is_recognized_by_at_least_one_alias_map(self):
+        """Every enum member's value must appear in at least one of the
+        four alias maps, or nothing could ever recognize it from real
+        Observer/ViewPoint data in the first place."""
+        all_alias_values = (
+            set(OBSERVER_NAME_MAP.values())
+            | set(VIEWPOINT_TEXT_NAME_MAP.values())
+            | set(VIEWPOINT_HL7_NAME_MAP.values())
+            | set(GENERIC_NAME_MAP.values())
+        )
+        unrecognized = [m for m in BiometryMeasurement if m not in all_alias_values]
+        assert not unrecognized, (
+            f"These BiometryMeasurement members have no alias in any "
+            f"name map, so nothing can ever recognize them from real "
+            f"data: {[m.name for m in unrecognized]}"
+        )
+
+    def test_every_measurement_has_a_documented_fate(self):
+        """Every enum member must either (a) have real YAML bins
+        (TermBinFactory._NAME_TO_YAML maps it), or (b) be explicitly
+        and individually listed in DELIBERATELY_UNMAPPED_MEASUREMENTS
+        with its own reviewed reason. Being in OPTIONAL_MEASUREMENTS is
+        deliberately not enough: optional-but-unmapped measurements are
+        exactly the silent gap this guards against."""
+        undocumented = [
+            m.value
+            for m in BiometryMeasurement
+            if m.value not in TermBinFactory._NAME_TO_YAML
+            and m.value not in DELIBERATELY_UNMAPPED_MEASUREMENTS
+        ]
+        assert not undocumented, (
+            f"These measurements have neither a YAML mapping nor an "
+            f"individually-reviewed DELIBERATELY_UNMAPPED_MEASUREMENTS "
+            f"entry - either add a real YAML mapping, or add the "
+            f"measurement here with a reviewed reason (not a guess): "
+            f"{undocumented}"
+        )
+
+    def test_every_yaml_mapped_measurement_has_full_percentile_coverage(self, factory):
+        """Every measurement with real YAML bins must cover the full
+        0-100 percentile range with no gaps - create_term_bin() hard-
+        errors (raises ValueError) if a real percentile doesn't land in
+        any bin. Samples every bin boundary (lower-inclusive/upper-
+        exclusive, confirmed via PercentileRange.contains()) plus one
+        interior point per bin, so a gap anywhere in the range fails
+        this test rather than surfacing later as a runtime crash on
+        real data."""
+        boundaries = [
+            0.0,
+            1.5,
+            3.0,
+            4.0,
+            5.0,
+            7.5,
+            10.0,
+            30.0,
+            50.0,
+            70.0,
+            90.0,
+            92.5,
+            95.0,
+            96.0,
+            97.0,
+            99.0,
+            100.0,
+        ]
+        for short_name, yaml_key in TermBinFactory._NAME_TO_YAML.items():
+            bins = factory._mappings.get(yaml_key)
+            assert bins, f"{short_name} -> {yaml_key} has no bins at all"
+            for percentile in boundaries:
+                matching = [b for b in bins if b.fits(percentile)]
+                assert matching, (
+                    f"{short_name} ({yaml_key}): no bin covers percentile "
+                    f"{percentile} - gap in percentile coverage"
+                )
 
 
 class TestValidateRequiredMeasurements:

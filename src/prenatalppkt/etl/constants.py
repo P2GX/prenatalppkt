@@ -146,6 +146,16 @@ VIEWPOINT_TEXT_NAME_MAP: Dict[str, BiometryMeasurement] = {
     "Cerebellum": BiometryMeasurement.CEREBELLUM,
     "OFD": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
     "Humerus": BiometryMeasurement.HUMERUS_LENGTH,
+    # Guessed from Observer's labels (every entry above matches Observer's
+    # string); not yet seen in a real ViewPoint text export.
+    # TODO(@VarenyaJ): real ViewPoint text exports label cisterna magna "CM"
+    # and cerebellum "Cerebellum tr"; the line parser needs to accept those
+    # labels before they can be added here.
+    "Cisterna Magna": BiometryMeasurement.CISTERNA_MAGNA,
+    "Nasal Bone": BiometryMeasurement.NASAL_BONE,
+    "Lateral Vent left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "Lateral Vent right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    "Biorbit": BiometryMeasurement.BIORBITAL_DIAMETER,
 }
 
 VIEWPOINT_HL7_NAME_MAP: Dict[str, BiometryMeasurement] = {
@@ -159,6 +169,14 @@ VIEWPOINT_HL7_NAME_MAP: Dict[str, BiometryMeasurement] = {
     "Cerebellum": BiometryMeasurement.CEREBELLUM,
     "OccipitofrontalDiameter": BiometryMeasurement.OCCIPITOFRONTAL_DIAMETER,
     "HumerusLength": BiometryMeasurement.HUMERUS_LENGTH,
+    # Guessed from the naming pattern above (PascalCase, spelled out like
+    # OccipitofrontalDiameter); not yet seen in a real ViewPoint HL7 export.
+    # Update if a real OBX-3 identifier uses a different string.
+    "CisternaMagna": BiometryMeasurement.CISTERNA_MAGNA,
+    "NasalBone": BiometryMeasurement.NASAL_BONE,
+    "LateralVentricleLeft": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "LateralVentricleRight": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    "BiorbitalDiameter": BiometryMeasurement.BIORBITAL_DIAMETER,
 }
 
 # Generic name normalization - catches common variations
@@ -204,6 +222,29 @@ GENERIC_NAME_MAP: Dict[str, BiometryMeasurement] = {
     "humerus_length": BiometryMeasurement.HUMERUS_LENGTH,
     "humerus length": BiometryMeasurement.HUMERUS_LENGTH,
     "humeruslength": BiometryMeasurement.HUMERUS_LENGTH,
+    # Cisterna Magna variations (guessed from the patterns above)
+    "cisterna magna": BiometryMeasurement.CISTERNA_MAGNA,
+    "cisterna_magna": BiometryMeasurement.CISTERNA_MAGNA,
+    "cisternamagna": BiometryMeasurement.CISTERNA_MAGNA,
+    # Nasal Bone variations (guessed from the patterns above)
+    "nasal bone": BiometryMeasurement.NASAL_BONE,
+    "nasal_bone": BiometryMeasurement.NASAL_BONE,
+    "nasalbone": BiometryMeasurement.NASAL_BONE,
+    # Lateral Ventricle variations (guessed from the patterns above)
+    "lateral vent left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "lateral ventricle left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "lateral_ventricle_left": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "lateralventricleleft": BiometryMeasurement.LATERAL_VENTRICLE_LEFT,
+    "lateral vent right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    "lateral ventricle right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    "lateral_ventricle_right": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    "lateralventricleright": BiometryMeasurement.LATERAL_VENTRICLE_RIGHT,
+    # Biorbital Diameter variations (guessed from the patterns above)
+    "biorbit": BiometryMeasurement.BIORBITAL_DIAMETER,
+    "biorbital": BiometryMeasurement.BIORBITAL_DIAMETER,
+    "biorbital_diameter": BiometryMeasurement.BIORBITAL_DIAMETER,
+    "biorbital diameter": BiometryMeasurement.BIORBITAL_DIAMETER,
+    "biorbitaldiameter": BiometryMeasurement.BIORBITAL_DIAMETER,
 }
 
 
