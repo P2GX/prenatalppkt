@@ -118,7 +118,7 @@ def _name_map(source: str) -> Dict[str, BiometryMeasurement]:
     return {
         label: BiometryMeasurement(spec.name)
         for spec in REGISTRY.values()
-        for label in spec.aliases[source]
+        for label in spec.all_aliases(source)
     }
 
 

@@ -11,6 +11,10 @@
 #   aliases         the label each export format uses, per source:
 #                   observer, viewpoint_text, viewpoint_hl7, and generic
 #                   (lowercase spelling variants used as a fallback)
+#   guessed_aliases same shape as aliases, for labels inferred from naming
+#                   patterns but not yet seen in a real export. They are
+#                   looked up exactly like aliases; move a label into
+#                   aliases once a real export confirms it.
 #
 # Percentile ranges, HPO terms and LOINC codes stay in
 # biometry_hpo_mappings.yaml.
@@ -30,8 +34,10 @@ BPD:
   aliases:
     observer: [BPD]
     viewpoint_text: [BPD]
-    viewpoint_hl7: [BiParietalDiameter]
+    viewpoint_hl7: [BiparietalDiameter]
     generic: [bpd, biparietal_diameter, "biparietal diameter", biparietaldiameter]
+  guessed_aliases:
+    viewpoint_hl7: [BiParietalDiameter]
 
 AC:
   role: required
@@ -48,20 +54,24 @@ Femur:
   aliases:
     observer: [Femur, FL]
     viewpoint_text: [Femur]
-    viewpoint_hl7: [FemurUndefinedLength, FemurLength]
+    viewpoint_hl7: [FemurUndefinedLength]
     generic: [femur, fl, femur_length, "femur length", femurlength, femurundefinedlength]
+  guessed_aliases:
+    viewpoint_hl7: [FemurLength]
 
 CRL:
   role: t1
   yaml_key: crown_rump_length
   aliases:
     observer: [CRL]
+    viewpoint_hl7: [CrownRumpLength]
 
 NT:
   role: t1
   yaml_key: nuchal_translucency
   aliases:
     observer: [NT]
+    viewpoint_hl7: [NuchalTranslucency]
 
 "Nuchal Fold":
   role: optional
@@ -69,9 +79,11 @@ NT:
   aliases:
     observer: ["Nuchal Fold"]
     viewpoint_text: ["Nuchal Fold"]
-    viewpoint_hl7: [NuchalFold]
+    viewpoint_hl7: [NuchalFoldThickness]
     # "nuchal" alone covers ViewPoint text's single-word label
     generic: [nuchal, nuchal_fold, "nuchal fold", nuchalfold]
+  guessed_aliases:
+    viewpoint_hl7: [NuchalFold]
 
 Cerebellum:
   role: optional
@@ -81,8 +93,10 @@ Cerebellum:
     # TODO(@VarenyaJ): real ViewPoint text exports label this
     # "Cerebellum tr"; the line parser needs to accept it first.
     viewpoint_text: [Cerebellum]
-    viewpoint_hl7: [Cerebellum]
+    viewpoint_hl7: [TranscerebellarDiameter]
     generic: [cerebellum]
+  guessed_aliases:
+    viewpoint_hl7: [Cerebellum]
 
 OFD:
   role: optional
@@ -90,13 +104,15 @@ OFD:
   aliases:
     observer: [OFD]
     viewpoint_text: [OFD]
-    viewpoint_hl7: [OccipitofrontalDiameter]
+    viewpoint_hl7: [OccipitoFrontalDiameter]
     generic:
       - ofd
       - occipitofrontal_diameter
       - "occipitofrontal diameter"
       - "occipito-frontal diameter"
       - occipitofrontaldiameter
+  guessed_aliases:
+    viewpoint_hl7: [OccipitofrontalDiameter]
 
 Humerus:
   role: optional
@@ -104,20 +120,24 @@ Humerus:
   aliases:
     observer: [Humerus]
     viewpoint_text: [Humerus]
-    viewpoint_hl7: [HumerusLength]
+    viewpoint_hl7: [HumerusUndefinedLength]
     generic: [humerus, hl, humerus_length, "humerus length", humeruslength]
+  guessed_aliases:
+    viewpoint_hl7: [HumerusLength]
 
 Tibia:
   role: optional
   yaml_key: tibia_length
   aliases:
     observer: [Tibia]
+    viewpoint_hl7: [TibiaUndefinedLength]
 
 Fibula:
   role: optional
   yaml_key: fibula_length
   aliases:
     observer: [Fibula]
+    viewpoint_hl7: [FibulaUndefinedLength]
 
 Radius:
   role: optional
@@ -137,63 +157,64 @@ Foot:
   aliases:
     observer: [Foot]
 
-# The viewpoint_text, viewpoint_hl7 and generic aliases below are guessed
-# from the patterns above; none has been seen in a real ViewPoint export
-# yet. Update them if a real export uses a different string.
-
 "Cisterna Magna":
   role: optional
   yaml_key: cisterna_magna
   aliases:
     observer: ["Cisterna Magna"]
+    generic: ["cisterna magna", cisterna_magna, cisternamagna]
+  guessed_aliases:
     # TODO(@VarenyaJ): real ViewPoint text exports label this "CM".
     viewpoint_text: ["Cisterna Magna"]
     viewpoint_hl7: [CisternaMagna]
-    generic: ["cisterna magna", cisterna_magna, cisternamagna]
 
 "Nasal Bone":
   role: optional
   yaml_key: nasal_bone
   aliases:
     observer: ["Nasal Bone"]
+    generic: ["nasal bone", nasal_bone, nasalbone]
+  guessed_aliases:
     viewpoint_text: ["Nasal Bone"]
     viewpoint_hl7: [NasalBone]
-    generic: ["nasal bone", nasal_bone, nasalbone]
 
 "Lateral Vent left":
   role: optional
   yaml_key: lateral_ventricle_left
   aliases:
     observer: ["Lateral Vent left"]
-    viewpoint_text: ["Lateral Vent left"]
-    viewpoint_hl7: [LateralVentricleLeft]
     generic:
       - "lateral vent left"
       - "lateral ventricle left"
       - lateral_ventricle_left
       - lateralventricleleft
+  guessed_aliases:
+    viewpoint_text: ["Lateral Vent left"]
+    viewpoint_hl7: [LateralVentricleLeft]
 
 "Lateral Vent right":
   role: optional
   yaml_key: lateral_ventricle_right
   aliases:
     observer: ["Lateral Vent right"]
-    viewpoint_text: ["Lateral Vent right"]
-    viewpoint_hl7: [LateralVentricleRight]
     generic:
       - "lateral vent right"
       - "lateral ventricle right"
       - lateral_ventricle_right
       - lateralventricleright
+  guessed_aliases:
+    viewpoint_text: ["Lateral Vent right"]
+    viewpoint_hl7: [LateralVentricleRight]
 
 Biorbit:
   role: optional
   yaml_key: biorbital_diameter
   aliases:
     observer: [Biorbit]
+    generic: [biorbit, biorbital, biorbital_diameter, "biorbital diameter", biorbitaldiameter]
+  guessed_aliases:
     viewpoint_text: [Biorbit]
     viewpoint_hl7: [BiorbitalDiameter]
-    generic: [biorbit, biorbital, biorbital_diameter, "biorbital diameter", biorbitaldiameter]
 
 "Mean Gest Sac":
   role: optional

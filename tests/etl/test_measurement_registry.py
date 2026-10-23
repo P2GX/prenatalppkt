@@ -1,13 +1,16 @@
 """Tests for the measurement registry and the name tables built from it."""
 
 import textwrap
+from pathlib import Path
 
 import pytest
+import yaml
 
 from prenatalppkt.etl import constants, scan_type, term_bin_factory
 from prenatalppkt.etl.constants import BiometryMeasurement
 from prenatalppkt.etl.measurement_registry import REGISTRY, SOURCES, load_registry
 from prenatalppkt.etl.term_bin_factory import TermBinFactory
+from prenatalppkt.scripts import data_dict
 
 
 def _write(tmp_path, text):
@@ -23,6 +26,7 @@ class TestShippedRegistry:
     def test_every_entry_lists_every_source(self):
         for spec in REGISTRY.values():
             assert tuple(spec.aliases) == SOURCES
+            assert tuple(spec.guessed_aliases) == SOURCES
 
 
 class TestLoadRegistry:
@@ -45,6 +49,28 @@ class TestLoadRegistry:
         assert spec.aliases["observer"] == ("HC",)
         assert spec.aliases["generic"] == ("hc", "head circumference")
         assert spec.aliases["viewpoint_hl7"] == ()
+        assert spec.guessed_aliases["observer"] == ()
+
+    def test_guessed_aliases_are_kept_apart_but_looked_up(self, tmp_path):
+        path = _write(
+            tmp_path,
+            """
+            Femur:
+              role: required
+              yaml_key: femur_length
+              aliases:
+                viewpoint_hl7: [FemurUndefinedLength]
+              guessed_aliases:
+                viewpoint_hl7: [FemurLength]
+            """,
+        )
+        spec = load_registry(path)["Femur"]
+        assert spec.aliases["viewpoint_hl7"] == ("FemurUndefinedLength",)
+        assert spec.guessed_aliases["viewpoint_hl7"] == ("FemurLength",)
+        assert spec.all_aliases("viewpoint_hl7") == (
+            "FemurUndefinedLength",
+            "FemurLength",
+        )
 
     @pytest.mark.parametrize(
         "body, message",
@@ -58,10 +84,19 @@ class TestLoadRegistry:
             ("role: optional\n  yaml_key: x\n  colour: red", "unknown fields"),
             (
                 "role: optional\n  yaml_key: x\n  aliases:\n    fax: [X]",
-                "unknown alias sources",
+                "unknown sources in aliases",
+            ),
+            (
+                "role: optional\n  yaml_key: x\n  guessed_aliases:\n    fax: [X]",
+                "unknown sources in guessed_aliases",
             ),
             (
                 "role: optional\n  yaml_key: x\n  aliases:\n    observer: [X, X]",
+                "duplicate observer alias",
+            ),
+            (
+                "role: optional\n  yaml_key: x\n  aliases:\n    observer: [X]\n"
+                "  guessed_aliases:\n    observer: [X]",
                 "duplicate observer alias",
             ),
         ],
@@ -91,6 +126,25 @@ class TestLoadRegistry:
         with pytest.raises(ValueError, match="'FL' used by both Femur and Foot"):
             load_registry(path)
 
+    def test_guessed_alias_shared_by_two_measurements_raises(self, tmp_path):
+        path = _write(
+            tmp_path,
+            """
+            Femur:
+              role: required
+              yaml_key: femur_length
+              aliases:
+                observer: [FL]
+            Foot:
+              role: optional
+              yaml_key: foot_length
+              guessed_aliases:
+                observer: [FL]
+            """,
+        )
+        with pytest.raises(ValueError, match="'FL' used by both Femur and Foot"):
+            load_registry(path)
+
     def test_same_alias_in_two_sources_is_fine(self, tmp_path):
         path = _write(
             tmp_path,
@@ -106,8 +160,8 @@ class TestLoadRegistry:
         assert load_registry(path)["HC"].aliases["viewpoint_text"] == ("HC",)
 
 
-# Literal copies of every name table as it stood before the tables were built
-# from the registry. A change here is a behavior change, not a refactor.
+# Literal copies of every name table. A change here is a behavior change, so
+# it should only ever come with a registry edit that means it.
 
 _OBSERVER_NAME_MAP = {
     "HC": "HC",
@@ -150,7 +204,16 @@ _VIEWPOINT_TEXT_NAME_MAP = {
 }
 _VIEWPOINT_HL7_NAME_MAP = {
     "HeadCircumference": "HC",
+    "BiparietalDiameter": "BPD",
     "BiParietalDiameter": "BPD",
+    "OccipitoFrontalDiameter": "OFD",
+    "HumerusUndefinedLength": "Humerus",
+    "TibiaUndefinedLength": "Tibia",
+    "FibulaUndefinedLength": "Fibula",
+    "TranscerebellarDiameter": "Cerebellum",
+    "CrownRumpLength": "CRL",
+    "NuchalTranslucency": "NT",
+    "NuchalFoldThickness": "Nuchal Fold",
     "AbdominalCircumference": "AC",
     "FemurUndefinedLength": "Femur",
     "FemurLength": "Femur",
@@ -297,3 +360,39 @@ class TestTablesMatchRegistry:
     )
     def test_name_sets(self, table, expected):
         assert table == expected
+
+
+# The data dictionary's concept_aliases.yaml lists ViewPoint ids per concept
+# independently of the registry. Each biometry measurement concept's ids must
+# resolve, through the registry, to that concept's measurement.
+_CONCEPT_ALIASES_PATH = Path(data_dict.__file__).parent / "concept_aliases.yaml"
+_BIOMETRY_CONCEPT_MEASUREMENT = {
+    "bpd": "BPD",
+    "ac": "AC",
+    "hc": "HC",
+    "crl": "CRL",
+    "femur": "Femur",
+    "humerus": "Humerus",
+    "nuchal_fold": "Nuchal Fold",
+}
+
+
+class TestConceptAliasesAgree:
+    def _measurement_concepts(self):
+        concepts = yaml.safe_load(_CONCEPT_ALIASES_PATH.read_text(encoding="utf-8"))
+        for key, entry in concepts.items():
+            parts = key.split(".")
+            if parts[0] == "biometry" and parts[-1] == "measurement_mm":
+                yield parts[1], (entry or {}).get("viewpoint") or []
+
+    def test_every_biometry_concept_is_known(self):
+        slugs = {slug for slug, _ in self._measurement_concepts()}
+        assert slugs <= set(_BIOMETRY_CONCEPT_MEASUREMENT)
+
+    def test_viewpoint_ids_resolve_to_the_concept_measurement(self):
+        for slug, identifiers in self._measurement_concepts():
+            for identifier in identifiers:
+                base = identifier.split(".")[-1]
+                resolved = constants.VIEWPOINT_HL7_NAME_MAP.get(base)
+                assert resolved is not None, f"{identifier} is not in the registry"
+                assert resolved.value == _BIOMETRY_CONCEPT_MEASUREMENT[slug], identifier

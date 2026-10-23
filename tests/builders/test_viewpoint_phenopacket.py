@@ -140,7 +140,7 @@ def test_twin_each_fetus_keeps_its_own_anatomy_finding(hpo_parser, now_ts):
 def test_single_fetus_fixture_complete_findings(hpo_parser, now_ts):
     """viewpoint_hl7_test.txt end-to-end - pure normal biometry, no
     narrative text, so the complete expected HPO set is exactly the
-    three core biometry terms, all ruled out (normal readings)."""
+    three core biometry terms plus CRL, all ruled out (normal readings)."""
     data = (DATA_DIR / "viewpoint_hl7_test.txt").read_text()
 
     pps = build_viewpoint_phenopacket(data, hpo_parser, now_ts, accession_id="TEST")
@@ -152,6 +152,7 @@ def test_single_fetus_fixture_complete_findings(hpo_parser, now_ts):
         "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
         "HP:0002823",  # Abnormal femur morphology (Femur, normal)
         "HP:0000240",  # Abnormality of skull size (HC, normal)
+        "HP:0001507",  # Growth abnormality (CRL, normal)
     }
     assert all(pf.excluded for pf in pp.phenotypic_features)
 
@@ -172,6 +173,7 @@ def test_discrete_hl7_sample_fixture_complete_findings(hpo_parser, now_ts):
         "HP:0034207",  # Abnormal fetal gastrointestinal system morphology (AC, normal)
         "HP:0002823",  # Abnormal femur morphology (Femur, normal)
         "HP:0000240",  # Abnormality of skull size (HC, normal)
+        "HP:0001507",  # Growth abnormality (CRL, normal)
     }
     assert all(pf.excluded for pf in pp.phenotypic_features)
 
