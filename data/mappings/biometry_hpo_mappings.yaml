@@ -45,7 +45,7 @@
 #        {"min": 97, "max": 100, "id": "HP:0002823", "label": "Abnormal femur morphology", "normal": False}
 #    ],
 #    "abdominal_circumference": [
-#        {"min": 0, "max": 3, "id": "HP:6000339", "label": "Small fetal abdominal circumference", "normal": False},
+#        {"min": 0, "max": 3, "id": "HP:6000339", "label": "Decreased fetal abdominal circumference", "normal": False},
 #        {"min": 3, "max": 5, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False},  # Need a specific HPO ID & Term here
 #        {"min": 5, "max": 10, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": False},
 #        {"min": 10, "max": 50, "id": "HP:0034207", "label": "Abnormal fetal gastrointestinal system morphology", "normal": True},
@@ -212,7 +212,7 @@ abdominal_circumference:
     - min: 0
       max: 3
       id: "HP:6000339"
-      label: "Small fetal abdominal circumference"
+      label: "Decreased fetal abdominal circumference"
       normal: false
     - min: 3
       max: 5
